@@ -1,0 +1,113 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Airflow
+logs/
+airflow.db
+airflow.cfg
+unittests.cfg
+airflow_login*
+standalone_admin_password.txt
+webserver_config.py
+
+# dbt
+target/
+dbt_packages/
+.user.yml
+
+# PySpark
+metastore_db/
+derby.log
+spark-warehouse/
+
+# Data files
+data/processed/
+data/temp/
+*.csv
+*.parquet
+*.json
+*.pdf
+
+# PowerBI (keep .pbix and screenshots, ignore temp files)
+*.tmp
+*.bak
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Secrets and configs
+*.key
+*.pem
+.env.local
+.env.production
