@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      POSTGRES_DB: ${POSTGRES_DB:-payload_analytics}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d payload_analytics"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  airflow:
+    # Using a custom image to include OpenJDK for pyspark
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin}@postgres/${POSTGRES_DB:-payload_analytics}
+      AIRFLOW_CONN_POSTGRES_DEFAULT: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin}@postgres:5432/${POSTGRES_DB:-payload_analytics}
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      _PIP_ADDITIONAL_REQUIREMENTS: >-
+        dbt-core
+        dbt-postgres
+        pandas
+        boto3
+        pyspark==3.5.0
+        psycopg2-binary
+        protobuf<5.0.0
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./spark:/opt/airflow/spark
+      - ./logs:/opt/airflow/logs
+      - ./data:/opt/airflow/data
+      - ./dbt:/opt/airflow/dbt
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "
+      airflow db migrate &&
+      (airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true) &&
+      (airflow webserver &) &&
+      exec airflow scheduler
+      "
+
+  dbt:
+    container_name: ${COMPOSE_PROJECT_NAME:-payload_analytics}-dbt-1
+    image: python:3.11
+    volumes:
+      - ./dbt:/dbt
+      - ./data:/data
+    working_dir: /dbt
+    command: >
+      bash -c "
+      pip install dbt-core dbt-postgres &&
+      sleep infinity
+      "
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DBT_PROFILES_DIR: /dbt
+
+volumes:
+  postgres_data:
