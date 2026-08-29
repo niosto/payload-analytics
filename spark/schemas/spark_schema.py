@@ -1,0 +1,91 @@
+from pyspark.sql.types import (
+    StructType, StructField, StringType, ArrayType
+)
+
+#  Expected schema inside the JSONB raw_data column
+SCHEMA = StructType([
+    StructField("customer_id", StringType()),
+    StructField("first_name", StringType()),
+    StructField("last_name", StringType()),
+    StructField("email", StringType()),
+    StructField("phone_number", StringType()),
+    StructField("date_of_birth", StringType()),
+    StructField("gender", StringType()),
+    StructField("nationality", StringType()),
+    StructField("city", StringType()),
+    StructField("country", StringType()),
+    StructField("address", StringType()),
+    StructField("lat", StringType()),
+    StructField("lon", StringType()),
+    StructField("registration_date", StringType()),
+    StructField("kyc_status", StringType()),
+    StructField("risk_score", StringType()),
+    StructField("customer_segment", StringType()),
+    StructField("relationship_manager", StringType()),
+    StructField("status", StringType()),
+
+    StructField("accounts", ArrayType(StructType([
+        StructField("account_id", StringType()),
+        StructField("account_type", StringType()),
+        StructField("currency", StringType()),
+        StructField("balance", StringType()),
+        StructField("credit_limit", StringType()),
+        StructField("interest_rate", StringType()),
+        StructField("opened_date", StringType()),
+        StructField("status", StringType()),
+        StructField("branch_code", StringType()),
+    ]))),
+
+    StructField("transactions", ArrayType(StructType([
+        StructField("transaction_id", StringType()),
+        StructField("account_id", StringType()),
+        StructField("date", StringType()),
+        StructField("amount", StringType()),
+        StructField("currency", StringType()),
+        StructField("type", StringType()),
+        StructField("category", StringType()),
+        StructField("merchant", StringType()),
+        StructField("channel", StringType()),
+        StructField("status", StringType()),
+        StructField("description", StringType()),
+    ]))),
+
+    StructField("loans", ArrayType(StructType([
+        StructField("loan_id", StringType()),
+        StructField("type", StringType()),
+        StructField("currency", StringType()),
+        StructField("principal", StringType()),
+        StructField("outstanding_balance", StringType()),
+        StructField("interest_rate", StringType()),
+        StructField("term_months", StringType()),
+        StructField("monthly_payment", StringType()),
+        StructField("start_date", StringType()),
+        StructField("end_date", StringType()),
+        StructField("status", StringType()),
+        StructField("days_past_due", StringType()),
+        StructField("collateral_type", StringType()),
+    ]))),
+
+    StructField("credit_info", StructType([
+        StructField("credit_score", StringType()),
+        StructField("currency", StringType()),
+        StructField("utilization_pct", StringType()),
+        StructField("total_limit", StringType()),
+        StructField("total_used", StringType()),
+        StructField("num_credit_accounts", StringType()),
+        StructField("oldest_account_age_months", StringType()),
+        StructField("late_payments_12m", StringType()),
+        StructField("inquiries_6m", StringType()),
+        StructField("bankruptcy_flag", StringType()),
+    ])),
+
+    StructField("digital_engagement", StructType([
+        StructField("mobile_app_registered", StringType()),
+        StructField("web_banking_registered", StringType()),
+        StructField("last_login_date", StringType()),
+        StructField("avg_monthly_logins", StringType()),
+        StructField("preferred_channel", StringType()),
+        StructField("push_notifications", StringType()),
+        StructField("paperless_statements", StringType()),
+    ])),
+])
