@@ -90,6 +90,7 @@ data/temp/
 *.json
 *.pdf
 !dbt/seeds/*
+!data/raw/*.json
 
 # PowerBI (keep .pbix and screenshots, ignore temp files)
 *.tmp
