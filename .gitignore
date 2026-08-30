@@ -89,6 +89,7 @@ data/temp/
 *.parquet
 *.json
 *.pdf
+!dbt/seeds/*
 
 # PowerBI (keep .pbix and screenshots, ignore temp files)
 *.tmp
