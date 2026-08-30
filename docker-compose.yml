@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d payload_analytics"]
+      test: ["CMD-SHELL", "pg_isready -U payload_analytics-admin -d payload_analytics"]
       interval: 10s
       timeout: 5s
       retries: 5
