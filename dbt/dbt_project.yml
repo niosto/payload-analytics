@@ -1,0 +1,46 @@
+name: 'payload_analytics'
+version: '2.0.0'
+config-version: 2
+
+profile: 'payload_analytics'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+analysis-paths: ["analysis"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  payload_analytics:
+    # Bronze layer - raw JSON data staging
+    bronze:
+      +materialized: table
+      +schema: bronze
+    # Silver layer - cleaned and normalized data
+    silver:
+      +materialized: table
+      +schema: silver
+
+
+seeds:
+  payload_analytics:
+    seed_city:
+      +schema: seeds
+    seed_customer_segment:
+      +schema: seeds
+    seed_status:
+      +schema: seeds
+    seed_phone_codes:
+      +schema: seeds
+    seed_transaction_type:
+      +schema: seeds
+    seed_fx_rates:
+      +schema: seeds
+    seed_currency_map:
+      +schema: seeds

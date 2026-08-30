@@ -1,0 +1,12 @@
+payload_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: postgres
+      user: payload_analytics-admin
+      password: payload_analytics-admin
+      port: 5432
+      dbname: payload_analytics
+      schema: public
+      threads: 1
