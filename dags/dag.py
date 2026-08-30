@@ -68,5 +68,20 @@ spark_bronze_to_silver = PythonOperator(
     dag=dag,
 )
 
+DBT_CONTAINER_NAME = os.environ.get(
+    "DBT_CONTAINER_NAME",
+    "payload_analytics-dbt-1",
+)
+
+# Task 5: dbt - run dbt
+dbt_task = BashOperator(
+    task_id="dbt_run",
+    bash_command=(
+        f'docker exec {DBT_CONTAINER_NAME} bash -c '
+        f'"dbt seed && dbt run && dbt test"'
+    ),
+    dag=dag,
+)
+
 # Task dependencies:
-download_raw_data >> create_schemas >> load_bronze >> spark_bronze_to_silver
+download_raw_data >> create_schemas >> load_bronze >> spark_bronze_to_silver >> dbt_task
