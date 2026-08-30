@@ -1,11 +1,20 @@
 import os
 from datetime import datetime, timedelta
 
+import os
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
-from utils.functions import download_s3, create_schemas, load_to_postgres
+# from utils.functions import download_s3, create_schemas, load_to_postgres
+from utils.functions import create_schemas, load_to_postgres
 from utils.spark_functions import run_spark_bronze_to_silver
+
+# RAW_DATA_URL is intentionally disabled while the S3 bucket is unavailable.
+# RAW_DATA_URL = os.getenv(
+#     "RAW_DATA_URL",
+#     "https://qversity-raw-public-data.s3.amazonaws.com/fintech_banking_dataset.json",
+# )
 
 default_args = {
     "owner": "payload_analytics",
@@ -26,16 +35,16 @@ dag = DAG(
     tags=["payload_analytics", "fintech"],
 )
 
-# Task 1: Download JSON from S3 and load to Bronze
-download_raw_data = PythonOperator(
-    task_id="download_raw_data",
-    python_callable=download_s3,
-    dag=dag,
-    params={
-        "url": "https://qversity-raw-public-data.s3.amazonaws.com/fintech_banking_dataset.json",
-        "path": "/opt/airflow/data/raw/fintech_banking_dataset.json",
-    }
-)
+# Task 1: S3 download is disabled for now to avoid access conflicts.
+# download_raw_data = PythonOperator(
+#     task_id="download_raw_data",
+#     python_callable=download_s3,
+#     dag=dag,
+#     params={
+#         "url": RAW_DATA_URL,
+#         "path": "/opt/airflow/data/raw/fintech_banking_dataset.json",
+#     }
+# )
 
 # Task 2: Create schemas
 create_schemas = PythonOperator(
@@ -70,7 +79,7 @@ spark_bronze_to_silver = PythonOperator(
 
 DBT_CONTAINER_NAME = os.environ.get(
     "DBT_CONTAINER_NAME",
-    "payload_analytics-dbt-1",
+    "payload-analytics-dbt-1",
 )
 
 # Task 5: dbt - run dbt
@@ -84,4 +93,4 @@ dbt_task = BashOperator(
 )
 
 # Task dependencies:
-download_raw_data >> create_schemas >> load_bronze >> spark_bronze_to_silver >> dbt_task
+create_schemas >> load_bronze >> spark_bronze_to_silver >> dbt_task
