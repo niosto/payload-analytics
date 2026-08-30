@@ -24,6 +24,8 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      RAW_DATA_URL: ${RAW_DATA_URL:-https://qversity-raw-public-data.s3.amazonaws.com/fintech_banking_dataset.json}
+      DBT_CONTAINER_NAME: ${DBT_CONTAINER_NAME:-payload-analytics-dbt-1}
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-payload_analytics-admin}:${POSTGRES_PASSWORD:-payload_analytics-admin}@postgres/${POSTGRES_DB:-payload_analytics}
       AIRFLOW_CONN_POSTGRES_DEFAULT: postgresql://${POSTGRES_USER:-payload_analytics-admin}:${POSTGRES_PASSWORD:-payload_analytics-admin}@postgres:5432/${POSTGRES_DB:-payload_analytics}
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
@@ -55,7 +57,7 @@ services:
       "
 
   dbt:
-    container_name: ${COMPOSE_PROJECT_NAME:-payload_analytics}-dbt-1
+    container_name: ${COMPOSE_PROJECT_NAME:-payload-analytics}-dbt-1
     image: python:3.11
     volumes:
       - ./dbt:/dbt
