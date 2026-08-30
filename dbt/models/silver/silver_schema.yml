@@ -1,0 +1,515 @@
+models:
+  # customers
+  - name: customers
+    description: >
+      Cleaned and standardized customer master data. One row per customer.
+      Includes demographic, contact, and derived behavioural columns.
+    columns:
+
+      - name: customer_id
+        description: Primary key — unique identifier for each customer.
+        tests:
+          - not_null
+          - unique
+
+      - name: first_name
+        description: Customer first name in Proper Case.
+        tests:
+          - not_null
+
+      - name: last_name
+        description: Customer last name in Proper Case.
+        tests:
+          - not_null
+
+      - name: email
+        description: Cleaned customer e-mail address.
+        tests:
+          - not_null
+
+      - name: email_status
+        description: Result of e-mail validation macro.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['valid', 'invalid']
+
+      - name: registration_date
+        description: Date the customer registered (YYYY-MM-DD).
+        tests:
+          - is_valid_date_format:
+              column_name: registration_date
+
+      - name: tenure_days
+        description: Days since registration_date (derived).
+        tests:
+          - is_non_negative
+
+      - name: kyc_status
+        description: Know-Your-Customer verification status.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['verified', 'pending', 'rejected', 'expired']
+
+      - name: risk_score
+        description: Numeric risk score in range 0–100.
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 100
+
+      - name: risk_tier
+        description: Risk band derived from risk_score (derived).
+        tests:
+          - accepted_values:
+              values: ['low', 'medium', 'high', 'critical']
+
+      - name: customer_segment
+        description: Standardised customer segment.
+        tests:
+          - accepted_values:
+              values: ['retail', 'private_banking', 'sme', 'premium']
+
+      - name: status
+        description: Account lifecycle status.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['active', 'inactive', 'closed', 'suspended', 'frozen']
+
+      - name: date_of_birth
+        description: Date of birth (YYYY-MM-DD).
+        tests:
+          - is_valid_date_format:
+              column_name: date_of_birth
+
+      - name: age
+        description: Customer age in whole years (derived from date_of_birth).
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 18
+              max_value: 120
+
+      - name: age_bucket
+        description: Age cohort bucket (derived).
+        tests:
+          - accepted_values:
+              values: ['18-25', '26-35', '36-50', '51-65', '65+']
+
+      - name: country
+        description: ISO country code (UPPERCASED).
+        tests:
+          - not_null
+
+      - name: load_timestamp
+        description: Timestamp when the record was loaded.
+        tests:
+          - not_null
+
+  # credit_info
+  - name: credit_info
+    description: >
+      Credit bureau attributes extracted from the credit_info JSONB field
+      in stg_customers. One row per customer that has credit data.
+    columns:
+
+      - name: customer_id
+        description: Foreign key to customers.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('customers')
+              field: customer_id
+
+      - name: credit_score
+        description: Numeric credit score (300–850).
+        tests:
+          - accepted_range:
+              min_value: 350
+              max_value: 800
+
+      - name: utilization_pct
+        description: Credit utilisation as a percentage (0–100).
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 100
+
+      - name: total_limit_usd
+        description: Total credit limit converted to USD via seed_fx_rates.
+        tests:
+          - is_non_negative
+
+      - name: total_used_usd
+        description: Total credit used converted to USD via seed_fx_rates.
+        tests:
+          - is_non_negative
+
+      - name: num_credit_accounts
+        description: Number of open credit accounts.
+        tests:
+          - not_null
+          - is_non_negative
+
+      - name: late_payments_12m
+        description: Number of late payments in the last 12 months.
+        tests:
+          - not_null
+          - is_non_negative
+
+      - name: inquiries_6m
+        description: Number of credit enquiries in the last 6 months.
+        tests:
+          - not_null
+          - is_non_negative
+
+      - name: bankruptcy_flag
+        description: Boolean — customer has declared bankruptcy.
+        tests:
+          - not_null
+
+      - name: load_timestamp
+        description: Timestamp when the record was loaded.
+        tests:
+          - not_null
+
+      - name: credit_score_band
+        description: Credit quality band derived from credit_score.
+        tests:
+          - accepted_values:
+              values: ['poor', 'fair', 'good', 'very_good', 'exceptional']
+
+      - name: utilization_tier
+        description: Utilisation risk tier derived from utilization_pct.
+        tests:
+          - accepted_values:
+              values: ['low', 'medium', 'high']
+
+  # digital_engagement
+  - name: digital_engagement
+    description: >
+      Digital channel preferences and login activity, extracted from the
+      digital_engagement JSONB field in stg_customers.
+    columns:
+
+      - name: customer_id
+        description: Foreign key to customers.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('customers')
+              field: customer_id
+
+      - name: mobile_app_registered
+        description: Boolean — customer is enrolled in mobile banking.
+        tests:
+          - not_null
+
+      - name: web_banking_registered
+        description: Boolean — customer is enrolled in web banking.
+        tests:
+          - not_null
+
+      - name: last_login_date
+        description: Date of the customer's last digital login.
+        tests:
+          - is_valid_date_format: 
+              column_name: last_login_date
+
+      - name: is_digital
+        description: >
+          True if mobile or web is the preferred channel (derived).
+        tests:
+          - not_null
+
+      - name: days_since_last_login
+        description: Days elapsed since last_login_date (derived).
+        tests:
+          - not_null
+          - is_non_negative
+
+      - name: load_timestamp
+        description: Timestamp when the record was loaded.
+        tests:
+          - not_null
+
+  # transactions
+  - name: transactions
+    description: >
+      Cleaned and standardised transaction fact table.
+      One row per transaction event.
+    columns:
+
+      - name: transaction_id
+        description: Primary key — unique identifier for each transaction.
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: Foreign key to customers.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('customers')
+              field: customer_id
+
+      - name: account_id
+        description: Foreign key to accounts.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('accounts')
+              field: account_id
+
+      - name: transaction_date
+        description: Date of the transaction (YYYY-MM-DD).
+        tests:
+          - not_null
+
+      - name: transaction_year
+        description: Calendar year extracted from transaction_date (derived).
+        tests:
+          - not_null
+
+      - name: transaction_month
+        description: Calendar month (1–12) extracted from transaction_date (derived).
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 1
+              max_value: 12
+
+      - name: transaction_week
+        description: ISO week number (1–53) extracted from transaction_date (derived).
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 1
+              max_value: 53
+
+      - name: is_weekend
+        description: True if the transaction occurred on Saturday or Sunday (derived).
+        tests:
+          - not_null
+
+      - name: day_of_week
+        description: Full day name (e.g. 'Monday   ') derived from transaction_date.
+        tests:
+          - not_null
+
+      - name: amount
+        description: Transaction amount (positive numeric).
+        tests:
+          - not_null
+          - is_positive
+
+      - name: amount_usd
+        description: Transaction amount converted to USD via seed_fx_rates.
+        tests:
+          - is_non_negative
+
+      - name: currency
+        description: ISO 4217 currency code (UPPERCASED).
+        tests:
+          - not_null
+
+      - name: type
+        description: Standardised transaction type.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['refund', 'transfer', 'withdrawal', 'fee', 'deposit', 'payment']
+
+      - name: channel
+        description: Transaction channel.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['atm', 'branch', 'mobile', 'pos', 'web']
+
+      - name: status
+        description: Transaction processing status.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['completed', 'pending', 'failed', 'reversed']
+
+      - name: load_timestamp
+        description: Timestamp when the record was loaded.
+        tests:
+          - not_null
+
+  # loans
+  - name: loans
+    description: >
+      Cleaned loan portfolio fact table. One row per loan.
+    columns:
+
+      - name: loan_id
+        description: Primary key — unique identifier for each loan.
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: Foreign key to customers.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('customers')
+              field: customer_id
+
+      - name: type
+        description: Loan product type.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['mortgage', 'personal', 'auto', 'education', 'business']
+
+      - name: principal
+        description: Original loan principal amount.
+        tests:
+          - not_null
+          - is_positive
+
+      - name: principal_usd
+        description: Principal converted to USD via seed_fx_rates.
+        tests:
+          - is_non_negative
+
+      - name: outstanding_balance
+        description: Remaining balance owed.
+        tests:
+          - not_null
+
+      - name: outstanding_balance_usd
+        description: Outstanding balance converted to USD via seed_fx_rates.
+        tests:
+          - is_non_negative
+
+      - name: interest_rate
+        description: Annual interest rate (numeric).
+        tests:
+          - not_null
+
+      - name: term_months
+        description: Contracted loan term in months.
+        tests:
+          - not_null
+
+      - name: start_date
+        description: Loan origination date (YYYY-MM-DD).
+        tests:
+          - is_valid_date_format:
+              column_name: start_date
+
+      - name: end_date
+        description: Loan maturity date (YYYY-MM-DD).
+        tests:
+          - is_valid_date_format:
+              column_name: end_date
+
+      - name: status
+        description: Current loan status.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['current', 'delinquent', 'default', 'paid_off']
+
+      - name: is_delinquent
+        description: True when status is 'delinquent' or 'default' (derived).
+        tests:
+          - not_null
+
+      - name: days_past_due
+        description: Number of days the loan payment is overdue.
+        tests:
+          - not_null
+          - is_non_negative
+
+      - name: dpd_bucket
+        description: Days-past-due bucket (derived).
+        tests:
+          - accepted_values:
+              values: ['current', '1-30', '31-60', '61-90', '90+']
+
+      - name: load_timestamp
+        description: Timestamp when the record was loaded.
+        tests:
+          - not_null
+
+  # accounts
+  - name: accounts
+    description: >
+      Cleaned account fact table. One row per account.
+    columns:
+
+      - name: account_id
+        description: Primary key — unique identifier for each account.
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: Foreign key to customers.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('customers')
+              field: customer_id
+
+      - name: account_type
+        description: Type of financial account.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['checking', 'savings', 'credit_card', 'investment']
+
+      - name: currency
+        description: ISO 4217 currency code (UPPERCASED).
+        tests:
+          - not_null
+
+      - name: balance
+        description: Current account balance.
+        tests:
+          - not_null
+
+      - name: balance_usd
+        description: Account balance converted to USD via seed_fx_rates.
+        tests:
+          - is_non_negative
+
+      - name: opened_date
+        description: Date the account was opened (YYYY-MM-DD).
+        tests:
+          - is_valid_date_format:
+              column_name: opened_date
+
+      - name: account_age_months
+        description: Months since the account was opened (derived).
+        tests:
+          - not_null
+          - is_non_negative
+
+      - name: status
+        description: Account lifecycle status.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['active', 'closed', 'frozen']
+
+      - name: branch_code
+        description: Branch identifier.
+        tests:
+          - not_null
+
+      - name: load_timestamp
+        description: Timestamp when the record was loaded.
+        tests:
+          - not_null
