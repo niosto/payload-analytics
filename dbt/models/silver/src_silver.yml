@@ -1,0 +1,16 @@
+sources:
+  - name: silver
+    schema: silver
+    tables:
+      - name: stg_customers
+        identifier: stg_customers
+        description: Table with customers' data (includes credit_info and digital_engagement as JSONB columns)
+      - name: stg_accounts
+        identifier: stg_accounts
+        description: Table with accounts data
+      - name: stg_transactions
+        identifier: stg_transactions
+        description: Table with transactions' data
+      - name: stg_loans
+        identifier: stg_loans
+        description: Table with loans data
