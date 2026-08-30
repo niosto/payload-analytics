@@ -1,0 +1,8 @@
+customer_segment_fuzzy,customer_segment_clean
+retail,retail
+minorista,retail
+private_banking,private_banking
+banca_privada,private_banking
+sme,sme
+pyme,sme
+premium,premium

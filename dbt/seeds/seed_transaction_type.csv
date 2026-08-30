@@ -1,0 +1,13 @@
+transaction_type_fuzzy,transaction_type_clean
+refund,refund
+transfer,transfer
+withdrawal,withdrawal
+fee,fee
+deposit,deposit
+payment,payment
+pago,payment
+deposito,deposit
+comision,fee
+retiro,withdrawal
+reembolso,refund
+transferencia,transfer
