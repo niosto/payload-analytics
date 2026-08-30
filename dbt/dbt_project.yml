@@ -18,14 +18,13 @@ clean-targets:
 
 models:
   payload_analytics:
-    # Bronze layer - raw JSON data staging
-    bronze:
-      +materialized: table
-      +schema: bronze
     # Silver layer - cleaned and normalized data
     silver:
       +materialized: table
       +schema: silver
+    gold:
+      +materialized: table
+      +schema: gold
 
 
 seeds:
