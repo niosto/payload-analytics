@@ -1,0 +1,40 @@
+{{ config(materialized='table') }}
+
+select
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    c.country,
+    c.city,
+    c.gender,
+    c.nationality,
+    c.date_of_birth,
+    c.age,
+    c.age_bucket,
+    c.registration_date,
+    DATE_TRUNC('month', c.registration_date)::date as registration_month,
+    c.tenure_days,
+    c.tenure_years,
+    c.kyc_status,
+    c.risk_score,
+    c.risk_tier,
+    c.customer_segment,
+    c.status,
+    c.relationship_manager,
+    cr.credit_score,
+    cr.credit_score_band,
+    cr.utilization_pct,
+    cr.utilization_tier,
+    cr.total_limit_usd as total_limit,
+    cr.total_used_usd as total_used,
+    cr.late_payments_12m,
+    cr.bankruptcy_flag,
+    d.is_digital,
+    d.preferred_channel,
+    d.avg_monthly_logins,
+    d.days_since_last_login,
+    d.mobile_app_registered
+from {{ ref('customers') }} c
+left join {{ ref('credit_info') }} cr on c.customer_id = cr.customer_id
+left join {{ ref('digital_engagement') }} d on c.customer_id = d.customer_id

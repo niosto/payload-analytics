@@ -1,0 +1,214 @@
+models:
+  - name: dim_date
+    description: Calendar dimension (2000-01-01 through 2050-12-31).
+    columns:
+      - name: date_id
+        description: Surrogate key YYYYMMDD as integer.
+        tests:
+          - not_null
+          - unique
+      - name: full_date
+        description: Calendar date.
+        tests:
+          - not_null
+          - unique
+      - name: day_of_week
+        description: Day of week (0=Sunday, 6=Saturday).
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 6
+      - name: month_number
+        description: Calendar month (1-12).
+        tests:
+          - accepted_range:
+              min_value: 1
+              max_value: 12
+      - name: quarter
+        description: Calendar quarter (1-4).
+        tests:
+          - accepted_range:
+              min_value: 1
+              max_value: 4
+      - name: year
+        description: Calendar year.
+        tests:
+          - accepted_range:
+              min_value: 2000
+              max_value: 2050
+      - name: is_weekend
+        description: True on Saturday or Sunday.
+        tests:
+          - not_null
+      - name: is_month_end
+        description: True on the last day of the month.
+        tests:
+          - not_null
+
+  - name: dim_customer
+    description: Customer dimension with credit and digital engagement attributes.
+    columns:
+      - name: customer_id
+        description: Primary key — one row per customer.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('customers')
+              field: customer_id
+
+  - name: dim_account
+    description: Account dimension with USD balances and customer context.
+    columns:
+      - name: account_id
+        description: Primary key — one row per account.
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Foreign key to dim_customer.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_id
+      - name: is_credit_product
+        description: True when account_type is credit_card.
+        tests:
+          - not_null
+      - name: balance
+        description: Account balance in USD.
+        tests:
+          - is_non_negative
+
+  - name: fct_transactions
+    description: Transaction fact with USD amounts and revenue flags.
+    columns:
+      - name: transaction_id
+        description: Primary key — one row per transaction.
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Foreign key to dim_customer.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_id
+      - name: account_id
+        description: Foreign key to dim_account.
+        tests:
+          - relationships:
+              to: ref('dim_account')
+              field: account_id
+      - name: date_id
+        description: Foreign key to dim_date (YYYYMMDD integer).
+        tests:
+          - relationships:
+              to: ref('dim_date')
+              field: date_id
+      - name: amount
+        description: Transaction amount in USD.
+        tests:
+          - is_non_negative
+      - name: revenue_amount
+        description: Revenue in USD (completed fee transactions only).
+        tests:
+          - is_non_negative
+      - name: is_revenue
+        description: True when revenue_amount is positive.
+        tests:
+          - not_null
+      - name: is_failed
+        description: True when transaction status is failed.
+        tests:
+          - not_null
+
+  - name: fct_loans
+    description: Loan fact with USD balances and delinquency flags.
+    columns:
+      - name: loan_id
+        description: Primary key — one row per loan.
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Foreign key to dim_customer.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_id
+      - name: date_id
+        description: Foreign key to dim_date (loan start date as YYYYMMDD).
+        tests:
+          - relationships:
+              to: ref('dim_date')
+              field: date_id
+      - name: principal
+        description: Original principal in USD.
+        tests:
+          - is_non_negative
+      - name: outstanding_balance
+        description: Remaining balance in USD.
+        tests:
+          - is_non_negative
+      - name: monthly_payment
+        description: Monthly payment in USD.
+        tests:
+          - is_non_negative
+      - name: estimated_monthly_interest
+        description: Estimated monthly interest in USD.
+        tests:
+          - is_non_negative
+      - name: pct_outstanding
+        description: Outstanding balance as a fraction of principal.
+        tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+      - name: is_delinquent
+        description: True when status is delinquent or default.
+        tests:
+          - not_null
+      - name: loan_age_months
+        description: Months since loan start date.
+        tests:
+          - is_non_negative
+      - name: days_past_due
+        description: Days the loan payment is overdue.
+        tests:
+          - is_non_negative
+
+  - name: mart_customer_summary
+    description: Per-customer metrics; monetary fields are USD.
+    columns:
+      - name: customer_id
+        description: Primary key — one row per customer.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_id
+      - name: total_revenue
+        description: Sum of revenue_amount (USD).
+        tests:
+          - is_non_negative
+      - name: total_balance
+        description: Sum of balance (USD).
+        tests:
+          - is_non_negative
+      - name: account_count
+        description: Number of accounts per customer.
+        tests:
+          - is_non_negative
+      - name: loan_count
+        description: Number of loans per customer.
+        tests:
+          - is_non_negative
+      - name: product_count
+        description: account_count + loan_count.
+        tests:
+          - is_non_negative
