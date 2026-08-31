@@ -1,4 +1,10 @@
-{{ config(materialized='table') }}
+{{ config(
+    materialized='table',
+    indexes=[
+      {'columns': ['account_id'], 'unique': True},
+      {'columns': ['customer_id']}
+    ]
+) }}
 
 select
     a.account_id,

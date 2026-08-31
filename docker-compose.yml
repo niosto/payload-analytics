@@ -25,14 +25,13 @@ services:
         condition: service_healthy
     environment:
       RAW_DATA_URL: ${RAW_DATA_URL:-https://qversity-raw-public-data.s3.amazonaws.com/fintech_banking_dataset.json}
-      DBT_CONTAINER_NAME: ${DBT_CONTAINER_NAME:-payload-analytics-dbt-1}
+      DBT_PROJECT_DIR: ${DBT_PROJECT_DIR:-/opt/airflow/dbt}
+      DBT_PROFILES_DIR: ${DBT_PROFILES_DIR:-/opt/airflow/dbt}
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-payload_analytics-admin}:${POSTGRES_PASSWORD:-payload_analytics-admin}@postgres/${POSTGRES_DB:-payload_analytics}
       AIRFLOW_CONN_POSTGRES_DEFAULT: postgresql://${POSTGRES_USER:-payload_analytics-admin}:${POSTGRES_PASSWORD:-payload_analytics-admin}@postgres:5432/${POSTGRES_DB:-payload_analytics}
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       _PIP_ADDITIONAL_REQUIREMENTS: >-
-        dbt-core
-        dbt-postgres
         pandas
         boto3
         pyspark==3.5.0
@@ -43,8 +42,6 @@ services:
       - ./spark:/opt/airflow/spark
       - ./logs:/opt/airflow/logs
       - ./data:/opt/airflow/data
-      # Grant access to the docker socket to allow Airflow to interact with the docker daemon
-      - /var/run/docker.sock:/var/run/docker.sock
       - ./dbt:/opt/airflow/dbt
     ports:
       - "8080:8080"
@@ -65,7 +62,7 @@ services:
     working_dir: /dbt
     command: >
       bash -c "
-      pip install dbt-core dbt-postgres &&
+      pip install dbt-core==1.12.3 dbt-postgres==1.11.0 &&
       sleep infinity
       "
     depends_on:
