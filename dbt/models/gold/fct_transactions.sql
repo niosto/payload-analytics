@@ -1,4 +1,12 @@
-{{ config(materialized='table') }}
+{{ config(
+    materialized='table',
+    indexes=[
+      {'columns': ['transaction_id'], 'unique': True},
+      {'columns': ['customer_id', 'transaction_date']},
+      {'columns': ['date_id']},
+      {'columns': ['account_id']}
+    ]
+) }}
 
 select
     t.transaction_id,

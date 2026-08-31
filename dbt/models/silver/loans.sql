@@ -16,7 +16,7 @@ SELECT
     {{ format_date('l.start_date') }} AS start_date,
     {{ format_date('l.end_date') }} AS end_date,
     LOWER(TRIM(l.status)) AS status,
-    LOWER(TRIM(l.status)) IN ('delinquent') AS is_delinquent,
+    LOWER(TRIM(l.status)) IN ('delinquent', 'default') AS is_delinquent,
     CAST(l.days_past_due AS integer) AS days_past_due,
     CASE
         WHEN CAST(l.days_past_due AS integer) = 0 THEN 'current'

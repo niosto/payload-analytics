@@ -77,17 +77,22 @@ spark_bronze_to_silver = PythonOperator(
     dag=dag,
 )
 
-DBT_CONTAINER_NAME = os.environ.get(
-    "DBT_CONTAINER_NAME",
-    "payload-analytics-dbt-1",
-)
+# dbt runs from an isolated virtualenv baked into the Airflow image. Invoking
+# it by absolute path removes the coupling to the dbt container's name, which
+# Compose derives from the project folder, and the need for the docker socket.
+DBT_BIN = os.environ.get("DBT_BIN", "/opt/airflow/dbt_venv/bin/dbt")
+DBT_PROJECT_DIR = os.environ.get("DBT_PROJECT_DIR", "/opt/airflow/dbt")
+DBT_PROFILES_DIR = os.environ.get("DBT_PROFILES_DIR", "/opt/airflow/dbt")
 
-# Task 5: dbt - run dbt
+DBT_FLAGS = f"--project-dir {DBT_PROJECT_DIR} --profiles-dir {DBT_PROFILES_DIR}"
+
+# Task 5: dbt - build the silver/gold models and run the data quality tests
 dbt_task = BashOperator(
     task_id="dbt_run",
     bash_command=(
-        f'docker exec {DBT_CONTAINER_NAME} bash -c '
-        f'"dbt seed && dbt run && dbt test"'
+        f"{DBT_BIN} seed {DBT_FLAGS} && "
+        f"{DBT_BIN} run {DBT_FLAGS} && "
+        f"{DBT_BIN} test {DBT_FLAGS}"
     ),
     dag=dag,
 )

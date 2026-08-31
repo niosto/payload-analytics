@@ -1,4 +1,11 @@
-{{ config(materialized='table') }}
+{{ config(
+    materialized='table',
+    indexes=[
+      {'columns': ['loan_id'], 'unique': True},
+      {'columns': ['customer_id']},
+      {'columns': ['date_id']}
+    ]
+) }}
 
 select
     loan_id,

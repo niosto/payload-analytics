@@ -1,4 +1,10 @@
-{{ config(materialized='table') }}
+{{ config(
+    materialized='table',
+    indexes=[
+      {'columns': ['date_id'], 'unique': True},
+      {'columns': ['full_date'], 'unique': True}
+    ]
+) }}
 
 with date_spine as (
     select generate_series(
