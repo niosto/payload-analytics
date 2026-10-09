@@ -1,0 +1,25 @@
+services:
+  payload_analytics_infrastructure:
+    container_name: 'PayloadAnalyticsInfrastructure'
+    build:
+      context: .
+      dockerfile: ../../.docker/Dockerfile
+      target: img-infrastructure
+    volumes:
+      - ../..:/app
+      - payload-analytics-infrastructure-bashhistory:/commandhistory
+    env_file:
+      - ../../.envs/aws.env
+      - ../../.envs/sls.env
+      - ../.envs/config.env
+    environment:
+      - DEPLOY_APP=payload-analytics
+    working_dir: /app/infrastructure
+    restart: unless-stopped
+    command:
+      - /bin/sh
+      - -c
+      - sleep infinity
+
+volumes:
+  payload-analytics-infrastructure-bashhistory:

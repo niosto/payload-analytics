@@ -1,0 +1,48 @@
+Resources:
+  ClusterArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/ClusterArn
+      Tier: Standard
+      Type: String
+      Value: !GetAtt DbtCluster.Arn
+
+  TaskDefinitionArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/TaskDefinitionArn
+      Tier: Standard
+      Type: String
+      Value: !Ref DbtTaskDefinition
+
+  ExecutionRoleArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/ExecutionRoleArn
+      Tier: Standard
+      Type: String
+      Value: !GetAtt DbtExecutionRole.Arn
+
+  TaskRoleArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/TaskRoleArn
+      Tier: Standard
+      Type: String
+      Value: !GetAtt DbtTaskRole.Arn
+
+  SecurityGroupId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/SecurityGroupId
+      Tier: Standard
+      Type: String
+      Value: !Ref DbtTaskSecurityGroup
+
+  Subnets:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/Subnets
+      Tier: Standard
+      Type: String
+      Value: ${env:DEFAULT_VPC_SUBNET_IDS}

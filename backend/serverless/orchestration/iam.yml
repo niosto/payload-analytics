@@ -1,0 +1,57 @@
+Resources:
+  StateMachineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ${self:custom.servicePrefix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ${self:custom.servicePrefix}
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:StartJobRun
+                  - glue:GetJobRun
+                  - glue:GetJobRuns
+                  - glue:BatchStopJobRun
+                Resource: !Sub
+                  - arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${JobName}
+                  - JobName: ${self:custom.glue.jobName}
+              - Effect: Allow
+                Action: ecs:RunTask
+                Resource: ${self:custom.ecs.taskDefinitionArn}
+              - Effect: Allow
+                Action:
+                  - ecs:StopTask
+                  - ecs:DescribeTasks
+                Resource: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task/${self:custom.ecs.clusterName}/*
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource:
+                  - ${self:custom.ecs.executionRoleArn}
+                  - ${self:custom.ecs.taskRoleArn}
+              - Effect: Allow
+                Action:
+                  - events:PutTargets
+                  - events:PutRule
+                  - events:DescribeRule
+                Resource: !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventsForECSTaskRule
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - ${self:custom.s3.dataLakeBucket.arn}/raw/*
+                  - ${self:custom.s3.dataLakeBucket.arn}/processed/*
+                  - ${self:custom.s3.dataLakeBucket.arn}/failed/*
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: ${self:custom.sns.topicArn}

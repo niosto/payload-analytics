@@ -1,0 +1,58 @@
+Resources:
+  DbtCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: ${self:custom.servicePrefix}
+      CapacityProviders:
+        - FARGATE
+
+  DbtLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/${self:custom.servicePrefix}
+      RetentionInDays: 14
+
+  DbtTaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Egress-only security group for the dbt Fargate task
+      VpcId: ${env:DEFAULT_VPC_ID}
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  DbtTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: ${self:custom.servicePrefix}
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: '512'
+      Memory: '1024'
+      RuntimePlatform:
+        CpuArchitecture: ${self:custom.architecture}
+        OperatingSystemFamily: LINUX
+      ExecutionRoleArn: !GetAtt DbtExecutionRole.Arn
+      TaskRoleArn: !GetAtt DbtTaskRole.Arn
+      ContainerDefinitions:
+        - Name: dbt
+          Image: '${self:custom.ecr.repositoryUri}:${param:imageTag}'
+          Essential: true
+          Secrets:
+            - Name: DBT_HOST
+              ValueFrom: '${self:custom.secretsManager.masterCredentialsArn}:host::'
+            - Name: DBT_USER
+              ValueFrom: '${self:custom.secretsManager.masterCredentialsArn}:username::'
+            - Name: DBT_PASSWORD
+              ValueFrom: '${self:custom.secretsManager.masterCredentialsArn}:password::'
+            - Name: DBT_DBNAME
+              ValueFrom: '${self:custom.secretsManager.masterCredentialsArn}:dbname::'
+            - Name: DBT_PORT
+              ValueFrom: '${self:custom.secretsManager.masterCredentialsArn}:port::'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref DbtLogGroup
+              awslogs-region: ${env:AWS_DEFAULT_REGION}
+              awslogs-stream-prefix: dbt

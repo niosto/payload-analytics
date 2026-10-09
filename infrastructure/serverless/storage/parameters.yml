@@ -1,0 +1,32 @@
+Resources:
+  DataLakeBucketName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/DataLakeBucketName
+      Tier: Standard
+      Type: String
+      Value: !Ref DataLakeBucket
+
+  DataLakeBucketArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/DataLakeBucketArn
+      Tier: Standard
+      Type: String
+      Value: !GetAtt DataLakeBucket.Arn
+
+  ArtifactsBucketName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/ArtifactsBucketName
+      Tier: Standard
+      Type: String
+      Value: !Ref ArtifactsBucket
+
+  ArtifactsBucketArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/ArtifactsBucketArn
+      Tier: Standard
+      Type: String
+      Value: !GetAtt ArtifactsBucket.Arn

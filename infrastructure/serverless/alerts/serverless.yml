@@ -1,0 +1,46 @@
+service: alerts
+frameworkVersion: '^4.6.2'
+configValidationMode: error
+
+provider:
+  name: aws
+  stage: dev
+  region: ${env:AWS_DEFAULT_REGION}
+  stackName: ${env:DEPLOY_APP}-${self:service}
+  deploymentBucket:
+    name: ${self:custom.s3.deploymentBucketName.${self:custom.stage}}
+
+plugins:
+  - serverless-deployment-bucket
+  - '@serverless/safeguards-plugin'
+
+resources:
+  - ${file(sns.yml)}
+  - ${file(budgets.yml)}
+  - ${file(parameters.yml)}
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  safeguards:
+    - safeguard: framework-version
+      enforcementLevel: warning
+      config: ${self:frameworkVersion}
+    - safeguard: allowed-regions
+      enforcementLevel: error
+      config:
+        - ${self:provider.region}
+    - safeguard: allowed-stages
+      enforcementLevel: error
+      config:
+        - dev
+        - test
+        - prod
+  servicePrefix: ${env:DEPLOY_APP}-${self:service}
+  developer: ${env:DEVELOPER}
+  s3:
+    deploymentBucketName:
+      dev: ${self:provider.region}.cfn.${self:service}.${env:DEPLOY_APP}.${self:custom.stage}.${self:custom.developer}.deploys
+      test: ${self:provider.region}.cfn.${self:service}.${env:DEPLOY_APP}.${self:custom.stage}.deploys
+      prod: ${self:provider.region}.cfn.${self:service}.${env:DEPLOY_APP}.${self:custom.stage}.deploys
+  alerts:
+    email: ${env:ALERTS_EMAIL}

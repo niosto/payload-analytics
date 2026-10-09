@@ -1,0 +1,8 @@
+Resources:
+  PipelineAlertsTopicArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/PipelineAlertsTopicArn
+      Tier: Standard
+      Type: String
+      Value: !Ref PipelineAlertsTopic

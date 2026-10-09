@@ -1,0 +1,21 @@
+{
+  "folders": [
+    {
+      "path": "/app/infrastructure",
+      "name": "[✪] Payload Analytics Infrastructure"
+    },
+    {
+      "path": "/app/.envs",
+      "name": "[✪] Parent Envs"
+    },
+    {
+      "path": "/app/backend/.envs",
+      "name": "[⛭] Backend Envs"
+    },
+    {
+      "path": "/app/.docker",
+      "name": "[✪] Parent Docker"
+    }
+  ],
+  "settings": {}
+}

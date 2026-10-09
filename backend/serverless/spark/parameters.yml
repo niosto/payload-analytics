@@ -1,0 +1,8 @@
+Resources:
+  GlueJobName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/GlueJobName
+      Tier: Standard
+      Type: String
+      Value: !Ref GlueSparkJob

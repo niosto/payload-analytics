@@ -1,0 +1,97 @@
+QueryLanguage: JSONata
+Comment: S3 raw upload to Glue, then dbt, then archive the object
+StartAt: CaptureObject
+States:
+  CaptureObject:
+    Type: Pass
+    Assign:
+      bucket: '{% $states.input.detail.bucket.name %}'
+      key: '{% $states.input.detail.object.key %}'
+      sourcePath: '{% "s3://" & $states.input.detail.bucket.name & "/" & $states.input.detail.object.key %}'
+    Next: RunSparkJob
+  RunSparkJob:
+    Type: Task
+    Resource: arn:aws:states:::glue:startJobRun.sync
+    Arguments:
+      JobName: ${ssm:/${env:DEPLOY_APP}-backend-spark/GlueJobName}
+      Arguments:
+        '--source_path': '{% $sourcePath %}'
+    Retry:
+      - ErrorEquals:
+          - Glue.ConcurrentRunsExceededException
+        IntervalSeconds: 30
+        BackoffRate: 2
+        MaxAttempts: 6
+    Catch:
+      - ErrorEquals:
+          - States.ALL
+        Assign:
+          error: '{% $states.errorOutput.Error %}'
+          cause: '{% $string($states.errorOutput.Cause) %}'
+        Next: CopyToFailed
+    Next: RunDbt
+  RunDbt:
+    Type: Task
+    Resource: arn:aws:states:::ecs:runTask.sync
+    Arguments:
+      Cluster: ${ssm:/${env:DEPLOY_APP}-backend-dbt/ClusterArn}
+      TaskDefinition: ${ssm:/${env:DEPLOY_APP}-backend-dbt/TaskDefinitionArn}
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: "{% $split('${ssm:/${env:DEPLOY_APP}-backend-dbt/Subnets}', ',') %}"
+          SecurityGroups:
+            - ${ssm:/${env:DEPLOY_APP}-backend-dbt/SecurityGroupId}
+          AssignPublicIp: ENABLED
+    Catch:
+      - ErrorEquals:
+          - States.ALL
+        Assign:
+          error: '{% $states.errorOutput.Error %}'
+          cause: '{% $string($states.errorOutput.Cause) %}'
+        Next: CopyToFailed
+    Next: CopyToProcessed
+  CopyToProcessed:
+    Type: Task
+    Resource: arn:aws:states:::aws-sdk:s3:copyObject
+    Arguments:
+      Bucket: '{% $bucket %}'
+      CopySource: '{% $bucket & "/" & $key %}'
+      Key: '{% "processed/" & $substring($key, 4) %}'
+    Next: DeleteOriginal
+  DeleteOriginal:
+    Type: Task
+    Resource: arn:aws:states:::aws-sdk:s3:deleteObject
+    Arguments:
+      Bucket: '{% $bucket %}'
+      Key: '{% $key %}'
+    Next: Succeeded
+  Succeeded:
+    Type: Succeed
+  CopyToFailed:
+    Type: Task
+    Resource: arn:aws:states:::aws-sdk:s3:copyObject
+    Arguments:
+      Bucket: '{% $bucket %}'
+      CopySource: '{% $bucket & "/" & $key %}'
+      Key: '{% "failed/" & $substring($key, 4) %}'
+    Next: DeleteFailedOriginal
+  DeleteFailedOriginal:
+    Type: Task
+    Resource: arn:aws:states:::aws-sdk:s3:deleteObject
+    Arguments:
+      Bucket: '{% $bucket %}'
+      Key: '{% $key %}'
+    Next: NotifyFailure
+  NotifyFailure:
+    Type: Task
+    Resource: arn:aws:states:::sns:publish
+    Arguments:
+      TopicArn: ${ssm:/${env:DEPLOY_APP}-alerts/PipelineAlertsTopicArn}
+      Subject: Payload analytics pipeline failed
+      Message: '{% "Pipeline failed for " & $sourcePath & "\n" & $cause %}'
+    Next: FailPipeline
+  FailPipeline:
+    Type: Fail
+    Error: '{% $error %}'
+    Cause: '{% $cause %}'

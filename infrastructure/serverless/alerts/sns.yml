@@ -1,0 +1,12 @@
+Resources:
+  PipelineAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: ${self:custom.servicePrefix}-${self:custom.stage}
+
+  PipelineAlertsTopicEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref PipelineAlertsTopic
+      Protocol: email
+      Endpoint: ${self:custom.alerts.email}

@@ -1,0 +1,12 @@
+payload_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DBT_HOST', 'postgres') }}"
+      user: "{{ env_var('DBT_USER', 'payload_analytics-admin') }}"
+      password: "{{ env_var('DBT_PASSWORD', 'payload_analytics-admin') }}"
+      port: "{{ env_var('DBT_PORT', '5432') | int }}"
+      dbname: "{{ env_var('DBT_DBNAME', 'payload_analytics') }}"
+      schema: public
+      threads: "{{ env_var('DBT_THREADS', '1') | int }}"

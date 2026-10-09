@@ -1,0 +1,33 @@
+Resources:
+  GlueJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ${self:custom.servicePrefix}-job
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: ${self:custom.servicePrefix}-job
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - ${self:custom.s3.dataLakeBucket.arn}/raw/*
+                  - ${self:custom.s3.artifactsBucket.arn}/*
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource:
+                  - ${self:custom.s3.dataLakeBucket.arn}
+                  - ${self:custom.s3.artifactsBucket.arn}
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Sub >-
+                  arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${self:custom.secretsManager.masterCredentials}-*

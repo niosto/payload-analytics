@@ -1,282 +1,292 @@
 # Payload Analytics
 
-A containerized ELT pipeline for fintech and banking data, built with Airflow, PostgreSQL, PySpark, dbt, and a BI-ready Gold layer. The project is designed to ingest a raw customer dataset from an S3-hosted JSON file, normalize it through Bronze → Silver → Gold stages, and produce analytics tables suitable for reporting and dashboarding.
+An ELT pipeline for a LATAM fintech and banking dataset. A JSON file dropped in S3 is flattened with Spark, cleaned and modeled with dbt on PostgreSQL, and left ready for reporting.
 
-## Overview
-
-![Project architecture](imgs/diagrama-local.png)
-
-This repository implements a lakehouse-style data pipeline for financial customer records, including customers, accounts, transactions, loans, digital engagement, and credit indicators. The workflow aims to:
-
-- ingest raw JSON records into a Bronze layer
-- flatten and deduplicate nested arrays with PySpark
-- normalize and clean data in Silver using dbt
-- build a reporting-oriented Gold model for analysis and dashboards
-- keep business assumptions transparent in the data-model documentation
-
-The raw source is intended to be a public S3 JSON file that is downloaded before loading into Postgres. The download task is prepared in the codebase and currently commented out, but the architecture is already set up for that S3-based ingestion flow.
+The dataset covers customers, accounts, transactions, loans, credit indicators, and digital engagement. The pipeline keeps the file as it arrived, then builds a cleaned Silver layer and a Gold star schema for reporting.
 
 ## Architecture
 
 ```text
-S3 JSON file → Airflow → Bronze PostgreSQL → PySpark → Silver tables → dbt → Gold tables → BI dashboard
+JSON upload
+  → S3 raw/
+  → EventBridge
+  → Step Functions
+  → Glue Spark job          writes silver.stg_*
+  → Fargate dbt task        seed, run, test
+  → S3 processed/           or failed/ plus an email
 ```
 
-### Layers
+| Piece | Role |
+| --- | --- |
+| S3 data lake | Bronze. `raw/` is the inbox, `processed/` is the archive, `failed/` keeps files that did not finish. |
+| Glue | Reads one JSON file from S3 and replaces the four `silver.stg_*` tables. |
+| RDS PostgreSQL | Warehouse. Silver staging, cleaned Silver, seeds, and Gold. |
+| Fargate | Runs `dbt seed`, `dbt run`, and `dbt test` from a container image in ECR. |
+| Step Functions | Runs Glue, then dbt, then moves the file. |
+| SNS | Emails you when a run fails. |
 
-- Bronze: raw customer JSON stored in PostgreSQL as immutable records
-- Silver: flattened, deduplicated, cleaned relational tables
-- Gold: star-schema dimensions and facts optimized for reporting
+There is no NAT Gateway. The database is a public `db.t4g.micro` in the default VPC. Glue uses AWS's managed network. The dbt task runs in the default public subnets with a public IP so it can pull its image, read the database secret, and reach PostgreSQL.
 
-## Project structure
+Each new file replaces `silver.stg_*` and dbt rebuilds the tables on top. Two uploads close together do not run at once: Glue allows one run, and Step Functions waits and retries.
+
+## Layers
+
+- **Bronze** is the JSON object in S3. Nested accounts, transactions, loans, credit info, and digital engagement stay intact.
+- **Silver staging** (`silver.stg_*`) is the flattened Spark output: customers, accounts, transactions, and loans. Values stay strings. Credit info and digital engagement stay JSON text on the customer row.
+- **Silver** is the dbt layer: typed amounts, parsed dates, seed lookups, and flags for bad emails and currency mismatches.
+- **Gold** is the star schema for reporting: customer, account, and date dimensions, transaction and loan facts, and a customer summary.
+
+![Silver layer](imgs/silver_diagram.jpeg)
+
+![Gold layer](imgs/gold_diagram.jpeg)
+
+## Project layout
 
 ```text
 payload-analytics/
-├── dags/
-│   ├── dag.py                 # Airflow DAG definition
-│   └── utils/
-│       ├── functions.py       # Bronze schema creation and raw load helpers
-│       ├── schema_postgre.py  # Postgres schema definitions
-│       └── spark_functions.py # PySpark orchestration helpers
-├── spark/
-│   ├── bronze_to_silver.py   # PySpark transformation from Bronze to Silver
-│   ├── jars/                 # JDBC dependencies for Spark
-│   └── schemas/
-│       └── spark_schema.py    # JSON schema used to parse nested fields
-├── dbt/
-│   ├── dbt_project.yml        # dbt project config
-│   ├── profiles.yml           # Connection profile for PostgreSQL
-│   ├── macros/                # Data cleaning and conversion functions
-│   ├── models/
-│   │   ├── silver/            # Normalized relational business tables
-│   │   └── gold/              # Reporting model, dims, facts, and mart
-│   ├── seeds/                 # Reference mappings for currencies, statuses, etc.
-│   └── tests/                 # dbt quality checks and custom validation
-├── data/
-│   └── raw/
-│       └── fintech_banking_dataset.json
-├── logs/
-├── docker-compose.yml         # Container orchestration for Airflow + Postgres + dbt
-├── Dockerfile                  # Airflow image with Spark dependencies
-├── env.example                 # Environment variable template
-├── requirements.txt            # Python dependencies
-├── README.md                   # Project documentation
-├── readme-example.md           # Reference example used for structure and style
-└── .gitignore
+├── .docker/                         # Image used by both dev containers
+├── .envs/                           # AWS credentials and the Serverless key (not committed)
+├── infrastructure/                  # S3, RDS, ECR, alerts
+│   └── serverless/
+│       ├── storage/
+│       ├── rds/
+│       ├── registry/
+│       └── alerts/
+├── backend/
+│   ├── database/rds/                # SQL migration for silver.stg_*
+│   ├── src/spark/                   # Glue job and shared transforms
+│   ├── src/dbt/                     # dbt project and its image
+│   └── serverless/
+│       ├── spark/
+│       ├── dbt/
+│       └── orchestration/
+└── data/raw/                        # Sample JSON used to start a run
 ```
 
-## Data source and ingestion model
+## Before you start
 
-The intended pipeline flow is:
+- Docker Desktop running
+- An AWS account, with permission to create S3, RDS, ECR, Glue, ECS, Step Functions, SNS, and IAM
+- A Serverless Framework access key
 
-1. download the raw fintech dataset from an S3 URL
-2. store it in the local data folder used by the Airflow job
-3. insert each JSON record into the Bronze table in PostgreSQL
-4. read the raw Bronze records with Spark
-5. explode nested arrays and normalize them into Silver tables
-6. run dbt for quality checks, standardization, and Gold model creation
+Nothing else is installed on the host. Serverless, the AWS CLI, and Docker (for the dbt image) run inside the dev containers.
 
-The direct S3 download step is currently commented in the DAG and helper functions, which makes it easy to re-enable when the bucket or URL is available. This is intentional: the implementation is prepared for real cloud ingestion without changing the rest of the pipeline design.
+## 1. Fill in the environment files
 
-## Prerequisites
+These files are gitignored. Create them if they are missing.
 
-Before starting the stack, make sure you have:
-
-- Docker and Docker Compose installed
-- at least 4 GB of RAM available
-- a working local environment with ports 5432 and 8080 available
-
-## Environment configuration
-
-The project uses environment variables defined in `env.example` and supports overriding them through a local `.env` file if needed.
-
-```bash
-cp env.example .env
-```
-
-Key variables include:
-
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
-- `POSTGRES_DB`
-- `COMPOSE_PROJECT_NAME`
-- `RAW_DATA_URL`
-- `DBT_CONTAINER_NAME`
-
-The default pipeline setup expects the raw dataset to be pulled from a public S3 URL defined in the Airflow configuration, then loaded into PostgreSQL. If you are using a custom bucket or URL, set `RAW_DATA_URL` in the environment or `.env` file before running the stack.
-
-## Run the project
-
-### 1. Start the containers
-
-```bash
-docker compose up -d --build
-```
-
-This brings up:
-
-- PostgreSQL
-- Airflow
-- the dbt service
-- the project volume mounts used for Airflow DAGs, Spark scripts, and dbt models
-
-### 2. Access Airflow
-
-Open:
+`.envs/aws.env`
 
 ```text
-http://localhost:8080
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-2
+AWS_DEFAULT_OUTPUT=json
 ```
 
-Login with:
+`.envs/sls.env`
 
-- username: `admin`
-- password: `admin`
+```text
+SERVERLESS_ACCESS_KEY=
+```
 
-### 3. Trigger the pipeline
+`infrastructure/.envs/config.env` and `backend/.envs/config.env` share the developer name and the VPC. `ALERTS_EMAIL` is only on the infrastructure file. `DEVELOPER` must be lowercase; it is part of the S3 bucket name.
 
-#### Via Airflow UI
+```text
+DEVELOPER=
+DEFAULT_VPC_ID=
+DEFAULT_VPC_SUBNET_IDS=
+ALERTS_EMAIL=
+```
 
-1. Find the DAG named `payload_analytics_fintech_pipeline`
-2. Unpause it
-3. Trigger it manually from the UI
-
-#### Via command line
+`DEFAULT_VPC_SUBNET_IDS` is a comma-separated list with no spaces. You can look the default VPC up after the infrastructure container is running:
 
 ```bash
-docker compose exec airflow airflow dags unpause payload_analytics_fintech_pipeline
-docker compose exec airflow airflow dags trigger payload_analytics_fintech_pipeline
+aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query "Vpcs[0].VpcId" --output text
+aws ec2 describe-subnets --filters Name=vpc-id,Values=vpc-xxxxxxxx Name=default-for-az,Values=true --query "Subnets[].SubnetId" --output text
 ```
 
-### 4. Run dbt manually if needed
+Paste that VPC id into `DEFAULT_VPC_ID`. Join the subnet ids with commas for `DEFAULT_VPC_SUBNET_IDS`. Put the same three values in the backend config file.
+
+If you change any of these files after a container is already running, recreate that container. Compose only reads env files when the container is created. Recreate it; do not rebuild the image:
 
 ```bash
-docker compose exec dbt bash
-cd /dbt
-dbt seed && dbt run && dbt test
+docker compose -f .docker/docker-compose.yml up -d --force-recreate
 ```
 
-## Pipeline description
+## 2. Start the infrastructure container
 
-### Bronze layer
+From a terminal:
 
-The Bronze layer keeps the raw customer documents as immutable records. Each JSON object is stored in PostgreSQL as a full record, preserving nested data structures such as accounts, transactions, loans, credit information, and digital engagement objects.
+```bash
+cd payload-analytics/infrastructure
+docker compose -f .docker/docker-compose.yml up -d --build
+docker compose -f .docker/docker-compose.yml exec payload_analytics_infrastructure bash -lc "sed -i 's/\r$//' .docker/entrypoint.sh && sudo chmod +x .docker/entrypoint.sh && .docker/entrypoint.sh"
+docker compose -f .docker/docker-compose.yml exec payload_analytics_infrastructure bash
+```
 
-This layer is meant to act as the audit-friendly source of truth. It does not attempt to clean or standardize values; it records the data as it arrived.
+Check that the VPC values arrived:
 
-### Silver layer
+```bash
+echo "$DEFAULT_VPC_ID"
+echo "$DEFAULT_VPC_SUBNET_IDS"
+echo "$ALERTS_EMAIL"
+```
 
-The Silver layer performs structural transformation and normalization:
+Then create the stacks, in this order. RDS takes several minutes.
 
-- flatten nested arrays into table-level entities
-- deduplicate by business key using latest-load logic
-- cast raw values into sensible data types
-- preserve customer-level extensions such as credit and digital objects in structured form
+```bash
+cd /app/infrastructure/serverless/storage && serverless deploy
+cd /app/infrastructure/serverless/rds && serverless deploy
+cd /app/infrastructure/serverless/registry && serverless deploy
+cd /app/infrastructure/serverless/alerts && serverless deploy
+```
 
-The PySpark transformation reads Bronze data and writes Silver tables for:
+Open the SNS confirmation email and confirm the subscription before you rely on failure alerts.
 
-- customers
-- accounts
-- transactions
-- loans
+| Stack | What it creates |
+| --- | --- |
+| storage | Private data lake bucket and artifacts bucket. EventBridge is enabled on the data lake. |
+| rds | Public Postgres. Database `payload_analytics`, master user `payload_analytics_admin`. |
+| registry | ECR repository for the dbt image. |
+| alerts | Email topic and a monthly cost budget. |
 
-The dbt layer then applies business rules, standardization, and relationships.
+## 3. Start the backend container
 
-### Gold layer
+From a terminal:
 
-The Gold layer builds reporting-ready models optimized for BI and KPI analysis. It follows a star schema with:
+```bash
+cd payload-analytics/backend
+docker compose -f .docker/docker-compose.yml up -d --build
+docker compose -f .docker/docker-compose.yml exec payload_analytics_backend bash -lc "sed -i 's/\r$//' .docker/entrypoint.sh && sudo chmod +x .docker/entrypoint.sh && .docker/entrypoint.sh"
+docker compose -f .docker/docker-compose.yml exec payload_analytics_backend bash
+```
 
-- dimensions: customer, account, date
-- facts: transactions and loans
-- a customer-summary mart for aggregated portfolio metrics
+This image includes the Docker CLI and the host Docker socket, which the dbt image build uses. Inside the container:
 
-This stage turns normalized operational data into a dashboard-friendly structure.
+```bash
+cd /app/backend && ./database/rds/migrate.sh
+cd /app/backend && ./serverless/spark/deploy.sh
+cd /app/backend && ./serverless/dbt/deploy.sh
+cd /app/backend/serverless/orchestration && serverless deploy
+```
 
-![Gold layer ERD](imgs/gold_diagram.jpeg)
+`migrate.sh` creates the `silver` schema and the four `stg_*` tables. Spark later replaces the rows and keeps those definitions.
 
-## Silver layer data model
+`serverless/spark/deploy.sh` uploads the Glue script, the Postgres JDBC jar, and the shared Python, then creates the Glue job.
 
-![Silver layer ERD](imgs/silver_diagram.jpeg)
+`serverless/dbt/deploy.sh` builds the dbt image, pushes it to ECR tagged with the current git commit, and creates the Fargate task for that tag. This step is the slow one.
 
-## Data quality findings from the dirty source data
+`serverless/orchestration` is the state machine. It has to go last, because it reads the bucket, the Glue job, and the task definition created above. If you build a new dbt image later, run `serverless/dbt/deploy.sh` again and then deploy orchestration again so the state machine points at the new task.
 
-The dataset is not clean by default. The project was intentionally designed to handle messy production-style values rather than dropping records silently. Some of the main issues found are summarized below.
+## 4. Run the pipeline
 
-### 1. Bad or malformed email addresses
+Do this from the backend container, after the infrastructure stacks, the migration, Spark, dbt, and orchestration have all deployed. Confirm the SNS subscription first if you want a failure email.
 
-Many email values arrived with formatting inconsistencies, including:
+The bucket name is in SSM. Copy the sample file into `raw/`:
 
-- missing dots in domains
-- glued TLD patterns
-- stray punctuation or invalid characters
-- mixed casing and accent noise
+```bash
+BUCKET=$(aws ssm get-parameter --name /payload-analytics-storage/DataLakeBucketName --query Parameter.Value --output text)
+aws s3 cp /app/data/raw/fintech_banking_dataset.json "s3://${BUCKET}/raw/"
+```
 
-Instead of hard-failing or removing the rows, the cleaning logic keeps the original value when necessary and separates storage from validation. The project distinguishes between:
+That upload is the trigger. EventBridge sees the new object under `raw/` and starts Step Functions. Nothing else has to be invoked by hand.
 
-- a cleaned email value
-- an `email_status` flag (`valid` vs `invalid`)
+In the AWS console, switch to the same region as `AWS_DEFAULT_REGION`. Open **Step Functions → State machines → `payload-analytics-backend-orchestration` → Executions**. The new execution is the run for that file. Its graph is Glue (`RunSparkJob`), then the dbt task on Fargate (`RunDbt`), then the copy that archives the object.
 
-This allows downstream analysis to filter contactable customers without losing the original records for auditing.
+| Result | Where the file goes | What you have |
+| --- | --- | --- |
+| Execution **Succeeded** | `processed/` | `silver.stg_*` replaced, dbt tests passed, Gold rebuilt |
+| Execution **Failed** | `failed/` | SNS email, if the subscription was confirmed |
 
-### 2. Inconsistent date formats
+Check the prefixes from the same container:
 
-Dates came in multiple shapes, including:
+```bash
+aws s3 ls "s3://${BUCKET}/processed/"
+aws s3 ls "s3://${BUCKET}/failed/"
+```
 
-- `YYYY-MM-DD`
-- `YYYYMMDD`
-- `DD/MM/YYYY`
-- `MM-DD-YYYY`
+`raw/` should be empty for that key after the execution finishes. A later upload of the same name runs the pipeline again and replaces `silver.stg_*`; it does not append.
 
-The date parsing logic standardizes them into a common format and validates conditions such as:
+## 5. Connect to RDS
 
-- date of birth before registration date
-- no future DOB or registration dates
-- no future transaction dates
+The instance is public on port `5432`. Use any PostgreSQL client. Connect to the database `payload_analytics`. The default database `postgres` only has an empty `public` schema; the warehouse is not there.
 
-This avoids broken chronology while retaining the raw data for auditability.
+Look up the host and the password from the backend container. Do not paste them into the repo.
 
-### 3. Currency mismatch and cross-border signals
+```bash
+aws ssm get-parameter --name /payload-analytics-rds/DBInstanceEndpoint --query Parameter.Value --output text
+aws secretsmanager get-secret-value \
+  --secret-id /payload-analytics-rds/MasterCredentials \
+  --query SecretString --output text
+```
 
-The source data includes account and transaction currency values that do not always match the expected domestic currency for the customer’s country. For example, a customer in Colombia may have an account or transaction in USD or EUR rather than COP.
+The second command prints a JSON object. Use its `password` field.
 
-Rather than overwriting the original value, the pipeline:
+| Setting | Value |
+| --- | --- |
+| Host | SSM `/payload-analytics-rds/DBInstanceEndpoint` |
+| Port | `5432` |
+| Database | `payload_analytics` |
+| User | `payload_analytics_admin` |
+| Password | `password` in secret `/payload-analytics-rds/MasterCredentials` |
 
-- keeps the recorded currency
-- flags mismatch conditions
-- converts monetary values to USD for analytics
+| Schema | What is in it |
+| --- | --- |
+| `silver` | `stg_*` from Spark, then the cleaned dbt models |
+| `seeds` | Lookup tables loaded by `dbt seed` |
+| `gold` | Dimensions, facts, and the customer summary used for reporting |
 
-This makes it easier to analyze international activity, FX exposure, and cross-border customer behavior without losing the native financial context.
+From the backend container:
 
-### 4. Monetary fields with noise and formatting artifacts
+```bash
+ENDPOINT=$(aws ssm get-parameter --name /payload-analytics-rds/DBInstanceEndpoint --query Parameter.Value --output text)
+psql "host=${ENDPOINT} port=5432 dbname=payload_analytics user=payload_analytics_admin sslmode=require"
+```
 
-Balances and transaction amounts were not always clean numeric strings. They sometimes contained:
+`psql` asks for the password. Then:
 
-- currency symbols
-- letters or locale noise
-- extra whitespace
-- decimal separators in different formats
+```sql
+\dn
+\dt silver.*
+\dt gold.*
+```
 
-The cleaning rules normalize these into a numeric form, while preserving the original currency field and keeping the numeric amount usable for aggregation.
+RDS lists its PostgreSQL output under log files named `error/postgresql.log`. That name is the log path. It does not mean the pipeline failed. Use the Step Functions execution status for that.
 
-### 5. Boolean and categorical label variation
+## What the models do
 
-Values such as status, account types, segments, and digital preferences were inconsistent across the dataset. There were Spanish labels, variants, and spelling deviations. The pipeline uses seed mappings to normalize known categories while leaving unknown values intact instead of forcing them to null.
+Spark only explodes and deduplicates. dbt does the cleaning.
 
-### 6. Duplicate records from re-ingestion
+| Staging table | How it is built | Dedupe key |
+| --- | --- | --- |
+| `silver.stg_customers` | Drop the arrays. Credit info and digital engagement become JSON text. | `customer_id` |
+| `silver.stg_accounts` | Explode `accounts`. | `account_id` |
+| `silver.stg_transactions` | Explode `transactions`. | `transaction_id` |
+| `silver.stg_loans` | Explode `loans`. | `loan_id` |
 
-The source may contain repeated rows for the same entity when a file is reloaded or partially reprocessed. The Spark transformation uses deduplication based on the most recent `load_timestamp` to keep the newest version and avoid duplicate keys in Silver.
+Silver models then standardize names, emails, phones, dates, amounts, and categories. Gold keeps money in USD and drops the `_usd` suffix. Native currency stays on Silver.
 
-## Business assumptions in the model
+Seeds under `backend/src/dbt/seeds/` map cities, segments, statuses, transaction types, phone codes, expected currency by country, and static FX rates.
 
-The project does not try to be perfect by default. Instead, it follows practical assumptions:
+## Data quality
 
-- keep rows when a value can be safely normalized
-- flag suspicious cases instead of silently deleting them
-- preserve the original raw truth in Bronze
-- create standardized reporting values in Gold
-- use USD as the common reporting scale for cross-country metrics
+The source is dirty on purpose. The pipeline keeps the row, normalizes what it can, and flags the rest.
 
-This approach is especially useful in financial data, where hard deletions can hide real operational patterns and business context.
+- **Emails.** Invalid addresses stay in the column and `email_status` is `invalid`.
+- **Dates.** `YYYY-MM-DD`, `YYYYMMDD`, `DD/MM/YYYY`, and `MM-DD-YYYY` are parsed. The separator chooses day-first versus month-first.
+- **Currency.** A Colombian customer can still have a USD account. The recorded currency stays, a mismatch flag is set, and amounts are also converted to USD.
+- **Amounts.** Symbols, letters, and mixed decimal separators are stripped. The original currency column is unchanged.
+- **Labels.** Spanish values and typos map through seeds. Unknown values pass through instead of becoming null.
+- **Duplicates inside one file.** The newest `load_timestamp` wins for each business key. A later file replaces the staging tables entirely.
+
+## Business assumptions
+
+- Keep a row when the value can be normalized.
+- Flag suspicious values instead of deleting them.
+- Leave the original file in S3.
+- Report cross-country money in USD.
+- Revenue is a completed fee. Anything else is zero.
 
 ## Quality checks
 

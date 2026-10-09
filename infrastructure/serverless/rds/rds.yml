@@ -1,0 +1,67 @@
+Resources:
+  PayloadAnalyticsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allows inbound PostgreSQL access to the payload analytics RDS instance
+      VpcId: ${env:DEFAULT_VPC_ID}
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+
+  PayloadAnalyticsDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Default VPC subnets for the payload analytics RDS instance
+      SubnetIds: !Split [',', '${env:DEFAULT_VPC_SUBNET_IDS}']
+
+  PayloadAnalyticsMasterSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub /${self:custom.servicePrefix}/MasterCredentials
+      Description: RDS master credentials for the payload analytics PostgreSQL instance
+      GenerateSecretString:
+        SecretStringTemplate: !Sub |
+          {
+            "username": "${self:custom.rds.masterUsername}",
+            "dbname": "${self:custom.rds.dbName}"
+          }
+        GenerateStringKey: password
+        ExcludeCharacters: '"''(),./:;<=>?@[\]^`{|}~%#&!'
+
+  PayloadAnalyticsDBInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      DBInstanceIdentifier: ${self:custom.servicePrefix}
+      Engine: postgres
+      EngineVersion: '18.3'
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: '20'
+      StorageType: gp2
+      DBName: ${self:custom.rds.dbName}
+      Port: '5432'
+      MasterUsername: ${self:custom.rds.masterUsername}
+      MasterUserPassword: !Sub
+        - '{{resolve:secretsmanager:${SecretId}::password}}'
+        - SecretId: !Ref PayloadAnalyticsMasterSecret
+      DBSubnetGroupName: !Ref PayloadAnalyticsDBSubnetGroup
+      VPCSecurityGroups:
+        - !GetAtt PayloadAnalyticsSecurityGroup.GroupId
+      PubliclyAccessible: true
+      MultiAZ: false
+      AllowMajorVersionUpgrade: false
+      BackupRetentionPeriod: 1
+      DeletionProtection: false
+
+  PayloadAnalyticsSecretAttachment:
+    Type: AWS::SecretsManager::SecretTargetAttachment
+    DependsOn:
+      - PayloadAnalyticsDBInstance
+      - PayloadAnalyticsMasterSecret
+    Properties:
+      SecretId: !Ref PayloadAnalyticsMasterSecret
+      TargetId: !Ref PayloadAnalyticsDBInstance
+      TargetType: AWS::RDS::DBInstance

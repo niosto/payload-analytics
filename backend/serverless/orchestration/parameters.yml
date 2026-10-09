@@ -1,0 +1,8 @@
+Resources:
+  StateMachineArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/StateMachineArn
+      Tier: Standard
+      Type: String
+      Value: !Ref PipelineStateMachine

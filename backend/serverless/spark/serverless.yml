@@ -1,0 +1,53 @@
+service: backend-spark
+frameworkVersion: '^4.6.2'
+configValidationMode: error
+
+provider:
+  name: aws
+  stage: dev
+  region: ${env:AWS_DEFAULT_REGION}
+  stackName: ${env:DEPLOY_APP}-${self:service}
+  deploymentBucket:
+    name: ${self:custom.s3.deploymentBucketName.${self:custom.stage}}
+
+plugins:
+  - serverless-deployment-bucket
+  - '@serverless/safeguards-plugin'
+
+resources:
+  - ${file(iam.yml)}
+  - ${file(glue.yml)}
+  - ${file(parameters.yml)}
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  safeguards:
+    - safeguard: framework-version
+      enforcementLevel: warning
+      config: ${self:frameworkVersion}
+    - safeguard: allowed-regions
+      enforcementLevel: error
+      config:
+        - ${self:provider.region}
+    - safeguard: no-wild-iam-role-statements
+      enforcementLevel: warning
+    - safeguard: allowed-stages
+      enforcementLevel: error
+      config:
+        - dev
+        - test
+        - prod
+  servicePrefix: ${env:DEPLOY_APP}-${self:service}
+  developer: ${env:DEVELOPER}
+  s3:
+    deploymentBucketName:
+      dev: ${self:provider.region}.${self:service}.${env:DEPLOY_APP}.${self:custom.stage}.${self:custom.developer}
+      test: ${self:provider.region}.${self:service}.${env:DEPLOY_APP}.${self:custom.stage}
+      prod: ${self:provider.region}.${self:service}.${env:DEPLOY_APP}.${self:custom.stage}
+    dataLakeBucket:
+      arn: ${ssm:/${env:DEPLOY_APP}-storage/DataLakeBucketArn}
+    artifactsBucket:
+      name: ${ssm:/${env:DEPLOY_APP}-storage/ArtifactsBucketName}
+      arn: ${ssm:/${env:DEPLOY_APP}-storage/ArtifactsBucketArn}
+  secretsManager:
+    masterCredentials: /${env:DEPLOY_APP}-rds/MasterCredentials

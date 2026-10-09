@@ -1,0 +1,12 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Environment
+.envs
+
+# Source (formatted separately with yapf/isort)
+src
+
+# Serverless Framework deploy artifacts
+.serverless

@@ -1,0 +1,81 @@
+service: backend-orchestration
+frameworkVersion: '^4.6.2'
+configValidationMode: error
+
+provider:
+  name: aws
+  stage: dev
+  region: ${env:AWS_DEFAULT_REGION}
+  stackName: ${env:DEPLOY_APP}-${self:service}
+  deploymentBucket:
+    name: ${self:custom.s3.deploymentBucketName.${self:custom.stage}}
+
+plugins:
+  - serverless-deployment-bucket
+  - '@serverless/safeguards-plugin'
+  - serverless-step-functions
+
+stepFunctions:
+  stateMachines:
+    pipeline:
+      id: PipelineStateMachine
+      name: ${self:custom.servicePrefix}
+      role:
+        Fn::GetAtt: [StateMachineRole, Arn]
+      definition: ${file(statemachine.yml)}
+      events:
+        - eventBridge:
+            name: ${self:custom.servicePrefix}-raw
+            event:
+              source:
+                - aws.s3
+              detail-type:
+                - Object Created
+              detail:
+                bucket:
+                  name:
+                    - ${ssm:/${env:DEPLOY_APP}-storage/DataLakeBucketName}
+                object:
+                  key:
+                    - prefix: raw/
+
+resources:
+  - ${file(iam.yml)}
+  - ${file(parameters.yml)}
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  safeguards:
+    - safeguard: framework-version
+      enforcementLevel: warning
+      config: ${self:frameworkVersion}
+    - safeguard: allowed-regions
+      enforcementLevel: error
+      config:
+        - ${self:provider.region}
+    - safeguard: no-wild-iam-role-statements
+      enforcementLevel: warning
+    - safeguard: allowed-stages
+      enforcementLevel: error
+      config:
+        - dev
+        - test
+        - prod
+  servicePrefix: ${env:DEPLOY_APP}-${self:service}
+  developer: ${env:DEVELOPER}
+  s3:
+    deploymentBucketName:
+      dev: ${self:provider.region}.${self:service}.${env:DEPLOY_APP}.${self:custom.stage}.${self:custom.developer}
+      test: ${self:provider.region}.${self:service}.${env:DEPLOY_APP}.${self:custom.stage}
+      prod: ${self:provider.region}.${self:service}.${env:DEPLOY_APP}.${self:custom.stage}
+    dataLakeBucket:
+      arn: ${ssm:/${env:DEPLOY_APP}-storage/DataLakeBucketArn}
+  ecs:
+    clusterName: ${env:DEPLOY_APP}-backend-dbt
+    taskDefinitionArn: ${ssm:/${env:DEPLOY_APP}-backend-dbt/TaskDefinitionArn}
+    executionRoleArn: ${ssm:/${env:DEPLOY_APP}-backend-dbt/ExecutionRoleArn}
+    taskRoleArn: ${ssm:/${env:DEPLOY_APP}-backend-dbt/TaskRoleArn}
+  glue:
+    jobName: ${ssm:/${env:DEPLOY_APP}-backend-spark/GlueJobName}
+  sns:
+    topicArn: ${ssm:/${env:DEPLOY_APP}-alerts/PipelineAlertsTopicArn}

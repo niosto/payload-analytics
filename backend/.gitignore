@@ -1,0 +1,9 @@
+*.pyc
+*.serverless
+*.vscode
+*.DS_Store
+.ssh
+tmp/
+customlib/
+node_modules/
+*.pth

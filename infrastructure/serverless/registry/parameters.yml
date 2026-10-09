@@ -1,0 +1,16 @@
+Resources:
+  DbtRepositoryUri:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/DbtRepositoryUri
+      Tier: Standard
+      Type: String
+      Value: !GetAtt DbtRepository.RepositoryUri
+
+  DbtRepositoryArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/DbtRepositoryArn
+      Tier: Standard
+      Type: String
+      Value: !GetAtt DbtRepository.Arn

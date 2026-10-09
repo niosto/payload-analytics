@@ -1,0 +1,24 @@
+Resources:
+  MasterSecretArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/MasterSecretArn
+      Tier: Standard
+      Type: String
+      Value: !Ref PayloadAnalyticsMasterSecret
+
+  MasterSecretName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/MasterSecretName
+      Tier: Standard
+      Type: String
+      Value: !Sub /${self:custom.servicePrefix}/MasterCredentials
+
+  DBInstanceEndpoint:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/DBInstanceEndpoint
+      Tier: Standard
+      Type: String
+      Value: !GetAtt PayloadAnalyticsDBInstance.Endpoint.Address

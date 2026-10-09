@@ -89,7 +89,7 @@ data/temp/
 *.parquet
 *.json
 *.pdf
-!dbt/seeds/*
+!backend/src/dbt/seeds/*
 !data/raw/*.json
 
 # PowerBI (keep .pbix and screenshots, ignore temp files)
@@ -113,3 +113,7 @@ Thumbs.db
 *.pem
 .env.local
 .env.production
+
+# Devcontainers and Serverless
+node_modules/
+.serverless/

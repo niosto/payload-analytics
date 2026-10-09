@@ -1,0 +1,26 @@
+services:
+  payload_analytics_backend:
+    container_name: 'PayloadAnalyticsBackend'
+    build:
+      context: .
+      dockerfile: ../../.docker/Dockerfile
+      target: img-backend
+    volumes:
+      - ../..:/app
+      - payload-analytics-backend-bashhistory:/commandhistory
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file:
+      - ../../.envs/aws.env
+      - ../../.envs/sls.env
+      - ../.envs/config.env
+    environment:
+      - DEPLOY_APP=payload-analytics
+    working_dir: /app/backend
+    restart: unless-stopped
+    command:
+      - /bin/sh
+      - -c
+      - sleep infinity
+
+volumes:
+  payload-analytics-backend-bashhistory:

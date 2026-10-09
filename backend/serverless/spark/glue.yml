@@ -1,0 +1,21 @@
+Resources:
+  GlueSparkJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: ${self:custom.servicePrefix}
+      Role: !GetAtt GlueJobRole.Arn
+      GlueVersion: '5.0'
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+      Timeout: 30
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      Command:
+        Name: glueetl
+        PythonVersion: '3'
+        ScriptLocation: s3://${self:custom.s3.artifactsBucket.name}/glue/scripts/glue_job.py
+      DefaultArguments:
+        '--extra-jars': s3://${self:custom.s3.artifactsBucket.name}/glue/jars/postgresql-42.7.3.jar
+        '--extra-py-files': s3://${self:custom.s3.artifactsBucket.name}/glue/libs/spark_libs.zip
+        '--secret_name': ${self:custom.secretsManager.masterCredentials}
+        '--enable-continuous-cloudwatch-log': 'true'
