@@ -1,0 +1,102 @@
+name: payload-analytics-streaming
+
+services:
+  redpanda:
+    container_name: 'PayloadAnalyticsRedpanda'
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda
+      - start
+      - --mode
+      - dev-container
+      - --smp
+      - '1'
+      - --memory
+      - 1G
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+      - --schema-registry-addr
+      - internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr
+      - redpanda:33145
+      - --advertise-rpc-addr
+      - redpanda:33145
+    ports:
+      - '19092:19092'
+      - '18081:18081'
+    volumes:
+      - payload-analytics-redpanda-data:/var/lib/redpanda/data
+    healthcheck:
+      test: ['CMD-SHELL', "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # One-shot: creates the topics, then exits. Re-running is safe.
+  redpanda_init:
+    container_name: 'PayloadAnalyticsRedpandaInit'
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    entrypoint: ['/bin/bash', '-c']
+    command:
+      - |
+        set -e
+        for topic in fx.rates fintech.live_transactions; do
+          rpk topic create "$$topic" -p 3 -r 1 -X brokers=redpanda:9092 \
+            || rpk topic describe "$$topic" -X brokers=redpanda:9092 > /dev/null
+        done
+        rpk topic list -X brokers=redpanda:9092
+    restart: 'no'
+
+  console:
+    container_name: 'PayloadAnalyticsRedpandaConsole'
+    image: docker.redpanda.com/redpandadata/console:v2.7.2
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+      KAFKA_SCHEMAREGISTRY_ENABLED: 'true'
+      KAFKA_SCHEMAREGISTRY_URLS: http://redpanda:8081
+    ports:
+      - '8088:8080'
+    restart: unless-stopped
+
+  fx_producer:
+    container_name: 'PayloadAnalyticsFxProducer'
+    build:
+      context: ../src/producers
+    command: ['python', 'fx_producer.py']
+    depends_on:
+      redpanda_init:
+        condition: service_completed_successfully
+    env_file:
+      - ../.envs/config.env
+    environment:
+      - KAFKA_BOOTSTRAP=redpanda:9092
+    restart: unless-stopped
+
+  transactions_simulator:
+    container_name: 'PayloadAnalyticsTransactionsSimulator'
+    build:
+      context: ../src/producers
+    command: ['python', 'transactions_simulator.py']
+    depends_on:
+      redpanda_init:
+        condition: service_completed_successfully
+    env_file:
+      - ../.envs/config.env
+    environment:
+      - KAFKA_BOOTSTRAP=redpanda:9092
+      - TX_SOURCE_PATH=/data/raw/fintech_banking_dataset.json
+    volumes:
+      - ../../data:/data:ro
+    restart: unless-stopped
+
+volumes:
+  payload-analytics-redpanda-data:

@@ -60,6 +60,9 @@ payload-analytics/
 │       ├── spark/
 │       ├── dbt/
 │       └── orchestration/
+├── streaming/                       # Local Redpanda and producers (runs on your machine)
+│   ├── .docker/
+│   └── src/producers/
 └── data/raw/                        # Sample JSON used to start a run
 ```
 
@@ -253,6 +256,49 @@ psql "host=${ENDPOINT} port=5432 dbname=payload_analytics user=payload_analytics
 ```
 
 RDS lists its PostgreSQL output under log files named `error/postgresql.log`. That name is the log path. It does not mean the pipeline failed. Use the Step Functions execution status for that.
+
+## 6. Run the streaming producers
+
+The streaming side runs on your machine with Docker, not in AWS. Nothing here is deployed with Serverless, so it adds no AWS cost.
+
+| Service | Role |
+| --- | --- |
+| `redpanda` | Kafka-compatible broker. Inside Docker it is `redpanda:9092`; from the host it is `localhost:19092`. |
+| `redpanda_init` | Creates the topics `fx.rates` and `fintech.live_transactions` (3 partitions each), then exits. |
+| `console` | Redpanda Console at http://localhost:8088 to browse topics and messages. |
+| `fx_producer` | Publishes USD exchange rates for the nine currencies to `fx.rates`, keyed by currency. |
+| `transactions_simulator` | Publishes live transactions to `fintech.live_transactions`, keyed by customer. |
+
+Create `streaming/.envs/config.env` (gitignored). Every value has a default, so an empty file also works:
+
+```text
+FX_API_URL=https://open.er-api.com/v6/latest/USD
+FX_CURRENCIES=USD,EUR,COP,ARS,MXN,CLP,PEN,BRL,UYU
+FX_FETCH_SECONDS=600
+FX_PUBLISH_SECONDS=10
+TX_EVENTS_PER_SECOND=2
+TX_SEED=
+```
+
+Start it from the `streaming` folder:
+
+```bash
+cd payload-analytics/streaming
+docker compose -f .docker/docker-compose.yml up -d --build
+```
+
+Check that events are flowing:
+
+```bash
+docker exec PayloadAnalyticsRedpanda rpk topic consume fx.rates -n 3
+docker exec PayloadAnalyticsRedpanda rpk topic consume fintech.live_transactions -n 3
+```
+
+Stop it with `docker compose -f .docker/docker-compose.yml stop`. The producers flush pending events before they exit. `down -v` also deletes the topic data.
+
+**FX rates.** The free provider refreshes its rates about once a day. The producer calls the API every `FX_FETCH_SECONDS` and republishes the last rates every `FX_PUBLISH_SECONDS`, so the stream always has a recent tick. `provider_updated_at` is the provider's own timestamp, the real age of the rate; `event_time` is when the tick was published. `usd_per_unit` has the same meaning as in `seed_fx_rates`. If the API fails, the producer keeps the last good rates and retries with backoff. It never makes up a rate.
+
+**Live transactions.** Customers and accounts come from `data/raw/fintech_banking_dataset.json`, so every event points to a customer and account that exist in Silver and Gold. Amount, type, category, merchant, channel, status, and description are copied from a real transaction in the same currency, dirt included. The date is today in one of the four source formats, with the source's frequencies. Live ids start with `LTX-`, batch ids with `TXN-`. All fields are strings, the same contract as `silver.stg_transactions`.
 
 ## What the models do
 

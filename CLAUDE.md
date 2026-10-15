@@ -10,7 +10,7 @@ Human-facing setup lives in `README.md`. This file is the agent guide: how to ru
 
 Do not deploy, `git push`, drop schemas, or change AWS resources unless the developer asks. Give them the command. Do not print AWS keys, the Serverless key, or the database password.
 
-Env files are gitignored: `.envs/aws.env`, `.envs/sls.env`, `infrastructure/.envs/config.env`, `backend/.envs/config.env`. Compose injects them only when the container is created. After an edit, recreate that container (`docker compose -f .docker/docker-compose.yml up -d --force-recreate`). Do not rebuild the image for an env change.
+Env files are gitignored: `.envs/aws.env`, `.envs/sls.env`, `infrastructure/.envs/config.env`, `backend/.envs/config.env`, `streaming/.envs/config.env`. Compose injects them only when the container is created. After an edit, recreate that container (`docker compose -f .docker/docker-compose.yml up -d --force-recreate`). Do not rebuild the image for an env change.
 
 `DEPLOY_APP=payload-analytics` is set by each dev container. Region comes from `AWS_DEFAULT_REGION` in `.envs/aws.env`.
 
@@ -49,8 +49,24 @@ No NAT Gateway. RDS is a public `db.t4g.micro` in the default VPC (`PubliclyAcce
 - **`backend/serverless/orchestration/`**: JSONata state machine. EventBridge `Object Created` on prefix `raw/`. Glue sync, then ECS sync, then S3 copy to `processed/` and delete. Catch copies to `failed/`, publishes to SNS, then fails. Glue `ConcurrentRunsExceededException` retries with backoff (30s, rate 2, 6 attempts).
 - **`data/raw/fintech_banking_dataset.json`**: sample source. `*.json` is gitignored except `!data/raw/*.json`.
 - **`powerbi/`**: dashboard against Gold.
+- **`streaming/`**: local Docker stack, not deployed. Redpanda, Redpanda Console (host port 8088), a topic-init job, and the two producers in `src/producers/`. See the Streaming section.
 
 Every stack uses `region: ${env:AWS_DEFAULT_REGION}`, `stackName: ${env:DEPLOY_APP}-${self:service}`, and publishes outputs to SSM at `/${AWS::StackName}/...`, which other stacks read as `/${DEPLOY_APP}-<service>/...`.
+
+**Stack names do not include `DEVELOPER`; bucket names do.** The team shares one AWS account, so a `serverless deploy` with a different `DEVELOPER` updates the existing stack and tries to replace its buckets (and, for `rds`, the database). Before any deploy, run `aws cloudformation list-stacks` and check whose stacks exist. Use the `DEVELOPER` of the existing stacks, or do not deploy.
+
+## Streaming
+
+Runs locally with `docker compose -f .docker/docker-compose.yml up -d --build` from `streaming/`. Brokers: `redpanda:9092` inside the compose network, `localhost:19092` from the host. `redpanda_init` creates the topics with 3 partitions and is safe to re-run.
+
+| Topic | Key | Producer | Payload |
+| --- | --- | --- | --- |
+| `fx.rates` | currency | `fx_producer.py` | `event_id`, `event_time`, `currency`, `base` (USD), `units_per_usd`, `usd_per_unit`, `provider`, `provider_updated_at` |
+| `fintech.live_transactions` | customer_id | `transactions_simulator.py` | the 12 `stg_transactions` fields as strings, plus `event_id`, `event_time`, `source` |
+
+- **FX**: the free API updates about daily. The producer fetches every `FX_FETCH_SECONDS` and republishes the cached rates every `FX_PUBLISH_SECONDS`. `provider_updated_at` is the rate's real age; `event_time` is the tick. On API failure it keeps the last good rates and backs off. It never fabricates a rate. `usd_per_unit` has the same meaning as `seed_fx_rates.usd_per_unit`.
+- **Transactions**: accounts and templates come from `data/raw/fintech_banking_dataset.json` (mounted read-only at `/data`), so ids exist in Silver. Template fields are copied from a real transaction in the account's currency, dirt included, on purpose: do not clean them in the producer. Dates use the four source masks with weights 81.2 / 6.3 / 6.3 / 6.2. Ids are `LTX-` + 12 hex, so they never collide with batch `TXN-` ids.
+- Both producers use `acks=all`, idempotence, and flush on SIGTERM.
 
 ## Spark
 
