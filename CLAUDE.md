@@ -39,7 +39,7 @@ No NAT Gateway. RDS is a public `db.t4g.micro` in the default VPC (`PubliclyAcce
 - **`infrastructure/serverless/rds`**: Postgres 18, `db.t4g.micro`, master user `payload_analytics_admin` (no hyphen; RDS rejects hyphens). Secret name `/payload-analytics-rds/MasterCredentials`. The secret template includes `username` and `dbname`; the RDS attachment adds `host` and `port`.
 - **`infrastructure/serverless/registry`**: ECR repository. SSM `/payload-analytics-registry/DbtRepositoryUri`.
 - **`infrastructure/serverless/alerts`**: SNS email topic and a monthly budget. SSM `/payload-analytics-alerts/PipelineAlertsTopicArn`.
-- **`backend/database/rds/`**: yoyo migration `20260930000000_silver_staging` creates `silver` and the four `stg_*` tables. `migrate.sh` reads the master secret. Rollback drops those tables and the schema.
+- **`backend/database/rds/`**: yoyo migration `20260930000000_silver_staging` creates `silver` and the four `stg_*` tables. `20261015000000_silver_streaming` (depends on it) adds `silver.stream_fx_rates` and `silver.stream_transactions`. `migrate.sh` reads the master secret. Rollbacks run newest first: streaming drops its two tables, staging drops the `stg_*` tables and the schema.
 - **`backend/src/spark/transformations.py`**: `deduplicate` and `build_silver_frames`. Shared by the Glue job.
 - **`backend/src/spark/glue_job.py`**: Glue entrypoint. `--source_path` is the S3 URI. `--secret_name` is the master secret. Reads JSON with `SCHEMA`, adds `load_timestamp`, writes each frame with `mode("overwrite")` and `truncate=true`.
 - **`backend/src/spark/schemas/spark_schema.py`**: every field is `StringType` on purpose.
@@ -49,7 +49,7 @@ No NAT Gateway. RDS is a public `db.t4g.micro` in the default VPC (`PubliclyAcce
 - **`backend/serverless/orchestration/`**: JSONata state machine. EventBridge `Object Created` on prefix `raw/`. Glue sync, then ECS sync, then S3 copy to `processed/` and delete. Catch copies to `failed/`, publishes to SNS, then fails. Glue `ConcurrentRunsExceededException` retries with backoff (30s, rate 2, 6 attempts).
 - **`data/raw/fintech_banking_dataset.json`**: sample source. `*.json` is gitignored except `!data/raw/*.json`.
 - **`powerbi/`**: dashboard against Gold.
-- **`streaming/`**: local Docker stack, not deployed. Redpanda, Redpanda Console (host port 8088), a topic-init job, and the two producers in `src/producers/`. See the Streaming section.
+- **`streaming/`**: local Docker stack, not deployed. Redpanda, Redpanda Console (host port 8088), a topic-init job, the two producers in `src/producers/`, and the Spark Structured Streaming job in `src/spark/` (Spark UI on 4040). See the Streaming section.
 
 Every stack uses `region: ${env:AWS_DEFAULT_REGION}`, `stackName: ${env:DEPLOY_APP}-${self:service}`, and publishes outputs to SSM at `/${AWS::StackName}/...`, which other stacks read as `/${DEPLOY_APP}-<service>/...`.
 
@@ -67,6 +67,23 @@ Runs locally with `docker compose -f .docker/docker-compose.yml up -d --build` f
 - **FX**: the free API updates about daily. The producer fetches every `FX_FETCH_SECONDS` and republishes the cached rates every `FX_PUBLISH_SECONDS`. `provider_updated_at` is the rate's real age; `event_time` is the tick. On API failure it keeps the last good rates and backs off. It never fabricates a rate. `usd_per_unit` has the same meaning as `seed_fx_rates.usd_per_unit`.
 - **Transactions**: accounts and templates come from `data/raw/fintech_banking_dataset.json` (mounted read-only at `/data`), so ids exist in Silver. Template fields are copied from a real transaction in the account's currency, dirt included, on purpose: do not clean them in the producer. Dates use the four source masks with weights 81.2 / 6.3 / 6.3 / 6.2. Ids are `LTX-` + 12 hex, so they never collide with batch `TXN-` ids.
 - Both producers use `acks=all`, idempotence, and flush on SIGTERM.
+
+### Spark Structured Streaming (`src/spark/stream_job.py`)
+
+Image `apache/spark:3.5.3` with the Kafka connector jars baked in (no `--packages` at runtime), plus boto3 and psycopg2. `spark-submit --master local[2]`. It writes to the team RDS, so the `20261015000000_silver_streaming` migration must be applied first; without it the container crash-loops.
+
+| Query | Source | Sink | Upsert key |
+| --- | --- | --- | --- |
+| `fx_sink` | `fx.rates` | `silver.stream_fx_rates` | `event_id`, `DO NOTHING` |
+| `tx_sink` | `fintech.live_transactions` LEFT JOIN `fx.rates` | `silver.stream_transactions` | `transaction_id` |
+
+- **Join**: `fx_currency = upper(trim(currency)) AND fx_event_time BETWEEN event_time - FX_JOIN_SECONDS AND event_time`, watermark `WATERMARK` on both sides. Several ticks match; `foreachBatch` keeps the latest per `transaction_id`. Left outer on purpose: a transaction with no tick is still written, with NULL FX, after the watermark passes (about 2 minutes later). Do not change it to an inner join; that drops transactions during an FX outage.
+- **Upsert**: rows are collected on the driver and written with `psycopg2.execute_values`. On conflict, `tx_sink` only replaces the FX columns when the new tick is later, and never rewrites `processed_at`, which is the latency measurement. Batches are small (seconds of events); do not switch to JDBC `append`, it would duplicate on replay.
+- **Credentials**: the RDS master secret via boto3 (`.envs/aws.env` is in the service's `env_file`), `sslmode=require`. If `DB_HOST` is set, the `DB_*` variables are used instead and the secret is not read; that is how the job is tested against a throwaway local Postgres.
+- **Session zone**: Spark `spark.sql.session.timeZone=UTC`, container `TZ=UTC`, and the psycopg2 session `timezone=UTC`, because `collect()` returns naive datetimes.
+- **Checkpoint**: named volume `payload-analytics-spark-checkpoints` at `/checkpoints/{fx_sink,tx_sink}`. `STARTING_OFFSETS` only applies when there is no checkpoint. Deleting the volume restarts from `latest`.
+- **Latency**: `TRIGGER_SECONDS=1` gives transactions p50 3.3 s / p95 4.9 s and FX p50 1.5 s / p95 2.3 s (local test). With the old 5 s trigger, p95 was 9 s. The PDF KPI is FX latency under 5 s.
+- From Git Bash on Windows, `docker run -e CHECKPOINT_DIR=/tmp/...` gets rewritten to a `C:/` path; prefix with `MSYS_NO_PATHCONV=1`.
 
 ## Spark
 

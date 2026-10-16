@@ -98,5 +98,27 @@ services:
       - ../../data:/data:ro
     restart: unless-stopped
 
+  # Writes to the team RDS. Needs ../../.envs/aws.env to read the DB secret,
+  # and the 20261015000000_silver_streaming migration applied.
+  spark_streaming:
+    container_name: 'PayloadAnalyticsSparkStreaming'
+    build:
+      context: ../src/spark
+    depends_on:
+      redpanda_init:
+        condition: service_completed_successfully
+    env_file:
+      - ../../.envs/aws.env
+      - ../.envs/config.env
+    environment:
+      - KAFKA_BOOTSTRAP=redpanda:9092
+      - CHECKPOINT_DIR=/checkpoints
+    volumes:
+      - payload-analytics-spark-checkpoints:/checkpoints
+    ports:
+      - '4040:4040'
+    restart: unless-stopped
+
 volumes:
   payload-analytics-redpanda-data:
+  payload-analytics-spark-checkpoints:
