@@ -322,7 +322,7 @@ Stop it with `docker compose -f .docker/docker-compose.yml stop`. The producers 
 
 **Live transactions.** Customers and accounts come from `data/raw/fintech_banking_dataset.json`, so every event points to a customer and account that exist in Silver and Gold. Amount, type, category, merchant, channel, status, and description are copied from a real transaction in the same currency, dirt included. The date is today in one of the four source formats, with the source's frequencies. Live ids start with `LTX-`, batch ids with `TXN-`. All fields are strings, the same contract as `silver.stg_transactions`.
 
-**Spark job.** Each transaction is joined with the FX ticks for its currency published in the `FX_JOIN_SECONDS` before its `event_time`, and the latest one is kept. It is a left join: if the FX producer is down, the transaction is still written with empty FX columns once the 2-minute watermark passes, and dbt falls back to `seed_fx_rates`. Rows are upserted by `transaction_id` and `event_id`, so a restart never duplicates them. `processed_at - event_time` is the end-to-end latency:
+**Spark job.** Each transaction is joined with the FX ticks for its currency published in the `FX_JOIN_SECONDS` before its `event_time`, and the latest one is kept. It is a left join: if the FX producer is down, the transaction is still written with empty FX columns once the 2-minute watermark passes, and dbt converts it with `fx_rates_current` instead. Rows are upserted by `transaction_id` and `event_id`, so a restart never duplicates them. `processed_at - event_time` is the end-to-end latency:
 
 ```sql
 select percentile_cont(0.95) within group (order by extract(epoch from processed_at - event_time)) as p95_seconds
@@ -352,7 +352,25 @@ Spark only explodes and deduplicates. dbt does the cleaning.
 
 Silver models then standardize names, emails, phones, dates, amounts, and categories. Gold keeps money in USD and drops the `_usd` suffix. Native currency stays on Silver.
 
-Seeds under `backend/src/dbt/seeds/` map cities, segments, statuses, transaction types, phone codes, expected currency by country, and static FX rates.
+Seeds under `backend/src/dbt/seeds/` map cities, segments, statuses, transaction types, phone codes, expected currency by country, and fallback FX rates.
+
+### FX rates and live transactions
+
+Every USD amount goes through `to_usd`, which reads `silver.fx_rates_current`: one row per currency with the latest live tick from `silver.stream_fx_rates`. When the stream has no tick for a currency in the last 48 hours (`fx_live_max_age_hours`), that currency falls back to `seed_fx_rates`. `rate_source` says which one was used. So batch USD amounts follow the live rate whenever the streaming job has run recently, and the seed values otherwise.
+
+With the rates of 2026-10-15, the switch moves the batch transaction total by -0.2% overall, but much more per currency: ARS -34%, COP +26%, PEN +8%, CLP -8%, MXN -7%. Country-level reports change accordingly.
+
+| Model | What it holds |
+| --- | --- |
+| `silver.fx_rates_current` | Rate per currency used by `to_usd`, its source (`stream` or `seed`), and the seed value for comparison. |
+| `silver.live_transactions` | View over `silver.stream_transactions`, cleaned with the batch macros. USD uses the rate joined in the stream at event time, or `fx_rates_current` when there was none (`fx_rate_source`). |
+| `gold.fct_live_transactions` | Incremental fact with the `fct_transactions` columns plus `amount_native`, `fx_usd_per_unit`, `fx_rate_source`, `event_time`, `processed_at`, and `latency_seconds`. Each run adds the new rows and rebuilds the last 10 minutes (`live_lookback_minutes`). |
+
+To refresh only the live fact between batch runs:
+
+```bash
+dbt run -s fct_live_transactions
+```
 
 ## Data quality
 

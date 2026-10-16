@@ -117,6 +117,8 @@ Sources in `models/silver/src_silver.yml` point at the Spark tables.
 - `customers` — `INITCAP` names, cleaned email + `email_status`, city/segment/status via `match_seed`, phone via `normalize_phone`, dates via `format_date`, derived tenure, age, and risk tier.
 - `accounts` — `clean_amount` / `to_usd`, `is_currency_mismatch` against `seed_currency_map`, `account_age_months`.
 - `transactions` — date parts, `amount_usd`, type via `seed_transaction_type`.
+- `fx_rates_current` — **table** on purpose (`to_usd` runs a scalar lookup per row; a view over the tick history would be scanned ~175k times). One row per currency: latest `stream_fx_rates` tick newer than `var('fx_live_max_age_hours', 48)`, else `seed_fx_rates` (`FULL OUTER JOIN`, so no seed currency is lost). Columns `rate_source` (`stream`/`seed`), `rate_event_time`, `provider_updated_at`, `seed_usd_per_unit`.
+- `live_transactions` — **view** over `source('silver','stream_transactions')`, same cleaning macros as `transactions`. `amount_usd` uses the stream's `fx_usd_per_unit` (rate at event time); when NULL, `to_usd` (fx_rates_current). `fx_rate_source` is `event_window` or `fx_rates_current`. Adds `event_time`, `kafka_ts`, `processed_at`, `latency_seconds`.
 - `loans` — USD principals, balances, and payments; `is_delinquent` when status is `delinquent` or `default`; `dpd_bucket`.
 - `credit_info` / `digital_engagement` — one row per customer that has the object, extracted with `::jsonb`. `credit_score` outside 350–800 becomes NULL.
 
@@ -130,7 +132,7 @@ Sources in `models/silver/src_silver.yml` point at the Spark tables.
 | --- | --- |
 | `format_date` | `TO_DATE` with a `LIKE`-picked mask. Separator `-` means MDY; `/` means DMY. That is intentional. |
 | `clean_amount` | `normalize_null`, comma to dot, strip `$` / letters / spaces, `float`. |
-| `to_usd` | `amount * seed_fx_rates.usd_per_unit`. Unknown currency → NULL, not 0. |
+| `to_usd` | `amount * fx_rates_current.usd_per_unit` (live tick, or seed fallback). Unknown currency → NULL, not 0. Batch USD values therefore move with the live rate; with `--vars '{fx_live_max_age_hours: 0}'` every currency uses the seed again. |
 | `clean_email` / `email_status` | `unaccent` is nested `REPLACE`, not the Postgres extension. No `CREATE EXTENSION`. |
 | `normalize_phone` | No leading `+` → prefix `seed_phone_codes.phone_code`; else strip `() -`. |
 | `normalize_boolean` | `true/1/yes/y/si` vs `false/0/no/n`. |
@@ -155,6 +157,11 @@ Money is already USD and drops the `_usd` suffix. Native currency stays on Silve
 - `fct_transactions` — `date_id` from `transaction_date`, `is_failed`, `is_international`, revenue from the fee-and-completed macro.
 - `fct_loans` — `date_id` from **start_date**, `pct_outstanding` capped at 1, `estimated_monthly_interest = outstanding * rate/100 / 12`.
 - `mart_customer_summary` — the only Gold model that is a **view** (set in the SQL file, not `dbt_project.yml`).
+- `fct_live_transactions` — the only **incremental** model. `delete+insert` on `transaction_id`; the incremental filter takes `processed_at` newer than the table max minus `var('live_lookback_minutes', 10)`, so rows whose FX columns the stream upserted after the last run are rebuilt. Same columns as `fct_transactions` plus `amount_native`, `fx_usd_per_unit`, `fx_rate_source`, `fx_event_time`, `fx_provider_updated_at`, `event_time`, `kafka_ts`, `processed_at`, `latency_seconds`. Does not join `accounts` (not needed for any column).
+
+The dbt project now reads `silver.stream_*`. Those tables come from migration `20261015000000_silver_streaming`; a database without it fails at `fx_rates_current`.
+
+Singular tests added with streaming: `silver_fx_rates_current_covers_seed` (no seed currency lost), `silver_fx_rates_current_sane_vs_seed` (live rate within `var('fx_max_ratio_vs_seed', 10)`× of the seed; catches a `units_per_usd`/`usd_per_unit` inversion), and three on `fct_live_transactions`: FX tick inside `[event_time - var('live_fx_join_seconds', 60) s, event_time]`, `amount = amount_native * fx_usd_per_unit`, and the batch revenue rule.
 
 Most Gold tables declare btree indexes in `{{ config(indexes=[...]) }}`. The mart does not.
 

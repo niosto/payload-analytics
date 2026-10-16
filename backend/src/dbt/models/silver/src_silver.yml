@@ -14,3 +14,9 @@ sources:
       - name: stg_loans
         identifier: stg_loans
         description: Table with loans data
+      - name: stream_fx_rates
+        identifier: stream_fx_rates
+        description: FX ticks written by the streaming job (one row per currency per tick, usd_per_unit like seed_fx_rates)
+      - name: stream_transactions
+        identifier: stream_transactions
+        description: Live transactions written by the streaming job, joined with the FX tick in effect at event_time
