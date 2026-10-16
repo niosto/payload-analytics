@@ -81,6 +81,23 @@ services:
       - KAFKA_BOOTSTRAP=redpanda:9092
     restart: unless-stopped
 
+  # Real market rates (Binance public WebSocket) for BRL, ARS, MXN, COP, EUR.
+  # fx_producer must not publish those same currencies: set FX_CURRENCIES in
+  # ../.envs/config.env to the rest (USD,CLP,PEN,UYU).
+  fx_market_producer:
+    container_name: 'PayloadAnalyticsFxMarketProducer'
+    build:
+      context: ../src/producers
+    command: ['python', 'fx_market_producer.py']
+    depends_on:
+      redpanda_init:
+        condition: service_completed_successfully
+    env_file:
+      - ../.envs/config.env
+    environment:
+      - KAFKA_BOOTSTRAP=redpanda:9092
+    restart: unless-stopped
+
   transactions_simulator:
     container_name: 'PayloadAnalyticsTransactionsSimulator'
     build:

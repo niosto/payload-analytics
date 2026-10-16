@@ -266,7 +266,8 @@ The streaming side runs on your machine with Docker, not in AWS. Nothing here is
 | `redpanda` | Kafka-compatible broker. Inside Docker it is `redpanda:9092`; from the host it is `localhost:19092`. |
 | `redpanda_init` | Creates the topics `fx.rates` and `fintech.live_transactions` (3 partitions each), then exits. |
 | `console` | Redpanda Console at http://localhost:8088 to browse topics and messages. |
-| `fx_producer` | Publishes USD exchange rates for the nine currencies to `fx.rates`, keyed by currency. |
+| `fx_market_producer` | Real market rates for BRL, ARS, MXN, COP, and EUR from the Binance public WebSocket, to `fx.rates`, keyed by currency. |
+| `fx_producer` | Daily rates from open.er-api.com for the currencies Binance does not list (USD, CLP, PEN, UYU), to the same topic. |
 | `transactions_simulator` | Publishes live transactions to `fintech.live_transactions`, keyed by customer. |
 | `spark_streaming` | Spark Structured Streaming. Joins each transaction with its FX rate and writes both streams to `silver.stream_*` on RDS. Spark UI at http://localhost:4040. |
 
@@ -274,9 +275,12 @@ Create `streaming/.envs/config.env` (gitignored). Every value has a default, so 
 
 ```text
 FX_API_URL=https://open.er-api.com/v6/latest/USD
-FX_CURRENCIES=USD,EUR,COP,ARS,MXN,CLP,PEN,BRL,UYU
+FX_CURRENCIES=USD,CLP,PEN,UYU
 FX_FETCH_SECONDS=600
 FX_PUBLISH_SECONDS=10
+FX_MARKET_SYMBOLS=BRL:USDTBRL:inverse,ARS:USDTARS:inverse,MXN:USDTMXN:inverse,COP:USDTCOP:inverse,EUR:EURUSDT:direct
+FX_MARKET_PUBLISH_MS=1000
+FX_MARKET_HEARTBEAT_SECONDS=10
 TX_EVENTS_PER_SECOND=2
 TX_SEED=
 STARTING_OFFSETS=latest
@@ -318,7 +322,14 @@ docker logs -f PayloadAnalyticsSparkStreaming
 
 Stop it with `docker compose -f .docker/docker-compose.yml stop`. The producers flush pending events before they exit, and the Spark job resumes from its checkpoint. `down -v` also deletes the topic data and the checkpoint.
 
-**FX rates.** The free provider refreshes its rates about once a day. The producer calls the API every `FX_FETCH_SECONDS` and republishes the last rates every `FX_PUBLISH_SECONDS`, so the stream always has a recent tick. `provider_updated_at` is the provider's own timestamp, the real age of the rate; `event_time` is when the tick was published. `usd_per_unit` has the same meaning as in `seed_fx_rates`. If the API fails, the producer keeps the last good rates and retries with backoff. It never makes up a rate.
+**FX rates.** Two producers write to `fx.rates`, and each currency comes from exactly one of them. Keep `FX_CURRENCIES` and `FX_MARKET_SYMBOLS` disjoint; if both publish the same currency, the stream join alternates between a market price and a daily price.
+
+- **Market (`fx_market_producer`)**: real executed trades from Binance's public market-data stream (`data-stream.binance.vision`, no API key) for USDT/BRL, USDT/ARS, USDT/MXN, USDT/COP, and EUR/USDT. USDT is treated as USD. Trades are coalesced to at most one tick per currency per second. A currency with no new trade is republished every 10 seconds with its last price, because thin pairs (MXN, COP) can go a minute or more without a trade. On start, it reads the last trade of each pair over REST, so every currency has a rate right away. If the WebSocket drops, it reconnects with backoff and keeps the heartbeat on the last real price.
+- **Daily (`fx_producer`)**: open.er-api.com, which refreshes about once a day, for USD, CLP, PEN, and UYU. It calls the API every `FX_FETCH_SECONDS` and republishes every `FX_PUBLISH_SECONDS`.
+
+In both, `provider_updated_at` is when the price was actually set (the trade time, or the API's update time) and `event_time` is when the tick was published. Their difference is the real age of the rate: seconds for the market currencies, hours for the daily ones. `provider` says where it came from. `usd_per_unit` means the same as in `seed_fx_rates`. Neither producer makes up a rate.
+
+Note that ARS from the market is the crypto dollar (about 1,615 per USD on 2026-10-15), not the official rate (about 1,530). For a fintech settling in USDT that is the relevant price; for official reporting it is not.
 
 **Live transactions.** Customers and accounts come from `data/raw/fintech_banking_dataset.json`, so every event points to a customer and account that exist in Silver and Gold. Amount, type, category, merchant, channel, status, and description are copied from a real transaction in the same currency, dirt included. The date is today in one of the four source formats, with the source's frequencies. Live ids start with `LTX-`, batch ids with `TXN-`. All fields are strings, the same contract as `silver.stg_transactions`.
 
