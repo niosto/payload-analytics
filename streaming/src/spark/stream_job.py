@@ -23,16 +23,18 @@ other DB_* variables instead and the secret is not read.
 import json
 import logging
 import os
+import time
 
 import psycopg2
 from psycopg2.extras import execute_values
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, expr, from_json, row_number, upper, trim
+from pyspark.sql.functions import col, expr, from_json, upper, trim
 from pyspark.sql.types import DoubleType, StringType, StructField, StructType
-from pyspark.sql.window import Window
 
 logging.basicConfig(level="INFO", format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("stream_job")
+# py4j logs every callback from the JVM at INFO; one per micro-batch per query.
+logging.getLogger("py4j").setLevel(logging.WARNING)
 
 
 def env(name, default):
@@ -200,9 +202,14 @@ def main():
     tx = read_topic(spark, TX_TOPIC, TX_SCHEMA)
 
     def write_fx(batch_df, batch_id):
+        started = time.perf_counter()
         rows = batch_df.select(*FX_COLUMNS).collect()
+        collected = time.perf_counter()
         sink.upsert(FX_UPSERT, FX_COLUMNS, rows)
-        log.info("fx batch=%s rows=%d", batch_id, len(rows))
+        log.info(
+            "fx batch=%s rows=%d spark_ms=%d db_ms=%d", batch_id, len(rows),
+            (collected - started) * 1000, (time.perf_counter() - collected) * 1000,
+        )
 
     fx_query = (
         fx.writeStream.queryName("fx_sink")
@@ -231,20 +238,28 @@ def main():
         "leftOuter",
     )
 
-    latest_tick = Window.partitionBy("transaction_id").orderBy(
-        col("fx_event_time").desc_nulls_last()
-    )
-
     def write_tx(batch_df, batch_id):
-        rows = (
-            batch_df.withColumn("rn", row_number().over(latest_tick))
-            .filter(col("rn") == 1)
-            .select(*TX_COLUMNS)
-            .collect()
-        )
+        started = time.perf_counter()
+        # Several ticks match each transaction; keep the latest. Batches hold a
+        # few seconds of events, so this runs on the driver: a Spark window here
+        # costs an extra shuffle per micro-batch, about a second each.
+        latest = {}
+        for row in batch_df.select(*TX_COLUMNS).collect():
+            kept = latest.get(row["transaction_id"])
+            if kept is None or (
+                row["fx_event_time"] is not None
+                and (kept["fx_event_time"] is None or row["fx_event_time"] > kept["fx_event_time"])
+            ):
+                latest[row["transaction_id"]] = row
+        rows = list(latest.values())
+        collected = time.perf_counter()
         sink.upsert(TX_UPSERT, TX_COLUMNS, rows)
         unmatched = sum(1 for r in rows if r["fx_usd_per_unit"] is None)
-        log.info("tx batch=%s rows=%d without_fx=%d", batch_id, len(rows), unmatched)
+        log.info(
+            "tx batch=%s rows=%d without_fx=%d spark_ms=%d db_ms=%d",
+            batch_id, len(rows), unmatched,
+            (collected - started) * 1000, (time.perf_counter() - collected) * 1000,
+        )
 
     tx_query = (
         joined.writeStream.queryName("tx_sink")

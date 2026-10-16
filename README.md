@@ -330,7 +330,14 @@ from silver.stream_transactions
 where fx_usd_per_unit is not null and event_time > now() - interval '10 minutes';
 ```
 
-Measured locally with `TRIGGER_SECONDS=1`: transactions p50 3.3 s and p95 4.9 s, FX ticks p50 1.5 s and p95 2.3 s. Rows without a rate wait for the watermark, so they land about 2 minutes later.
+Measured with `TRIGGER_SECONDS=1`:
+
+| Target | FX ticks p50 / p95 | Transactions p50 / p95 |
+| --- | --- | --- |
+| Local Postgres | 1.5 s / 2.3 s | 3.3 s / 4.9 s |
+| Team RDS (us-east-2) | 1.3–1.7 s / 2.7–2.8 s | 3.1–4.2 s / 7.1–7.3 s |
+
+The FX latency goal (under 5 s) holds on RDS. Each transaction micro-batch spends about 2 s in the stream-stream join and about 0.3 s writing to RDS; the job logs both as `spark_ms` and `db_ms`. Rows without a rate wait for the watermark, so they land about 2 minutes later.
 
 ## What the models do
 
