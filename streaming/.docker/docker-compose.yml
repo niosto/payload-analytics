@@ -79,6 +79,8 @@ services:
       - ../.envs/config.env
     environment:
       - KAFKA_BOOTSTRAP=redpanda:9092
+    # Time to close sockets and flush pending events after SIGTERM.
+    stop_grace_period: 15s
     restart: unless-stopped
 
   # Real market rates (Binance public WebSocket) for BRL, ARS, MXN, COP, EUR.
@@ -96,6 +98,8 @@ services:
       - ../.envs/config.env
     environment:
       - KAFKA_BOOTSTRAP=redpanda:9092
+    # Time to close sockets and flush pending events after SIGTERM.
+    stop_grace_period: 15s
     restart: unless-stopped
 
   transactions_simulator:
@@ -113,6 +117,8 @@ services:
       - TX_SOURCE_PATH=/data/raw/fintech_banking_dataset.json
     volumes:
       - ../../data:/data:ro
+    # Time to close sockets and flush pending events after SIGTERM.
+    stop_grace_period: 15s
     restart: unless-stopped
 
   # Writes to the team RDS. Needs ../../.envs/aws.env to read the DB secret,
@@ -134,6 +140,9 @@ services:
       - payload-analytics-spark-checkpoints:/checkpoints
     ports:
       - '4040:4040'
+    # Without an explicit value these containers got a 1 s stop timeout; the
+    # JVM needs longer to stop the queries. It exits 143 (SIGTERM), not 137.
+    stop_grace_period: 45s
     restart: unless-stopped
 
 volumes:

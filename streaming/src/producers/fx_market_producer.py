@@ -159,7 +159,11 @@ async def stream_loop(state, stop, log):
     backoff = 1
     while not stop.stopped:
         try:
-            async with websockets.connect(url, ping_interval=20, ping_timeout=20) as ws:
+            # close_timeout stays short: Docker kills the container 10 s after
+            # SIGTERM, and the default would wait that long for Binance's close.
+            async with websockets.connect(
+                url, ping_interval=20, ping_timeout=20, close_timeout=2
+            ) as ws:
                 log.info("connected %s", url)
                 backoff = 1
                 while not stop.stopped:
