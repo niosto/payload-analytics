@@ -60,6 +60,9 @@ payload-analytics/
 │       ├── spark/
 │       ├── dbt/
 │       └── orchestration/
+├── streaming/                       # Local Redpanda and producers (runs on your machine)
+│   ├── .docker/
+│   └── src/producers/
 └── data/raw/                        # Sample JSON used to start a run
 ```
 
@@ -254,6 +257,99 @@ psql "host=${ENDPOINT} port=5432 dbname=payload_analytics user=payload_analytics
 
 RDS lists its PostgreSQL output under log files named `error/postgresql.log`. That name is the log path. It does not mean the pipeline failed. Use the Step Functions execution status for that.
 
+## 6. Run the streaming pipeline
+
+The streaming side runs on your machine with Docker, not in AWS. Nothing here is deployed with Serverless. The only AWS piece it touches is the existing RDS instance, which the Spark job writes to.
+
+| Service | Role |
+| --- | --- |
+| `redpanda` | Kafka-compatible broker. Inside Docker it is `redpanda:9092`; from the host it is `localhost:19092`. |
+| `redpanda_init` | Creates the topics `fx.rates` and `fintech.live_transactions` (3 partitions each), then exits. |
+| `console` | Redpanda Console at http://localhost:8088 to browse topics and messages. |
+| `fx_market_producer` | Real market rates for BRL, ARS, MXN, COP, and EUR from the Binance public WebSocket, to `fx.rates`, keyed by currency. |
+| `fx_producer` | Daily rates from open.er-api.com for the currencies Binance does not list (USD, CLP, PEN, UYU), to the same topic. |
+| `transactions_simulator` | Publishes live transactions to `fintech.live_transactions`, keyed by customer. |
+| `spark_streaming` | Spark Structured Streaming. Joins each transaction with its FX rate and writes both streams to `silver.stream_*` on RDS. Spark UI at http://localhost:4040. |
+
+Create `streaming/.envs/config.env` (gitignored). Every value has a default, so an empty file also works:
+
+```text
+FX_API_URL=https://open.er-api.com/v6/latest/USD
+FX_CURRENCIES=USD,CLP,PEN,UYU
+FX_FETCH_SECONDS=600
+FX_PUBLISH_SECONDS=10
+FX_MARKET_SYMBOLS=BRL:USDTBRL:inverse,ARS:USDTARS:inverse,MXN:USDTMXN:inverse,COP:USDTCOP:inverse,EUR:EURUSDT:direct
+FX_MARKET_PUBLISH_MS=1000
+FX_MARKET_HEARTBEAT_SECONDS=10
+TX_EVENTS_PER_SECOND=2
+TX_SEED=
+STARTING_OFFSETS=latest
+TRIGGER_SECONDS=1
+WATERMARK=2 minutes
+FX_JOIN_SECONDS=60
+```
+
+The Spark job also reads `.envs/aws.env` to get the database secret, the same one Glue and dbt use. No password goes in any env file.
+
+Before the first start, create the streaming tables. From the backend container:
+
+```bash
+cd /app/backend && ./database/rds/migrate.sh
+```
+
+That applies `20261015000000_silver_streaming`, which only adds `silver.stream_fx_rates` and `silver.stream_transactions`. Migrations already applied are skipped.
+
+Then start everything from the `streaming` folder:
+
+```bash
+cd payload-analytics/streaming
+docker compose -f .docker/docker-compose.yml up -d --build
+```
+
+To run only the broker and the producers, without writing to RDS, list the services:
+
+```bash
+docker compose -f .docker/docker-compose.yml up -d --build redpanda redpanda_init console fx_producer transactions_simulator
+```
+
+Check that events are flowing and landing:
+
+```bash
+docker exec PayloadAnalyticsRedpanda rpk topic consume fx.rates -n 3
+docker exec PayloadAnalyticsRedpanda rpk topic consume fintech.live_transactions -n 3
+docker logs -f PayloadAnalyticsSparkStreaming
+```
+
+Stop it with `docker compose -f .docker/docker-compose.yml stop`. The producers flush pending events before they exit, and the Spark job resumes from its checkpoint. `down -v` also deletes the topic data and the checkpoint.
+
+**FX rates.** Two producers write to `fx.rates`, and each currency comes from exactly one of them. Keep `FX_CURRENCIES` and `FX_MARKET_SYMBOLS` disjoint; if both publish the same currency, the stream join alternates between a market price and a daily price.
+
+- **Market (`fx_market_producer`)**: real executed trades from Binance's public market-data stream (`data-stream.binance.vision`, no API key) for USDT/BRL, USDT/ARS, USDT/MXN, USDT/COP, and EUR/USDT. USDT is treated as USD. Trades are coalesced to at most one tick per currency per second. A currency with no new trade is republished every 10 seconds with its last price, because thin pairs (MXN, COP) can go a minute or more without a trade. On start, it reads the last trade of each pair over REST, so every currency has a rate right away. If the WebSocket drops, it reconnects with backoff and keeps the heartbeat on the last real price.
+- **Daily (`fx_producer`)**: open.er-api.com, which refreshes about once a day, for USD, CLP, PEN, and UYU. It calls the API every `FX_FETCH_SECONDS` and republishes every `FX_PUBLISH_SECONDS`.
+
+In both, `provider_updated_at` is when the price was actually set (the trade time, or the API's update time) and `event_time` is when the tick was published. Their difference is the real age of the rate: seconds for the market currencies, hours for the daily ones. `provider` says where it came from. `usd_per_unit` means the same as in `seed_fx_rates`. Neither producer makes up a rate.
+
+Note that ARS from the market is the crypto dollar (about 1,615 per USD on 2026-10-15), not the official rate (about 1,530). For a fintech settling in USDT that is the relevant price; for official reporting it is not.
+
+**Live transactions.** Customers and accounts come from `data/raw/fintech_banking_dataset.json`, so every event points to a customer and account that exist in Silver and Gold. Amount, type, category, merchant, channel, status, and description are copied from a real transaction in the same currency, dirt included. The date is today in one of the four source formats, with the source's frequencies. Live ids start with `LTX-`, batch ids with `TXN-`. All fields are strings, the same contract as `silver.stg_transactions`.
+
+**Spark job.** Each transaction is joined with the FX ticks for its currency published in the `FX_JOIN_SECONDS` before its `event_time`, and the latest one is kept. It is a left join: if the FX producer is down, the transaction is still written with empty FX columns once the 2-minute watermark passes, and dbt converts it with `fx_rates_current` instead. Rows are upserted by `transaction_id` and `event_id`, so a restart never duplicates them. `processed_at - event_time` is the end-to-end latency:
+
+```sql
+select percentile_cont(0.95) within group (order by extract(epoch from processed_at - event_time)) as p95_seconds
+from silver.stream_transactions
+where fx_usd_per_unit is not null and event_time > now() - interval '10 minutes';
+```
+
+Measured with `TRIGGER_SECONDS=1`:
+
+| Target | FX ticks p50 / p95 | Transactions p50 / p95 |
+| --- | --- | --- |
+| Local Postgres | 1.5 s / 2.3 s | 3.3 s / 4.9 s |
+| Team RDS (us-east-2) | 1.3–1.7 s / 2.7–2.8 s | 3.1–4.2 s / 7.1–7.3 s |
+
+The FX latency goal (under 5 s) holds on RDS. Each transaction micro-batch spends about 2 s in the stream-stream join and about 0.3 s writing to RDS; the job logs both as `spark_ms` and `db_ms`. Rows without a rate wait for the watermark, so they land about 2 minutes later.
+
 ## What the models do
 
 Spark only explodes and deduplicates. dbt does the cleaning.
@@ -267,7 +363,25 @@ Spark only explodes and deduplicates. dbt does the cleaning.
 
 Silver models then standardize names, emails, phones, dates, amounts, and categories. Gold keeps money in USD and drops the `_usd` suffix. Native currency stays on Silver.
 
-Seeds under `backend/src/dbt/seeds/` map cities, segments, statuses, transaction types, phone codes, expected currency by country, and static FX rates.
+Seeds under `backend/src/dbt/seeds/` map cities, segments, statuses, transaction types, phone codes, expected currency by country, and fallback FX rates.
+
+### FX rates and live transactions
+
+Every USD amount goes through `to_usd`, which reads `silver.fx_rates_current`: one row per currency with the latest live tick from `silver.stream_fx_rates`. When the stream has no tick for a currency in the last 48 hours (`fx_live_max_age_hours`), that currency falls back to `seed_fx_rates`. `rate_source` says which one was used. So batch USD amounts follow the live rate whenever the streaming job has run recently, and the seed values otherwise.
+
+With the rates of 2026-10-15, the switch moves the batch transaction total by -0.2% overall, but much more per currency: ARS -34%, COP +26%, PEN +8%, CLP -8%, MXN -7%. Country-level reports change accordingly.
+
+| Model | What it holds |
+| --- | --- |
+| `silver.fx_rates_current` | Rate per currency used by `to_usd`, its source (`stream` or `seed`), and the seed value for comparison. |
+| `silver.live_transactions` | View over `silver.stream_transactions`, cleaned with the batch macros. USD uses the rate joined in the stream at event time, or `fx_rates_current` when there was none (`fx_rate_source`). |
+| `gold.fct_live_transactions` | Incremental fact with the `fct_transactions` columns plus `amount_native`, `fx_usd_per_unit`, `fx_rate_source`, `event_time`, `processed_at`, and `latency_seconds`. Each run adds the new rows and rebuilds the last 10 minutes (`live_lookback_minutes`). |
+
+To refresh only the live fact between batch runs:
+
+```bash
+dbt run -s fct_live_transactions
+```
 
 ## Data quality
 
