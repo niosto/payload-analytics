@@ -1,0 +1,10 @@
+{
+  "name": "payload-analytics-backend",
+  "private": true,
+  "description": "Serverless plugins for the Glue, dbt and orchestration stacks",
+  "devDependencies": {
+    "@serverless/safeguards-plugin": "^1.2.1",
+    "serverless-deployment-bucket": "^1.6.0",
+    "serverless-step-functions": "^3.31.2"
+  }
+}

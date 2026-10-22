@@ -513,3 +513,53 @@ models:
         description: Timestamp when the record was loaded.
         tests:
           - not_null
+
+  # fx_rates_current
+  - name: fx_rates_current
+    description: >
+      Rate to_usd applies, one row per currency. Latest live tick from
+      stream_fx_rates when newer than fx_live_max_age_hours, else seed_fx_rates.
+    columns:
+      - name: currency
+        description: ISO currency code, upper case.
+        tests:
+          - not_null
+          - unique
+
+      - name: usd_per_unit
+        description: USD for one unit of the currency.
+        tests:
+          - not_null
+          - is_positive
+
+      - name: rate_source
+        description: stream when a recent live tick exists, seed otherwise.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['stream', 'seed']
+
+  # live_transactions
+  - name: live_transactions
+    description: >
+      Live transactions from the stream, cleaned with the batch macros. A view;
+      gold.fct_live_transactions reads it incrementally.
+    columns:
+      - name: transaction_id
+        description: Live transaction id (LTX- prefix).
+        tests:
+          - not_null
+          - unique
+
+      - name: amount
+        description: Native amount after clean_amount.
+        tests:
+          - not_null
+          - is_positive
+
+      - name: fx_rate_source
+        description: event_window when the stream joined a tick, else fx_rates_current.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['event_window', 'fx_rates_current']

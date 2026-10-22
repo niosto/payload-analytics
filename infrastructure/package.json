@@ -1,0 +1,9 @@
+{
+  "name": "payload-analytics-infrastructure",
+  "private": true,
+  "description": "Serverless plugins for the S3, RDS, ECR and alerts stacks",
+  "devDependencies": {
+    "@serverless/safeguards-plugin": "^1.2.1",
+    "serverless-deployment-bucket": "^1.6.0"
+  }
+}

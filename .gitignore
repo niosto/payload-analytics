@@ -91,6 +91,8 @@ data/temp/
 *.pdf
 !backend/src/dbt/seeds/*
 !data/raw/*.json
+!infrastructure/package.json
+!backend/package.json
 
 # PowerBI (keep .pbix and screenshots, ignore temp files)
 *.tmp

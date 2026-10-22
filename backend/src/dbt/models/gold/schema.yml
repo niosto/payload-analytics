@@ -212,3 +212,67 @@ models:
         description: account_count + loan_count.
         tests:
           - is_non_negative
+
+  - name: fct_live_transactions
+    description: >
+      Live transaction fact from the stream. Same columns as fct_transactions,
+      plus the FX rate applied, its source, and the stream latency.
+    columns:
+      - name: transaction_id
+        description: Primary key — one row per live transaction.
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Foreign key to dim_customer.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_id
+      - name: account_id
+        description: Foreign key to dim_account.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_account')
+              field: account_id
+      - name: date_id
+        description: Foreign key to dim_date (YYYYMMDD integer).
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_id
+      - name: amount
+        description: Transaction amount in USD.
+        tests:
+          - not_null
+          - is_non_negative
+      - name: fx_usd_per_unit
+        description: Rate applied to convert amount_native to USD.
+        tests:
+          - not_null
+          - is_positive
+      - name: fx_rate_source
+        description: event_window (tick joined in the stream) or fx_rates_current (fallback).
+        tests:
+          - accepted_values:
+              values: ['event_window', 'fx_rates_current']
+      - name: revenue_amount
+        description: Revenue in USD (completed fee transactions only).
+        tests:
+          - is_non_negative
+      - name: is_revenue
+        description: True when revenue_amount is positive.
+        tests:
+          - not_null
+      - name: is_failed
+        description: True when transaction status is failed.
+        tests:
+          - not_null
+      - name: latency_seconds
+        description: processed_at minus event_time, end-to-end stream latency.
+        tests:
+          - not_null
+          - is_non_negative
