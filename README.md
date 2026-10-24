@@ -1,29 +1,32 @@
 # Payload Analytics
 
-An ELT pipeline for a LATAM fintech and banking dataset. A JSON file dropped in S3 is flattened with Spark, cleaned and modeled with dbt on PostgreSQL, and left ready for reporting.
+A hybrid data platform for a LATAM fintech that operates in seven markets. Two speeds of data meet in one PostgreSQL warehouse:
 
-The dataset covers customers, accounts, transactions, loans, credit indicators, and digital engagement. The pipeline keeps the file as it arrived, then builds a cleaned Silver layer and a Gold star schema for reporting.
+- **Batch:** a JSON file of ~5,000 customers, with their accounts, transactions, and loans, is dropped in S3. It is flattened with Spark on Glue, then cleaned and modeled with dbt on Fargate.
+- **Streaming:** real market FX rates and live transactions flow through Redpanda (Kafka) into Spark Structured Streaming, which joins each transaction with the rate in effect when it happened.
+
+dbt converts every amount to USD with the live rate. That is where the two speeds meet, and Gold is left ready for reporting.
 
 ## Architecture
 
-```text
-JSON upload
-  → S3 raw/
-  → EventBridge
-  → Step Functions
-  → Glue Spark job          writes silver.stg_*
-  → Fargate dbt task        seed, run, test
-  → S3 processed/           or failed/ plus an email
-```
+![Hybrid architecture: batch in AWS and streaming in local Docker meet in RDS PostgreSQL](imgs/architecture.drawio.svg)
 
-| Piece | Role |
-| --- | --- |
-| S3 data lake | Bronze. `raw/` is the inbox, `processed/` is the archive, `failed/` keeps files that did not finish. |
-| Glue | Reads one JSON file from S3 and replaces the four `silver.stg_*` tables. |
-| RDS PostgreSQL | Warehouse. Silver staging, cleaned Silver, seeds, and Gold. |
-| Fargate | Runs `dbt seed`, `dbt run`, and `dbt test` from a container image in ECR. |
-| Step Functions | Runs Glue, then dbt, then moves the file. |
-| SNS | Emails you when a run fails. |
+| Piece | Where | Role |
+| --- | --- | --- |
+| S3 data lake | AWS | Bronze for batch. `raw/` is the inbox, `processed/` is the archive, `failed/` keeps files that did not finish. |
+| EventBridge + Step Functions | AWS | A new object in `raw/` starts the state machine: Glue, then dbt, then it moves the file. |
+| Glue | AWS | Reads one JSON file from S3 and replaces the four `silver.stg_*` tables. |
+| Fargate | AWS | Runs `dbt seed`, `dbt run`, and `dbt test` from a container image in ECR. |
+| RDS PostgreSQL | AWS | Warehouse: Silver staging, streaming Silver, cleaned Silver, seeds, and Gold. |
+| SNS | AWS | Emails the team when a run fails. |
+| Secrets Manager | AWS | The only place the database password lives. Glue, Fargate, and the streaming job read it from there. |
+| Redpanda | Local | Kafka-compatible broker. Its two topics are the raw event log, the Bronze of the streaming side. |
+| FX producers | Local | Real rates: Binance trades for five currencies, a daily API for the other four. Each currency has one source. |
+| Transaction simulator | Local | Live transactions on real customers and accounts from the dataset, with the source's dirt kept. |
+| Spark Structured Streaming | Local | Joins each transaction with the latest FX tick of the minute before it, then upserts `silver.stream_*` on RDS. |
+| dbt `fx_rates_current` | RDS | The latest live rate per currency, or `seed_fx_rates` when the stream has no recent tick. Every USD amount in Silver and Gold uses it. |
+
+**Why hybrid.** The streaming side runs in Docker on a laptop and writes to the same RDS as the batch. A managed Kafka (MSK) costs USD 70–500 a month, and Kinesis plus a Glue streaming job about USD 1 per hour while running; the team's budget alert is USD 1 a month. Running it locally keeps the AWS bill at the batch's cost, and nothing downstream changes: dbt reads `silver.stream_*` like any other table.
 
 There is no NAT Gateway. The database is a public `db.t4g.micro` in the default VPC. Glue uses AWS's managed network. The dbt task runs in the default public subnets with a public IP so it can pull its image, read the database secret, and reach PostgreSQL.
 
@@ -31,10 +34,13 @@ Each new file replaces `silver.stg_*` and dbt rebuilds the tables on top. Two up
 
 ## Layers
 
-- **Bronze** is the JSON object in S3. Nested accounts, transactions, loans, credit info, and digital engagement stay intact.
+- **Bronze** is the JSON object in S3 for batch, with nested accounts, transactions, loans, credit info, and digital engagement intact. For streaming it is the Redpanda topics, which keep every event as it was published.
 - **Silver staging** (`silver.stg_*`) is the flattened Spark output: customers, accounts, transactions, and loans. Values stay strings. Credit info and digital engagement stay JSON text on the customer row.
-- **Silver** is the dbt layer: typed amounts, parsed dates, seed lookups, and flags for bad emails and currency mismatches.
-- **Gold** is the star schema for reporting: customer, account, and date dimensions, transaction and loan facts, and a customer summary.
+- **Silver streaming** (`silver.stream_fx_rates`, `silver.stream_transactions`) is what Spark Structured Streaming writes: every FX tick, and every live transaction with the rate joined at event time. Business fields stay strings; event times are typed so latency can be measured.
+- **Silver** is the dbt layer: typed amounts, parsed dates, seed lookups, flags for bad emails and currency mismatches, `fx_rates_current`, and the cleaned live transactions.
+- **Gold** is the star schema for reporting: customer, account, and date dimensions, transaction and loan facts, a customer summary, and `fct_live_transactions`, the incremental fact of the stream.
+
+The diagrams below show the batch models. The streaming models and every dependency between tables are in the [lineage](docs/governance/lineage.md) and the [data catalog](docs/governance/catalog.html).
 
 ![Silver layer](imgs/silver_diagram.jpeg)
 

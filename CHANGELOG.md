@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `fx_rates_current` reads the latest tick per currency with `LATERAL ... LIMIT 1` instead of `DISTINCT ON`, so it uses `stream_fx_rates_norm_currency_event_time_idx`: 1,593 ms down to 0.19 ms on 2M ticks. The seed now drives the currency list
 - The `fct_live_transactions` index on `processed_at` moved from `indexes` to a `post_hook`, because dbt builds `indexes` only when an incremental table is created
+- README architecture covers the hybrid platform: a draw.io diagram (`imgs/architecture.drawio.svg`, editable in diagrams.net) of the batch path in AWS and the streaming path in local Docker meeting in RDS, a table of every component, why streaming runs locally, and the streaming layers
 
 ### Fixed
 
