@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS silver.stream_transactions_processed_at_idx;
+DROP INDEX IF EXISTS silver.stream_fx_rates_norm_currency_event_time_idx;

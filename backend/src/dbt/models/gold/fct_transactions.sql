@@ -5,6 +5,10 @@
       {'columns': ['customer_id', 'transaction_date']},
       {'columns': ['date_id']},
       {'columns': ['account_id']}
+    ],
+    post_hook=[
+      "create index if not exists fct_transactions_revenue_idx on {{ this }} (date_id) include (customer_country, revenue_amount) where is_revenue",
+      "analyze {{ this }}"
     ]
 ) }}
 
