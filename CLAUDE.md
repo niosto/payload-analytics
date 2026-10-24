@@ -39,7 +39,7 @@ No NAT Gateway. RDS is a public `db.t4g.micro` in the default VPC (`PubliclyAcce
 - **`infrastructure/serverless/rds`**: Postgres 18, `db.t4g.micro`, master user `payload_analytics_admin` (no hyphen; RDS rejects hyphens). Secret name `/payload-analytics-rds/MasterCredentials`. The secret template includes `username` and `dbname`; the RDS attachment adds `host` and `port`.
 - **`infrastructure/serverless/registry`**: ECR repository. SSM `/payload-analytics-registry/DbtRepositoryUri`.
 - **`infrastructure/serverless/alerts`**: SNS email topic and a monthly budget. SSM `/payload-analytics-alerts/PipelineAlertsTopicArn`.
-- **`backend/database/rds/`**: yoyo migration `20260930000000_silver_staging` creates `silver` and the four `stg_*` tables. `20261015000000_silver_streaming` (depends on it) adds `silver.stream_fx_rates` and `silver.stream_transactions`. `migrate.sh` reads the master secret. Rollbacks run newest first: streaming drops its two tables, staging drops the `stg_*` tables and the schema.
+- **`backend/database/rds/`**: yoyo migration `20260930000000_silver_staging` creates `silver` and the four `stg_*` tables. `20261015000000_silver_streaming` (depends on it) adds `silver.stream_fx_rates` and `silver.stream_transactions`. `20261023000000_stream_indexes` adds the expression index `stream_fx_rates_norm_currency_event_time_idx` (used by `fx_rates_current`) and `stream_transactions_processed_at_idx` (the incremental filter). `migrate.sh` reads the master secret. Rollbacks run newest first: streaming drops its two tables, staging drops the `stg_*` tables and the schema.
 - **`backend/src/spark/transformations.py`**: `deduplicate` and `build_silver_frames`. Shared by the Glue job.
 - **`backend/src/spark/glue_job.py`**: Glue entrypoint. `--source_path` is the S3 URI. `--secret_name` is the master secret. Reads JSON with `SCHEMA`, adds `load_timestamp`, writes each frame with `mode("overwrite")` and `truncate=true`.
 - **`backend/src/spark/schemas/spark_schema.py`**: every field is `StringType` on purpose.
@@ -119,7 +119,7 @@ Sources in `models/silver/src_silver.yml` point at the Spark tables.
 - `customers` — `INITCAP` names, cleaned email + `email_status`, city/segment/status via `match_seed`, phone via `normalize_phone`, dates via `format_date`, derived tenure, age, and risk tier.
 - `accounts` — `clean_amount` / `to_usd`, `is_currency_mismatch` against `seed_currency_map`, `account_age_months`.
 - `transactions` — date parts, `amount_usd`, type via `seed_transaction_type`.
-- `fx_rates_current` — **table** on purpose (`to_usd` runs a scalar lookup per row; a view over the tick history would be scanned ~175k times). One row per currency: latest `stream_fx_rates` tick newer than `var('fx_live_max_age_hours', 48)`, else `seed_fx_rates` (`FULL OUTER JOIN`, so no seed currency is lost). Columns `rate_source` (`stream`/`seed`), `rate_event_time`, `provider_updated_at`, `seed_usd_per_unit`.
+- `fx_rates_current` — **table** on purpose (`to_usd` runs a scalar lookup per row; a view over the tick history would be scanned ~175k times). One row per currency: latest `stream_fx_rates` tick newer than `var('fx_live_max_age_hours', 48)`, else `seed_fx_rates`. The seed drives the currency list: one `CROSS JOIN LATERAL (... ORDER BY UPPER(TRIM(currency)), event_time DESC LIMIT 1)` per seed currency, so each lookup is one probe of `stream_fx_rates_norm_currency_event_time_idx`. Do not go back to `DISTINCT ON`: it reads the whole 48 h window and ignores the index (1.5 s vs 0.19 ms on 2M ticks). Keep `UPPER(TRIM(currency))` and `usd_per_unit > 0` as written; the index matches those expressions. A currency missing from the seed gets no live rate. Columns `rate_source` (`stream`/`seed`), `rate_event_time`, `provider_updated_at`, `seed_usd_per_unit`.
 - `live_transactions` — **view** over `source('silver','stream_transactions')`, same cleaning macros as `transactions`. `amount_usd` uses the stream's `fx_usd_per_unit` (rate at event time); when NULL, `to_usd` (fx_rates_current). `fx_rate_source` is `event_window` or `fx_rates_current`. Adds `event_time`, `kafka_ts`, `processed_at`, `latency_seconds`.
 - `loans` — USD principals, balances, and payments; `is_delinquent` when status is `delinquent` or `default`; `dpd_bucket`.
 - `credit_info` / `digital_engagement` — one row per customer that has the object, extracted with `::jsonb`. `credit_score` outside 350–800 becomes NULL.
@@ -159,13 +159,15 @@ Money is already USD and drops the `_usd` suffix. Native currency stays on Silve
 - `fct_transactions` — `date_id` from `transaction_date`, `is_failed`, `is_international`, revenue from the fee-and-completed macro.
 - `fct_loans` — `date_id` from **start_date**, `pct_outstanding` capped at 1, `estimated_monthly_interest = outstanding * rate/100 / 12`.
 - `mart_customer_summary` — the only Gold model that is a **view** (set in the SQL file, not `dbt_project.yml`).
-- `fct_live_transactions` — the only **incremental** model. `delete+insert` on `transaction_id`; the incremental filter takes `processed_at` newer than the table max minus `var('live_lookback_minutes', 10)`, so rows whose FX columns the stream upserted after the last run are rebuilt. Same columns as `fct_transactions` plus `amount_native`, `fx_usd_per_unit`, `fx_rate_source`, `fx_event_time`, `fx_provider_updated_at`, `event_time`, `kafka_ts`, `processed_at`, `latency_seconds`. Does not join `accounts` (not needed for any column).
+- `fct_live_transactions` — the only **incremental** model. `delete+insert` on `transaction_id`; the incremental filter takes `processed_at` newer than the table max minus `var('live_lookback_minutes', 10)`, so rows whose FX columns the stream upserted after the last run are rebuilt. Same columns as `fct_transactions` plus `amount_native`, `fx_usd_per_unit`, `fx_rate_source`, `fx_event_time`, `fx_provider_updated_at`, `event_time`, `kafka_ts`, `processed_at`, `latency_seconds`. Does not join `accounts` (not needed for any column). Its `processed_at` index is a `post_hook` (`transaction: False`), not in `indexes`: dbt only builds `indexes` when an incremental table is created.
 
 The dbt project now reads `silver.stream_*`. Those tables come from migration `20261015000000_silver_streaming`; a database without it fails at `fx_rates_current`.
 
 Singular tests added with streaming: `silver_fx_rates_current_covers_seed` (no seed currency lost), `silver_fx_rates_current_sane_vs_seed` (live rate within `var('fx_max_ratio_vs_seed', 10)`× of the seed; catches a `units_per_usd`/`usd_per_unit` inversion), and three on `fct_live_transactions`: FX tick inside `[event_time - var('live_fx_join_seconds', 60) s, event_time]`, `amount = amount_native * fx_usd_per_unit`, and the batch revenue rule.
 
 Most Gold tables declare btree indexes in `{{ config(indexes=[...]) }}`. The mart does not.
+
+Indexes the `indexes` config cannot express (partial, `INCLUDE`) or that an existing incremental table needs are `post_hook`s with a fixed name and `create index if not exists`, and they **must** use `{"sql": "...", "transaction": False}`. Inside the transaction, dbt's `__dbt_backup` copy of the previous table still owns an index with that name, so `if not exists` skips and dropping the backup drops the index: it exists only on every other run. `fct_transactions_revenue_idx` hit exactly this. Measurements and the reasoning per index are in `docs/optimizations/README.md`.
 
 ### Tests
 
@@ -189,6 +191,6 @@ fix: unificar is_delinquent e indexar Gold
 docs: update readme, including data diagrams, pipeline execution and findings in the data
 ```
 
-Prefer one concern per commit. This repo has no `CHANGELOG.md`.
+Prefer one concern per commit. `CHANGELOG.md` follows Keep a Changelog with `DD/MM/YYYY` dates; add user-visible changes under `[Unreleased]`.
 
 **Never add Claude co-authorship to commits in this repository.**

@@ -7,10 +7,17 @@
       {'columns': ['account_id']}
     ],
     post_hook=[
-      "create index if not exists fct_transactions_revenue_idx on {{ this }} (date_id) include (customer_country, revenue_amount) where is_revenue",
-      "analyze {{ this }}"
+      {"sql": "create index if not exists fct_transactions_revenue_idx on {{ this }} (date_id) include (customer_country, revenue_amount) where is_revenue",
+       "transaction": False},
+      {"sql": "analyze {{ this }}", "transaction": False}
     ]
 ) }}
+
+-- The revenue index is partial with INCLUDE, which the indexes config cannot
+-- express, so it is a post_hook. It must run outside the transaction: inside
+-- it, dbt's backup of the previous table still exists and still owns an index
+-- with this name, "if not exists" skips, and dropping the backup then drops
+-- the only copy. The index would exist on every other run.
 
 select
     t.transaction_id,
