@@ -17,7 +17,7 @@ Quién hace, quién responde y a quién se consulta o informa en cada actividad 
 | Gobernanza: diccionario, catálogo, linaje, clasificación de sensibilidad | A | C | I | **R** |
 | Seguridad y acceso (secretos, cuenta AWS compartida, datos personales) | **R/A** | C | I | C |
 | Consumo: dashboard en Power BI (Sprint Final) | A | C | I | **R** |
-| Documentación del repositorio (README, CHANGELOG) | **R** | **R** | **R** | C |
+| Documentación del repositorio (README, CHANGELOG) | **R/A** | **R** | **R** | C |
 | Presentación del sprint | A | C | C | **R** |
 
 ## Reglas de decisión
