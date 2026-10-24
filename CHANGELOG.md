@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `fx_rates_current` reads the latest tick per currency with `LATERAL ... LIMIT 1` instead of `DISTINCT ON`, so it uses `stream_fx_rates_norm_currency_event_time_idx`: 1,593 ms down to 0.19 ms on 2M ticks. The seed now drives the currency list
+- The `fct_live_transactions` index on `processed_at` moved from `indexes` to a `post_hook`, because dbt builds `indexes` only when an incremental table is created
+
+### Fixed
+
+- `fct_transactions_revenue_idx` disappeared on every other dbt run: the `post_hook` ran inside the transaction, while the previous table's backup still owned an index with that name. The hook now runs with `transaction: False`
+
+### Added
+
+- `docs/optimizations/README.md`: before/after table and write-up of the four index experiments, including the `LATERAL` result for optimization 1
+
+## [1.2.0] - 23/10/2026
+
+### Added
+
+- Migration `20261023000000_stream_indexes`: expression index on `silver.stream_fx_rates (UPPER(TRIM(currency)), event_time DESC)` and an index on `silver.stream_transactions (processed_at)`
+- Partial index `fct_transactions_revenue_idx` on `gold.fct_transactions` for the revenue-by-country query, plus `analyze` after each build
+- `processed_at` index on `gold.fct_live_transactions`
+- `docs/optimizations/`: benchmark setup on a scaled `perf` schema, `run_explain.sh`, the queries and indexes, and `EXPLAIN (ANALYZE, BUFFERS)` results before and after
+
 ## [1.1.0] - 15/10/2026
 
 ### Added
