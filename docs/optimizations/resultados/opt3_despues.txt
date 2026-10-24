@@ -1,0 +1,126 @@
+-- fecha: 2026-10-23T22:09:38Z
+-- PostgreSQL 18.3 on aarch64-unknown-linux-gnu, compiled by aarch64-unknown-linux-gnu-gcc (GCC) 12.4.0, 64-bit
+=== corrida 1 ===
+SET
+                                                                                  QUERY PLAN                                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=4048.62..4059.33 rows=4284 width=19) (actual time=56.959..56.986 rows=332.00 loops=1)
+   Sort Key: f.customer_country, d.year, d.month_number
+   Sort Method: quicksort  Memory: 37kB
+   Buffers: shared hit=1136 read=279
+   I/O Timings: shared read=5.934
+   ->  HashAggregate  (cost=3747.36..3790.20 rows=4284 width=19) (actual time=55.412..55.515 rows=332.00 loops=1)
+         Group Key: f.customer_country, d.year, d.month_number
+         Batches: 1  Memory Usage: 169kB
+         Buffers: shared hit=1130 read=279
+         I/O Timings: shared read=5.934
+         ->  Hash Join  (cost=611.55..3019.12 rows=72824 width=19) (actual time=9.168..37.180 rows=72260.00 loops=1)
+               Hash Cond: (f.date_id = d.date_id)
+               Buffers: shared hit=1130 read=279
+               I/O Timings: shared read=5.934
+               ->  Index Only Scan using fct_tx_revenue_idx on fct_transactions f  (cost=0.42..2216.78 rows=72824 width=15) (actual time=3.111..15.800 rows=72260.00 loops=1)
+                     Heap Fetches: 0
+                     Index Searches: 1
+                     Buffers: shared hit=938 read=279
+                     I/O Timings: shared read=5.934
+               ->  Hash  (cost=378.28..378.28 rows=18628 width=12) (actual time=5.942..5.943 rows=18628.00 loops=1)
+                     Buckets: 32768  Batches: 1  Memory Usage: 1057kB
+                     Buffers: shared hit=192
+                     ->  Seq Scan on dim_date d  (cost=0.00..378.28 rows=18628 width=12) (actual time=0.028..2.646 rows=18628.00 loops=1)
+                           Buffers: shared hit=192
+ Planning:
+   Buffers: shared hit=253
+ Planning Time: 5.979 ms
+ Execution Time: 57.245 ms
+(28 rows)
+
+=== corrida 2 ===
+SET
+                                                                                 QUERY PLAN                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=4048.62..4059.33 rows=4284 width=19) (actual time=49.191..49.223 rows=332.00 loops=1)
+   Sort Key: f.customer_country, d.year, d.month_number
+   Sort Method: quicksort  Memory: 37kB
+   Buffers: shared hit=1415
+   ->  HashAggregate  (cost=3747.36..3790.20 rows=4284 width=19) (actual time=48.342..48.450 rows=332.00 loops=1)
+         Group Key: f.customer_country, d.year, d.month_number
+         Batches: 1  Memory Usage: 169kB
+         Buffers: shared hit=1409
+         ->  Hash Join  (cost=611.55..3019.12 rows=72824 width=19) (actual time=6.311..30.460 rows=72260.00 loops=1)
+               Hash Cond: (f.date_id = d.date_id)
+               Buffers: shared hit=1409
+               ->  Index Only Scan using fct_tx_revenue_idx on fct_transactions f  (cost=0.42..2216.78 rows=72824 width=15) (actual time=0.017..9.220 rows=72260.00 loops=1)
+                     Heap Fetches: 0
+                     Index Searches: 1
+                     Buffers: shared hit=1217
+               ->  Hash  (cost=378.28..378.28 rows=18628 width=12) (actual time=6.199..6.201 rows=18628.00 loops=1)
+                     Buckets: 32768  Batches: 1  Memory Usage: 1057kB
+                     Buffers: shared hit=192
+                     ->  Seq Scan on dim_date d  (cost=0.00..378.28 rows=18628 width=12) (actual time=0.019..2.882 rows=18628.00 loops=1)
+                           Buffers: shared hit=192
+ Planning:
+   Buffers: shared hit=245
+ Planning Time: 0.949 ms
+ Execution Time: 49.464 ms
+(24 rows)
+
+=== corrida 3 ===
+SET
+                                                                                 QUERY PLAN                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=4048.62..4059.33 rows=4284 width=19) (actual time=48.727..48.753 rows=332.00 loops=1)
+   Sort Key: f.customer_country, d.year, d.month_number
+   Sort Method: quicksort  Memory: 37kB
+   Buffers: shared hit=1415
+   ->  HashAggregate  (cost=3747.36..3790.20 rows=4284 width=19) (actual time=48.282..48.382 rows=332.00 loops=1)
+         Group Key: f.customer_country, d.year, d.month_number
+         Batches: 1  Memory Usage: 169kB
+         Buffers: shared hit=1409
+         ->  Hash Join  (cost=611.55..3019.12 rows=72824 width=19) (actual time=5.950..30.131 rows=72260.00 loops=1)
+               Hash Cond: (f.date_id = d.date_id)
+               Buffers: shared hit=1409
+               ->  Index Only Scan using fct_tx_revenue_idx on fct_transactions f  (cost=0.42..2216.78 rows=72824 width=15) (actual time=0.018..9.201 rows=72260.00 loops=1)
+                     Heap Fetches: 0
+                     Index Searches: 1
+                     Buffers: shared hit=1217
+               ->  Hash  (cost=378.28..378.28 rows=18628 width=12) (actual time=5.837..5.837 rows=18628.00 loops=1)
+                     Buckets: 32768  Batches: 1  Memory Usage: 1057kB
+                     Buffers: shared hit=192
+                     ->  Seq Scan on dim_date d  (cost=0.00..378.28 rows=18628 width=12) (actual time=0.018..2.636 rows=18628.00 loops=1)
+                           Buffers: shared hit=192
+ Planning:
+   Buffers: shared hit=245
+ Planning Time: 0.995 ms
+ Execution Time: 48.978 ms
+(24 rows)
+
+=== corrida 4 ===
+SET
+                                                                                 QUERY PLAN                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=4048.62..4059.33 rows=4284 width=19) (actual time=49.413..49.438 rows=332.00 loops=1)
+   Sort Key: f.customer_country, d.year, d.month_number
+   Sort Method: quicksort  Memory: 37kB
+   Buffers: shared hit=1415
+   ->  HashAggregate  (cost=3747.36..3790.20 rows=4284 width=19) (actual time=48.982..49.081 rows=332.00 loops=1)
+         Group Key: f.customer_country, d.year, d.month_number
+         Batches: 1  Memory Usage: 169kB
+         Buffers: shared hit=1409
+         ->  Hash Join  (cost=611.55..3019.12 rows=72824 width=19) (actual time=6.247..30.737 rows=72260.00 loops=1)
+               Hash Cond: (f.date_id = d.date_id)
+               Buffers: shared hit=1409
+               ->  Index Only Scan using fct_tx_revenue_idx on fct_transactions f  (cost=0.42..2216.78 rows=72824 width=15) (actual time=0.020..9.281 rows=72260.00 loops=1)
+                     Heap Fetches: 0
+                     Index Searches: 1
+                     Buffers: shared hit=1217
+               ->  Hash  (cost=378.28..378.28 rows=18628 width=12) (actual time=6.125..6.126 rows=18628.00 loops=1)
+                     Buckets: 32768  Batches: 1  Memory Usage: 1057kB
+                     Buffers: shared hit=192
+                     ->  Seq Scan on dim_date d  (cost=0.00..378.28 rows=18628 width=12) (actual time=0.019..2.727 rows=18628.00 loops=1)
+                           Buffers: shared hit=192
+ Planning:
+   Buffers: shared hit=245
+ Planning Time: 0.982 ms
+ Execution Time: 49.688 ms
+(24 rows)
+

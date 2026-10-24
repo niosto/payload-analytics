@@ -1,0 +1,30 @@
+                    Table "gold.fct_transactions"
+      Column      |       Type       | Collation | Nullable | Default 
+------------------+------------------+-----------+----------+---------
+ transaction_id   | text             |           |          | 
+ customer_id      | text             |           |          | 
+ account_id       | text             |           |          | 
+ date_id          | integer          |           |          | 
+ transaction_date | date             |           |          | 
+ day_of_week      | text             |           |          | 
+ is_weekend       | boolean          |           |          | 
+ customer_country | text             |           |          | 
+ amount           | double precision |           |          | 
+ currency         | text             |           |          | 
+ type             | text             |           |          | 
+ category         | text             |           |          | 
+ merchant         | text             |           |          | 
+ channel          | text             |           |          | 
+ status           | text             |           |          | 
+ is_failed        | boolean          |           |          | 
+ is_international | boolean          |           |          | 
+ revenue_amount   | double precision |           |          | 
+ is_revenue       | boolean          |           |          | 
+ description      | text             |           |          | 
+Indexes:
+    "0498533189a5aacbb51978f10b20a94b" btree (customer_id, transaction_date)
+    "56bcfc8c24b4af3e3ec88e421028507e" UNIQUE, btree (transaction_id)
+    "de9b409030379925ef865bc69a69cafe" btree (date_id)
+    "ee5862ee05e640ba689e19e2217f166e" btree (account_id)
+    "fct_transactions_revenue_idx" btree (date_id) INCLUDE (customer_country, revenue_amount) WHERE is_revenue
+

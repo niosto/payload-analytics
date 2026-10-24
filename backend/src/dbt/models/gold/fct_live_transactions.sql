@@ -6,6 +6,7 @@
     indexes=[
       {'columns': ['transaction_id'], 'unique': True},
       {'columns': ['event_time']},
+      {'columns': ['processed_at']},
       {'columns': ['customer_id', 'transaction_date']},
       {'columns': ['date_id']},
       {'columns': ['account_id']}

@@ -1,0 +1,76 @@
+-- fecha: 2026-10-23T22:10:18Z
+-- PostgreSQL 18.3 on aarch64-unknown-linux-gnu, compiled by aarch64-unknown-linux-gnu-gcc (GCC) 12.4.0, 64-bit
+=== corrida 1 ===
+SET
+                                                                          QUERY PLAN                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=1548.17..1548.21 rows=4 width=16) (actual time=17.977..17.985 rows=4.00 loops=1)
+   Group Key: status
+   Batches: 1  Memory Usage: 32kB
+   Buffers: shared hit=471 read=86
+   I/O Timings: shared read=3.752
+   ->  Index Scan using st_event_time_btree on stream_transactions  (cost=0.43..1390.89 rows=31455 width=8) (actual time=1.967..10.232 rows=30285.00 loops=1)
+         Index Cond: (event_time >= (now() - '06:00:00'::interval))
+         Index Searches: 1
+         Buffers: shared hit=471 read=86
+         I/O Timings: shared read=3.752
+ Planning:
+   Buffers: shared hit=129
+ Planning Time: 4.452 ms
+ Execution Time: 18.147 ms
+(14 rows)
+
+=== corrida 2 ===
+SET
+                                                                         QUERY PLAN                                                                          
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=1548.12..1548.16 rows=4 width=16) (actual time=13.039..13.047 rows=4.00 loops=1)
+   Group Key: status
+   Batches: 1  Memory Usage: 32kB
+   Buffers: shared hit=557
+   ->  Index Scan using st_event_time_btree on stream_transactions  (cost=0.43..1390.86 rows=31453 width=8) (actual time=0.022..5.418 rows=30284.00 loops=1)
+         Index Cond: (event_time >= (now() - '06:00:00'::interval))
+         Index Searches: 1
+         Buffers: shared hit=557
+ Planning:
+   Buffers: shared hit=129
+ Planning Time: 0.660 ms
+ Execution Time: 13.149 ms
+(12 rows)
+
+=== corrida 3 ===
+SET
+                                                                         QUERY PLAN                                                                          
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=1548.10..1548.14 rows=4 width=16) (actual time=14.488..14.498 rows=4.00 loops=1)
+   Group Key: status
+   Batches: 1  Memory Usage: 32kB
+   Buffers: shared hit=557
+   ->  Index Scan using st_event_time_btree on stream_transactions  (cost=0.43..1390.84 rows=31452 width=8) (actual time=0.058..6.103 rows=30282.00 loops=1)
+         Index Cond: (event_time >= (now() - '06:00:00'::interval))
+         Index Searches: 1
+         Buffers: shared hit=557
+ Planning:
+   Buffers: shared hit=129
+ Planning Time: 0.625 ms
+ Execution Time: 14.627 ms
+(12 rows)
+
+=== corrida 4 ===
+SET
+                                                                         QUERY PLAN                                                                          
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=1548.08..1548.12 rows=4 width=16) (actual time=14.859..14.868 rows=4.00 loops=1)
+   Group Key: status
+   Batches: 1  Memory Usage: 32kB
+   Buffers: shared hit=557
+   ->  Index Scan using st_event_time_btree on stream_transactions  (cost=0.43..1390.82 rows=31451 width=8) (actual time=0.022..6.243 rows=30281.00 loops=1)
+         Index Cond: (event_time >= (now() - '06:00:00'::interval))
+         Index Searches: 1
+         Buffers: shared hit=557
+ Planning:
+   Buffers: shared hit=129
+ Planning Time: 0.659 ms
+ Execution Time: 14.993 ms
+(12 rows)
+

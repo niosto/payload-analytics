@@ -1,0 +1,90 @@
+-- fecha: 2026-10-23T22:03:48Z
+-- PostgreSQL 18.3 on aarch64-unknown-linux-gnu, compiled by aarch64-unknown-linux-gnu-gcc (GCC) 12.4.0, 64-bit
+=== corrida 1 ===
+SET
+                                                                              QUERY PLAN                                                                               
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on stream_transactions  (cost=28019.01..58538.01 rows=333333 width=243) (actual time=4471.429..4472.644 rows=1000.00 loops=1)
+   Filter: (processed_at > ((InitPlan 1).col1 - '00:10:00'::interval))
+   Rows Removed by Filter: 999000
+   Buffers: shared hit=21274 read=9764
+   I/O Timings: shared read=415.865
+   InitPlan 1
+     ->  Aggregate  (cost=28019.00..28019.01 rows=1 width=8) (actual time=4114.623..4114.624 rows=1.00 loops=1)
+           Buffers: shared hit=10572 read=4947
+           I/O Timings: shared read=217.717
+           ->  Seq Scan on stream_transactions stream_transactions_1  (cost=0.00..25519.00 rows=1000000 width=8) (actual time=0.007..2135.048 rows=1000000.00 loops=1)
+                 Buffers: shared hit=10572 read=4947
+                 I/O Timings: shared read=217.717
+ Planning:
+   Buffers: shared hit=163 dirtied=3
+ Planning Time: 7.323 ms
+ Execution Time: 4483.957 ms
+(16 rows)
+
+=== corrida 2 ===
+SET
+                                                                              QUERY PLAN                                                                              
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on stream_transactions  (cost=28019.01..58538.01 rows=333333 width=243) (actual time=745.824..747.101 rows=1000.00 loops=1)
+   Filter: (processed_at > ((InitPlan 1).col1 - '00:10:00'::interval))
+   Rows Removed by Filter: 999000
+   Buffers: shared hit=21790 read=9248
+   I/O Timings: shared read=349.057
+   InitPlan 1
+     ->  Aggregate  (cost=28019.00..28019.01 rows=1 width=8) (actual time=407.636..407.637 rows=1.00 loops=1)
+           Buffers: shared hit=10830 read=4689
+           I/O Timings: shared read=166.551
+           ->  Seq Scan on stream_transactions stream_transactions_1  (cost=0.00..25519.00 rows=1000000 width=8) (actual time=0.012..243.753 rows=1000000.00 loops=1)
+                 Buffers: shared hit=10830 read=4689
+                 I/O Timings: shared read=166.551
+ Planning:
+   Buffers: shared hit=163
+ Planning Time: 5.832 ms
+ Execution Time: 754.819 ms
+(16 rows)
+
+=== corrida 3 ===
+SET
+                                                                              QUERY PLAN                                                                              
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on stream_transactions  (cost=28019.01..58538.01 rows=333333 width=243) (actual time=700.412..701.659 rows=1000.00 loops=1)
+   Filter: (processed_at > ((InitPlan 1).col1 - '00:10:00'::interval))
+   Rows Removed by Filter: 999000
+   Buffers: shared hit=22306 read=8732
+   I/O Timings: shared read=310.372
+   InitPlan 1
+     ->  Aggregate  (cost=28019.00..28019.01 rows=1 width=8) (actual time=393.613..393.615 rows=1.00 loops=1)
+           Buffers: shared hit=11088 read=4431
+           I/O Timings: shared read=155.229
+           ->  Seq Scan on stream_transactions stream_transactions_1  (cost=0.00..25519.00 rows=1000000 width=8) (actual time=0.014..231.357 rows=1000000.00 loops=1)
+                 Buffers: shared hit=11088 read=4431
+                 I/O Timings: shared read=155.229
+ Planning:
+   Buffers: shared hit=163
+ Planning Time: 5.615 ms
+ Execution Time: 711.774 ms
+(16 rows)
+
+=== corrida 4 ===
+SET
+                                                                              QUERY PLAN                                                                              
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on stream_transactions  (cost=28019.01..58538.01 rows=333333 width=243) (actual time=689.630..690.855 rows=1000.00 loops=1)
+   Filter: (processed_at > ((InitPlan 1).col1 - '00:10:00'::interval))
+   Rows Removed by Filter: 999000
+   Buffers: shared hit=22822 read=8216
+   I/O Timings: shared read=286.027
+   InitPlan 1
+     ->  Aggregate  (cost=28019.00..28019.01 rows=1 width=8) (actual time=379.212..379.214 rows=1.00 loops=1)
+           Buffers: shared hit=11346 read=4173
+           I/O Timings: shared read=139.084
+           ->  Seq Scan on stream_transactions stream_transactions_1  (cost=0.00..25519.00 rows=1000000 width=8) (actual time=0.011..215.837 rows=1000000.00 loops=1)
+                 Buffers: shared hit=11346 read=4173
+                 I/O Timings: shared read=139.084
+ Planning:
+   Buffers: shared hit=163
+ Planning Time: 8.308 ms
+ Execution Time: 704.038 ms
+(16 rows)
+

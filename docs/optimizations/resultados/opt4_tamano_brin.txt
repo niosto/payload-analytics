@@ -1,0 +1,6 @@
+                                                            List of relations
+ Schema |        Name        | Type  |          Owner          |        Table        | Persistence | Access method | Size  | Description 
+--------+--------------------+-------+-------------------------+---------------------+-------------+---------------+-------+-------------
+ perf   | st_event_time_brin | index | payload_analytics_admin | stream_transactions | permanent   | brin          | 56 kB | 
+(1 row)
+

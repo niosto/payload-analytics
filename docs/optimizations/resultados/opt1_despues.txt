@@ -1,0 +1,110 @@
+-- fecha: 2026-10-23T21:57:32Z
+-- PostgreSQL 18.3 on aarch64-unknown-linux-gnu, compiled by aarch64-unknown-linux-gnu-gcc (GCC) 12.4.0, 64-bit
+=== corrida 1 ===
+SET
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Unique  (cost=125508.04..128316.38 rows=9 width=56) (actual time=1367.251..1565.408 rows=9.00 loops=1)
+   Buffers: shared hit=9780, temp read=2922 written=2932
+   I/O Timings: temp read=6.677 write=36.778
+   ->  Sort  (cost=125508.04..126912.21 rows=561669 width=56) (actual time=1367.247..1504.886 rows=567047.00 loops=1)
+         Sort Key: (upper(TRIM(BOTH FROM currency))), event_time DESC
+         Sort Method: external merge  Disk: 23376kB
+         Buffers: shared hit=9780, temp read=2922 written=2932
+         I/O Timings: temp read=6.677 write=36.778
+         ->  Bitmap Heap Scan on stream_fx_rates  (cost=11969.60..52669.44 rows=561669 width=56) (actual time=28.015..358.088 rows=567047.00 loops=1)
+               Recheck Cond: (event_time >= (now() - '48:00:00'::interval))
+               Filter: (usd_per_unit > '0'::double precision)
+               Heap Blocks: exact=7561
+               Buffers: shared hit=9774
+               ->  Bitmap Index Scan on stream_fx_rates_currency_event_time_idx  (cost=0.00..11829.18 rows=561725 width=0) (actual time=25.338..25.338 rows=567047.00 loops=1)
+                     Index Cond: (event_time >= (now() - '48:00:00'::interval))
+                     Index Searches: 10
+                     Buffers: shared hit=2213
+ Planning:
+   Buffers: shared hit=139
+ Planning Time: 2.278 ms
+ Execution Time: 1572.568 ms
+(21 rows)
+
+=== corrida 2 ===
+SET
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Unique  (cost=125503.51..128311.82 rows=9 width=56) (actual time=1281.114..1479.003 rows=9.00 loops=1)
+   Buffers: shared hit=9780, temp read=2922 written=2932
+   I/O Timings: temp read=12.457 write=30.337
+   ->  Sort  (cost=125503.51..126907.67 rows=561661 width=56) (actual time=1281.110..1420.032 rows=567039.00 loops=1)
+         Sort Key: (upper(TRIM(BOTH FROM currency))), event_time DESC
+         Sort Method: external merge  Disk: 23376kB
+         Buffers: shared hit=9780, temp read=2922 written=2932
+         I/O Timings: temp read=12.457 write=30.337
+         ->  Bitmap Heap Scan on stream_fx_rates  (cost=11969.60..52669.24 rows=561661 width=56) (actual time=26.965..350.144 rows=567039.00 loops=1)
+               Recheck Cond: (event_time >= (now() - '48:00:00'::interval))
+               Filter: (usd_per_unit > '0'::double precision)
+               Heap Blocks: exact=7561
+               Buffers: shared hit=9774
+               ->  Bitmap Index Scan on stream_fx_rates_currency_event_time_idx  (cost=0.00..11829.18 rows=561717 width=0) (actual time=24.310..24.310 rows=567039.00 loops=1)
+                     Index Cond: (event_time >= (now() - '48:00:00'::interval))
+                     Index Searches: 10
+                     Buffers: shared hit=2213
+ Planning:
+   Buffers: shared hit=139
+ Planning Time: 0.563 ms
+ Execution Time: 1483.723 ms
+(21 rows)
+
+=== corrida 3 ===
+SET
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Unique  (cost=125502.41..128310.68 rows=9 width=56) (actual time=1259.743..1454.778 rows=9.00 loops=1)
+   Buffers: shared hit=9780, temp read=2922 written=2932
+   I/O Timings: temp read=6.757 write=29.319
+   ->  Sort  (cost=125502.41..126906.55 rows=561653 width=56) (actual time=1259.739..1395.500 rows=567031.00 loops=1)
+         Sort Key: (upper(TRIM(BOTH FROM currency))), event_time DESC
+         Sort Method: external merge  Disk: 23376kB
+         Buffers: shared hit=9780, temp read=2922 written=2932
+         I/O Timings: temp read=6.757 write=29.319
+         ->  Bitmap Heap Scan on stream_fx_rates  (cost=11969.52..52668.96 rows=561653 width=56) (actual time=28.688..350.154 rows=567031.00 loops=1)
+               Recheck Cond: (event_time >= (now() - '48:00:00'::interval))
+               Filter: (usd_per_unit > '0'::double precision)
+               Heap Blocks: exact=7561
+               Buffers: shared hit=9774
+               ->  Bitmap Index Scan on stream_fx_rates_currency_event_time_idx  (cost=0.00..11829.10 rows=561709 width=0) (actual time=24.657..24.657 rows=567031.00 loops=1)
+                     Index Cond: (event_time >= (now() - '48:00:00'::interval))
+                     Index Searches: 10
+                     Buffers: shared hit=2213
+ Planning:
+   Buffers: shared hit=139
+ Planning Time: 0.612 ms
+ Execution Time: 1459.826 ms
+(21 rows)
+
+=== corrida 4 ===
+SET
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Unique  (cost=125501.32..128309.54 rows=9 width=56) (actual time=1315.119..1508.863 rows=9.00 loops=1)
+   Buffers: shared hit=9780, temp read=2922 written=2932
+   I/O Timings: temp read=6.043 write=28.550
+   ->  Sort  (cost=125501.32..126905.43 rows=561645 width=56) (actual time=1315.116..1449.724 rows=567023.00 loops=1)
+         Sort Key: (upper(TRIM(BOTH FROM currency))), event_time DESC
+         Sort Method: external merge  Disk: 23376kB
+         Buffers: shared hit=9780, temp read=2922 written=2932
+         I/O Timings: temp read=6.043 write=28.550
+         ->  Bitmap Heap Scan on stream_fx_rates  (cost=11969.44..52668.69 rows=561645 width=56) (actual time=40.175..378.368 rows=567023.00 loops=1)
+               Recheck Cond: (event_time >= (now() - '48:00:00'::interval))
+               Filter: (usd_per_unit > '0'::double precision)
+               Heap Blocks: exact=7561
+               Buffers: shared hit=9774
+               ->  Bitmap Index Scan on stream_fx_rates_currency_event_time_idx  (cost=0.00..11829.03 rows=561701 width=0) (actual time=36.662..36.662 rows=567023.00 loops=1)
+                     Index Cond: (event_time >= (now() - '48:00:00'::interval))
+                     Index Searches: 10
+                     Buffers: shared hit=2213
+ Planning:
+   Buffers: shared hit=139
+ Planning Time: 1.241 ms
+ Execution Time: 1513.802 ms
+(21 rows)
+
