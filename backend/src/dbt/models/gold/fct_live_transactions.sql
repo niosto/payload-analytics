@@ -6,12 +6,20 @@
     indexes=[
       {'columns': ['transaction_id'], 'unique': True},
       {'columns': ['event_time']},
-      {'columns': ['processed_at']},
       {'columns': ['customer_id', 'transaction_date']},
       {'columns': ['date_id']},
       {'columns': ['account_id']}
+    ],
+    post_hook=[
+      {"sql": "create index if not exists fct_live_transactions_processed_at_idx on {{ this }} (processed_at)",
+       "transaction": False}
     ]
 ) }}
+
+-- processed_at is a post_hook, not in indexes: dbt only builds `indexes` when
+-- an incremental table is created, so a table that already exists would never
+-- get it. The hook runs on every run and is a no-op once the index exists.
+-- It serves max(processed_at), the incremental filter below.
 
 -- Live transaction fact, same grain and columns as fct_transactions plus the
 -- stream metadata. Incremental by processed_at with a lookback, so rows whose
