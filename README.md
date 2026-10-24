@@ -63,6 +63,9 @@ payload-analytics/
 ├── streaming/                       # Local Redpanda and producers (runs on your machine)
 │   ├── .docker/
 │   └── src/producers/
+├── docs/
+│   ├── governance/                  # Data dictionary, catalog, lineage, quality rules, RACI
+│   └── optimizations/               # Index experiments with EXPLAIN before and after
 └── data/raw/                        # Sample JSON used to start a run
 ```
 
@@ -414,6 +417,20 @@ The project includes dbt tests for:
 - customer and revenue consistency rules
 
 These tests validate both the warehouse structure and the business logic used in reporting.
+
+## Governance
+
+Everything about the data itself lives in [`docs/governance/`](docs/governance/README.md):
+
+| Document | What it holds |
+| --- | --- |
+| [Data dictionary](docs/governance/data_dictionary.md) | Every warehouse column with type, description, sensitivity class (direct PII, indirect PII, sensitive financial, internal), and tests |
+| [Data catalog](docs/governance/catalog.html) | dbt docs as one HTML file: tables, columns, SQL, and the lineage graph. Open it in a browser |
+| [Lineage](docs/governance/lineage.md) | From the JSON in S3 and the streaming sources to Gold and Power BI |
+| [Quality rules](docs/governance/quality_rules.md) | The 206 rules running as dbt tests, by type and by table |
+| [RACI](docs/governance/raci.md) | Who does, approves, is consulted, and is informed. Data owner: Nicolás Ospina |
+
+Database optimizations, with before and after `EXPLAIN` results, are in [`docs/optimizations/`](docs/optimizations/README.md).
 
 ## Typical use cases
 
