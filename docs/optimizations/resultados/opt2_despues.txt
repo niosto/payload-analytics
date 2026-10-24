@@ -1,0 +1,102 @@
+-- fecha: 2026-10-23T22:04:27Z
+-- PostgreSQL 18.3 on aarch64-unknown-linux-gnu, compiled by aarch64-unknown-linux-gnu-gcc (GCC) 12.4.0, 64-bit
+=== corrida 1 ===
+SET
+                                                                                                   QUERY PLAN                                                                                                   
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using st_processed_at_idx on stream_transactions  (cost=0.89..14670.22 rows=333333 width=243) (actual time=9.294..10.900 rows=1000.00 loops=1)
+   Index Cond: (processed_at > ((InitPlan 2).col1 - '00:10:00'::interval))
+   Index Searches: 1
+   Buffers: shared hit=20 read=6
+   I/O Timings: shared read=9.375
+   InitPlan 2
+     ->  Result  (cost=0.45..0.46 rows=1 width=8) (actual time=7.976..7.979 rows=1.00 loops=1)
+           Buffers: shared hit=1 read=3
+           I/O Timings: shared read=6.703
+           InitPlan 1
+             ->  Limit  (cost=0.42..0.45 rows=1 width=8) (actual time=7.972..7.973 rows=1.00 loops=1)
+                   Buffers: shared hit=1 read=3
+                   I/O Timings: shared read=6.703
+                   ->  Index Only Scan Backward using st_processed_at_idx on stream_transactions stream_transactions_1  (cost=0.42..25980.42 rows=1000000 width=8) (actual time=7.971..7.971 rows=1.00 loops=1)
+                         Heap Fetches: 0
+                         Index Searches: 1
+                         Buffers: shared hit=1 read=3
+                         I/O Timings: shared read=6.703
+ Planning:
+   Buffers: shared hit=207
+ Planning Time: 2.301 ms
+ Execution Time: 11.033 ms
+(22 rows)
+
+=== corrida 2 ===
+SET
+                                                                                                   QUERY PLAN                                                                                                   
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using st_processed_at_idx on stream_transactions  (cost=0.89..14670.22 rows=333333 width=243) (actual time=0.059..0.245 rows=1000.00 loops=1)
+   Index Cond: (processed_at > ((InitPlan 2).col1 - '00:10:00'::interval))
+   Index Searches: 1
+   Buffers: shared hit=26
+   InitPlan 2
+     ->  Result  (cost=0.45..0.46 rows=1 width=8) (actual time=0.035..0.036 rows=1.00 loops=1)
+           Buffers: shared hit=4
+           InitPlan 1
+             ->  Limit  (cost=0.42..0.45 rows=1 width=8) (actual time=0.033..0.034 rows=1.00 loops=1)
+                   Buffers: shared hit=4
+                   ->  Index Only Scan Backward using st_processed_at_idx on stream_transactions stream_transactions_1  (cost=0.42..25980.42 rows=1000000 width=8) (actual time=0.032..0.032 rows=1.00 loops=1)
+                         Heap Fetches: 0
+                         Index Searches: 1
+                         Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=179
+ Planning Time: 0.622 ms
+ Execution Time: 0.366 ms
+(18 rows)
+
+=== corrida 3 ===
+SET
+                                                                                                   QUERY PLAN                                                                                                   
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using st_processed_at_idx on stream_transactions  (cost=0.89..14670.22 rows=333333 width=243) (actual time=0.075..0.264 rows=1000.00 loops=1)
+   Index Cond: (processed_at > ((InitPlan 2).col1 - '00:10:00'::interval))
+   Index Searches: 1
+   Buffers: shared hit=26
+   InitPlan 2
+     ->  Result  (cost=0.45..0.46 rows=1 width=8) (actual time=0.037..0.038 rows=1.00 loops=1)
+           Buffers: shared hit=4
+           InitPlan 1
+             ->  Limit  (cost=0.42..0.45 rows=1 width=8) (actual time=0.035..0.036 rows=1.00 loops=1)
+                   Buffers: shared hit=4
+                   ->  Index Only Scan Backward using st_processed_at_idx on stream_transactions stream_transactions_1  (cost=0.42..25980.42 rows=1000000 width=8) (actual time=0.034..0.034 rows=1.00 loops=1)
+                         Heap Fetches: 0
+                         Index Searches: 1
+                         Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=179
+ Planning Time: 0.638 ms
+ Execution Time: 0.399 ms
+(18 rows)
+
+=== corrida 4 ===
+SET
+                                                                                                   QUERY PLAN                                                                                                   
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using st_processed_at_idx on stream_transactions  (cost=0.89..14670.22 rows=333333 width=243) (actual time=0.059..0.250 rows=1000.00 loops=1)
+   Index Cond: (processed_at > ((InitPlan 2).col1 - '00:10:00'::interval))
+   Index Searches: 1
+   Buffers: shared hit=26
+   InitPlan 2
+     ->  Result  (cost=0.45..0.46 rows=1 width=8) (actual time=0.036..0.037 rows=1.00 loops=1)
+           Buffers: shared hit=4
+           InitPlan 1
+             ->  Limit  (cost=0.42..0.45 rows=1 width=8) (actual time=0.034..0.035 rows=1.00 loops=1)
+                   Buffers: shared hit=4
+                   ->  Index Only Scan Backward using st_processed_at_idx on stream_transactions stream_transactions_1  (cost=0.42..25980.42 rows=1000000 width=8) (actual time=0.033..0.033 rows=1.00 loops=1)
+                         Heap Fetches: 0
+                         Index Searches: 1
+                         Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=179
+ Planning Time: 0.646 ms
+ Execution Time: 0.373 ms
+(18 rows)
+

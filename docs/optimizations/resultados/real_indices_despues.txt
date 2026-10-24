@@ -1,0 +1,28 @@
+       tablename       |                indexname                
+-----------------------+-----------------------------------------
+ dim_account           | 2d777e593aa8bf0760166439f3f416f8
+ dim_account           | ba54266be581df5a93096b5ccdd4b1e3
+ dim_customer          | 11f04039e5e9bb86773ff2e31e0e4dd0
+ dim_customer          | 48ea46544044c35720b021478c478dfc
+ dim_customer          | f11f2d203595b600b6c4551f15f64792
+ dim_date              | 256310ef98b8f87f1736f36950941dec
+ dim_date              | 4f922932d3ff423191c590ec379534e9
+ fct_live_transactions | 3c75dd9a33c076d2a348c2ab35f407f5
+ fct_live_transactions | 50794e7c07c19138374b07ce9c8a7a9d
+ fct_live_transactions | 78149b48c8c50a837f2d0c276b15a9a1
+ fct_live_transactions | 905d17ca5b72088ea14b5230b4fdf260
+ fct_live_transactions | e43e7590abe9f7c42da2597b5c7a4935
+ fct_loans             | 9c4944618ce48ab61e07d7692cab4dfe
+ fct_loans             | bf418d88d46a390c212d836c1fcfb5b3
+ fct_loans             | ffb1960dcef66b0eb27c61683efb006b
+ fct_transactions      | 0498533189a5aacbb51978f10b20a94b
+ fct_transactions      | 56bcfc8c24b4af3e3ec88e421028507e
+ fct_transactions      | de9b409030379925ef865bc69a69cafe
+ fct_transactions      | ee5862ee05e640ba689e19e2217f166e
+ fct_transactions      | fct_transactions_revenue_idx
+ stream_fx_rates       | stream_fx_rates_currency_event_time_idx
+ stream_fx_rates       | stream_fx_rates_pkey
+ stream_transactions   | stream_transactions_event_time_idx
+ stream_transactions   | stream_transactions_pkey
+(24 rows)
+

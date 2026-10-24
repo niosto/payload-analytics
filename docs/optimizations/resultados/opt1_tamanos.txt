@@ -1,0 +1,12 @@
+                                                                           List of relations
+ Schema |                       Name                        | Type  |          Owner          |        Table        | Persistence | Access method | Size  | Description 
+--------+---------------------------------------------------+-------+-------------------------+---------------------+-------------+---------------+-------+-------------
+ perf   | fct_transactions_account_id_idx                   | index | payload_analytics_admin | fct_transactions    | permanent   | btree         | 12 MB | 
+ perf   | fct_transactions_customer_id_transaction_date_idx | index | payload_analytics_admin | fct_transactions    | permanent   | btree         | 14 MB | 
+ perf   | fct_transactions_date_id_idx                      | index | payload_analytics_admin | fct_transactions    | permanent   | btree         | 12 MB | 
+ perf   | fx_norm_currency_event_time_idx                   | index | payload_analytics_admin | stream_fx_rates     | permanent   | btree         | 95 MB | 
+ perf   | st_event_time_btree                               | index | payload_analytics_admin | stream_transactions | permanent   | btree         | 21 MB | 
+ perf   | stream_fx_rates_currency_event_time_idx           | index | payload_analytics_admin | stream_fx_rates     | permanent   | btree         | 60 MB | 
+ perf   | stream_transactions_pkey                          | index | payload_analytics_admin | stream_transactions | permanent   | btree         | 30 MB | 
+(7 rows)
+

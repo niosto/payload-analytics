@@ -1,0 +1,23 @@
+ schemaname |        relname        | n_live_tup 
+------------+-----------------------+------------
+ gold       | dim_account           |      17529
+ gold       | dim_customer          |       5000
+ gold       | dim_date              |      18628
+ gold       | fct_live_transactions |       6793
+ gold       | fct_loans             |       7663
+ gold       | fct_transactions      |      87686
+ silver     | accounts              |      17529
+ silver     | credit_info           |       5000
+ silver     | customers             |       5000
+ silver     | digital_engagement    |       5000
+ silver     | fx_rates_current      |          9
+ silver     | loans                 |       7663
+ silver     | stg_accounts          |      17529
+ silver     | stg_customers         |       5000
+ silver     | stg_loans             |       7663
+ silver     | stg_transactions      |      87686
+ silver     | stream_fx_rates       |       4292
+ silver     | stream_transactions   |       7222
+ silver     | transactions          |      87686
+(19 rows)
+

@@ -1,0 +1,27 @@
+                         Table "silver.stream_transactions"
+         Column         |           Type           | Collation | Nullable | Default 
+------------------------+--------------------------+-----------+----------+---------
+ transaction_id         | character varying        |           | not null | 
+ customer_id            | character varying        |           |          | 
+ account_id             | character varying        |           |          | 
+ date                   | character varying        |           |          | 
+ amount                 | character varying        |           |          | 
+ currency               | character varying        |           |          | 
+ type                   | character varying        |           |          | 
+ category               | character varying        |           |          | 
+ merchant               | character varying        |           |          | 
+ channel                | character varying        |           |          | 
+ status                 | character varying        |           |          | 
+ description            | character varying        |           |          | 
+ event_id               | character varying        |           |          | 
+ source                 | character varying        |           |          | 
+ event_time             | timestamp with time zone |           | not null | 
+ kafka_ts               | timestamp with time zone |           |          | 
+ fx_usd_per_unit        | double precision         |           |          | 
+ fx_event_time          | timestamp with time zone |           |          | 
+ fx_provider_updated_at | timestamp with time zone |           |          | 
+ processed_at           | timestamp with time zone |           | not null | now()
+Indexes:
+    "stream_transactions_pkey" PRIMARY KEY, btree (transaction_id)
+    "stream_transactions_event_time_idx" btree (event_time)
+

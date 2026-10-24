@@ -1,0 +1,94 @@
+-- fecha: 2026-10-23T22:11:34Z
+-- PostgreSQL 18.3 on aarch64-unknown-linux-gnu, compiled by aarch64-unknown-linux-gnu-gcc (GCC) 12.4.0, 64-bit
+=== corrida 1 ===
+SET
+                                                                 QUERY PLAN                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=16244.54..16244.58 rows=4 width=16) (actual time=12.577..12.586 rows=4.00 loops=1)
+   Group Key: status
+   Batches: 1  Memory Usage: 32kB
+   Buffers: shared hit=485
+   ->  Bitmap Heap Scan on stream_transactions  (cost=23.49..16097.18 rows=29472 width=8) (actual time=0.312..6.707 rows=30157.00 loops=1)
+         Recheck Cond: (event_time >= (now() - '06:00:00'::interval))
+         Rows Removed by Index Recheck: 667
+         Heap Blocks: lossy=479
+         Buffers: shared hit=485
+         ->  Bitmap Index Scan on st_event_time_brin  (cost=0.00..16.12 rows=30928 width=0) (actual time=0.151..0.151 rows=4790.00 loops=1)
+               Index Cond: (event_time >= (now() - '06:00:00'::interval))
+               Index Searches: 1
+               Buffers: shared hit=6
+ Planning:
+   Buffers: shared hit=135
+ Planning Time: 2.135 ms
+ Execution Time: 13.427 ms
+(17 rows)
+
+=== corrida 2 ===
+SET
+                                                                 QUERY PLAN                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=16244.53..16244.57 rows=4 width=16) (actual time=12.610..12.618 rows=4.00 loops=1)
+   Group Key: status
+   Batches: 1  Memory Usage: 32kB
+   Buffers: shared hit=485
+   ->  Bitmap Heap Scan on stream_transactions  (cost=23.49..16097.18 rows=29470 width=8) (actual time=0.273..6.568 rows=30156.00 loops=1)
+         Recheck Cond: (event_time >= (now() - '06:00:00'::interval))
+         Rows Removed by Index Recheck: 668
+         Heap Blocks: lossy=479
+         Buffers: shared hit=485
+         ->  Bitmap Index Scan on st_event_time_brin  (cost=0.00..16.12 rows=30928 width=0) (actual time=0.127..0.127 rows=4790.00 loops=1)
+               Index Cond: (event_time >= (now() - '06:00:00'::interval))
+               Index Searches: 1
+               Buffers: shared hit=6
+ Planning:
+   Buffers: shared hit=135
+ Planning Time: 0.644 ms
+ Execution Time: 12.737 ms
+(17 rows)
+
+=== corrida 3 ===
+SET
+                                                                 QUERY PLAN                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=16244.52..16244.56 rows=4 width=16) (actual time=12.422..12.430 rows=4.00 loops=1)
+   Group Key: status
+   Batches: 1  Memory Usage: 32kB
+   Buffers: shared hit=485
+   ->  Bitmap Heap Scan on stream_transactions  (cost=23.49..16097.18 rows=29469 width=8) (actual time=0.269..6.547 rows=30154.00 loops=1)
+         Recheck Cond: (event_time >= (now() - '06:00:00'::interval))
+         Rows Removed by Index Recheck: 670
+         Heap Blocks: lossy=479
+         Buffers: shared hit=485
+         ->  Bitmap Index Scan on st_event_time_brin  (cost=0.00..16.12 rows=30928 width=0) (actual time=0.121..0.121 rows=4790.00 loops=1)
+               Index Cond: (event_time >= (now() - '06:00:00'::interval))
+               Index Searches: 1
+               Buffers: shared hit=6
+ Planning:
+   Buffers: shared hit=135
+ Planning Time: 0.614 ms
+ Execution Time: 12.543 ms
+(17 rows)
+
+=== corrida 4 ===
+SET
+                                                                 QUERY PLAN                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=16244.51..16244.55 rows=4 width=16) (actual time=13.426..13.434 rows=4.00 loops=1)
+   Group Key: status
+   Batches: 1  Memory Usage: 32kB
+   Buffers: shared hit=485
+   ->  Bitmap Heap Scan on stream_transactions  (cost=23.49..16097.18 rows=29467 width=8) (actual time=0.339..7.204 rows=30153.00 loops=1)
+         Recheck Cond: (event_time >= (now() - '06:00:00'::interval))
+         Rows Removed by Index Recheck: 671
+         Heap Blocks: lossy=479
+         Buffers: shared hit=485
+         ->  Bitmap Index Scan on st_event_time_brin  (cost=0.00..16.12 rows=30928 width=0) (actual time=0.140..0.141 rows=4790.00 loops=1)
+               Index Cond: (event_time >= (now() - '06:00:00'::interval))
+               Index Searches: 1
+               Buffers: shared hit=6
+ Planning:
+   Buffers: shared hit=135
+ Planning Time: 0.663 ms
+ Execution Time: 13.559 ms
+(17 rows)
+

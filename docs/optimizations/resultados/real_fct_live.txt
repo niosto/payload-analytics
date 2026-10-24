@@ -1,0 +1,39 @@
+                         Table "gold.fct_live_transactions"
+         Column         |           Type           | Collation | Nullable | Default 
+------------------------+--------------------------+-----------+----------+---------
+ transaction_id         | text                     |           |          | 
+ customer_id            | text                     |           |          | 
+ account_id             | text                     |           |          | 
+ date_id                | integer                  |           |          | 
+ transaction_date       | date                     |           |          | 
+ day_of_week            | text                     |           |          | 
+ is_weekend             | boolean                  |           |          | 
+ customer_country       | text                     |           |          | 
+ amount                 | double precision         |           |          | 
+ amount_native          | double precision         |           |          | 
+ currency               | text                     |           |          | 
+ fx_usd_per_unit        | double precision         |           |          | 
+ fx_rate_source         | text                     |           |          | 
+ fx_event_time          | timestamp with time zone |           |          | 
+ fx_provider_updated_at | timestamp with time zone |           |          | 
+ type                   | text                     |           |          | 
+ category               | text                     |           |          | 
+ merchant               | text                     |           |          | 
+ channel                | text                     |           |          | 
+ status                 | text                     |           |          | 
+ is_failed              | boolean                  |           |          | 
+ is_international       | boolean                  |           |          | 
+ revenue_amount         | double precision         |           |          | 
+ is_revenue             | boolean                  |           |          | 
+ description            | text                     |           |          | 
+ event_time             | timestamp with time zone |           |          | 
+ kafka_ts               | timestamp with time zone |           |          | 
+ processed_at           | timestamp with time zone |           |          | 
+ latency_seconds        | numeric                  |           |          | 
+Indexes:
+    "3c75dd9a33c076d2a348c2ab35f407f5" UNIQUE, btree (transaction_id)
+    "50794e7c07c19138374b07ce9c8a7a9d" btree (date_id)
+    "78149b48c8c50a837f2d0c276b15a9a1" btree (event_time)
+    "905d17ca5b72088ea14b5230b4fdf260" btree (customer_id, transaction_date)
+    "e43e7590abe9f7c42da2597b5c7a4935" btree (account_id)
+
