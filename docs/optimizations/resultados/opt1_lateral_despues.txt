@@ -1,0 +1,60 @@
+-- fecha: 2026-10-24T17:58:36Z
+-- PostgreSQL 18.3 on aarch64-unknown-linux-gnu, compiled by aarch64-unknown-linux-gnu-gcc (GCC) 12.4.0, 64-bit
+=== corrida 1 ===
+QUERY PLAN
+------------------------------------------------------------
+Nested Loop  (cost=0.43..39.36 rows=9 width=56) (actual time=6.227..6.384 rows=9.00 loops=1)
+  Buffers: shared hit=36
+  ->  Values Scan on "*VALUES*"  (cost=0.00..0.11 rows=9 width=32) (actual time=0.002..0.009 rows=9.00 loops=1)
+  ->  Limit  (cost=0.43..4.34 rows=1 width=56) (actual time=0.707..0.707 rows=1.00 loops=9)
+        Buffers: shared hit=36
+        ->  Index Scan using fx_norm_currency_event_time_idx on stream_fx_rates s  (cost=0.43..6399.01 rows=1637 width=56) (actual time=0.706..0.706 rows=1.00 loops=9)
+              Index Cond: ((upper(TRIM(BOTH FROM currency)) = "*VALUES*".column1) AND (event_time >= (now() - '48:00:00'::interval)))
+              Index Searches: 9
+              Buffers: shared hit=36
+Planning:
+  Buffers: shared hit=139
+Planning Time: 0.582 ms
+Execution Time: 6.425 ms
+=== corrida 2 ===
+QUERY PLAN
+------------------------------------------------------------
+Nested Loop  (cost=0.43..39.36 rows=9 width=56) (actual time=0.049..0.162 rows=9.00 loops=1)
+  Buffers: shared hit=36
+  ->  Values Scan on "*VALUES*"  (cost=0.00..0.11 rows=9 width=32) (actual time=0.002..0.004 rows=9.00 loops=1)
+  ->  Limit  (cost=0.43..4.34 rows=1 width=56) (actual time=0.017..0.017 rows=1.00 loops=9)
+        Buffers: shared hit=36
+        ->  Index Scan using fx_norm_currency_event_time_idx on stream_fx_rates s  (cost=0.43..6399.01 rows=1637 width=56) (actual time=0.016..0.017 rows=1.00 loops=9)
+              Index Cond: ((upper(TRIM(BOTH FROM currency)) = "*VALUES*".column1) AND (event_time >= (now() - '48:00:00'::interval)))
+              Index Searches: 9
+              Buffers: shared hit=36
+Planning Time: 0.196 ms
+Execution Time: 0.189 ms
+=== corrida 3 ===
+QUERY PLAN
+------------------------------------------------------------
+Nested Loop  (cost=0.43..39.36 rows=9 width=56) (actual time=0.049..0.158 rows=9.00 loops=1)
+  Buffers: shared hit=36
+  ->  Values Scan on "*VALUES*"  (cost=0.00..0.11 rows=9 width=32) (actual time=0.001..0.004 rows=9.00 loops=1)
+  ->  Limit  (cost=0.43..4.34 rows=1 width=56) (actual time=0.016..0.017 rows=1.00 loops=9)
+        Buffers: shared hit=36
+        ->  Index Scan using fx_norm_currency_event_time_idx on stream_fx_rates s  (cost=0.43..6399.01 rows=1637 width=56) (actual time=0.016..0.016 rows=1.00 loops=9)
+              Index Cond: ((upper(TRIM(BOTH FROM currency)) = "*VALUES*".column1) AND (event_time >= (now() - '48:00:00'::interval)))
+              Index Searches: 9
+              Buffers: shared hit=36
+Planning Time: 0.174 ms
+Execution Time: 0.185 ms
+=== corrida 4 ===
+QUERY PLAN
+------------------------------------------------------------
+Nested Loop  (cost=0.43..39.36 rows=9 width=56) (actual time=0.049..0.160 rows=9.00 loops=1)
+  Buffers: shared hit=36
+  ->  Values Scan on "*VALUES*"  (cost=0.00..0.11 rows=9 width=32) (actual time=0.001..0.004 rows=9.00 loops=1)
+  ->  Limit  (cost=0.43..4.34 rows=1 width=56) (actual time=0.017..0.017 rows=1.00 loops=9)
+        Buffers: shared hit=36
+        ->  Index Scan using fx_norm_currency_event_time_idx on stream_fx_rates s  (cost=0.43..6399.01 rows=1637 width=56) (actual time=0.016..0.016 rows=1.00 loops=9)
+              Index Cond: ((upper(TRIM(BOTH FROM currency)) = "*VALUES*".column1) AND (event_time >= (now() - '48:00:00'::interval)))
+              Index Searches: 9
+              Buffers: shared hit=36
+Planning Time: 0.177 ms
+Execution Time: 0.187 ms
