@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/optimizations/README.md`: before/after table and write-up of the four index experiments, including the `LATERAL` result for optimization 1
 - `docs/governance/`: data dictionary with a sensitivity class per column (375 columns), dbt docs catalog as a single HTML file, end-to-end lineage, the 206 quality rules, and the RACI matrix with Nicolás Ospina as data owner
 - `docs/governance/build_governance_docs.py`: regenerates the dictionary, quality rules, and lineage from dbt's `manifest.json` and `catalog.json`
+- `docs/demo.md`: step-by-step script for the live end-to-end demo (capture, cleaning, storage), with setup checklist, tested SQL queries, fallback plan, and likely questions
 
 ## [1.2.0] - 23/10/2026
 
