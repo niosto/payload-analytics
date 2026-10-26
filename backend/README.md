@@ -46,6 +46,33 @@ aws s3 ls "s3://${BUCKET}/failed/"
 
 `raw/` should be empty for that key after the execution finishes. A later upload of the same name runs the pipeline again and replaces `silver.stg_*`; it does not append.
 
+## Fault files
+
+`/app/data/faults/` holds small sources that are not the sample. Each one replaces `silver.stg_*` and dbt rebuilds Gold from that file alone. Run them one at a time, and only when the current warehouse can be discarded. The same Step Functions execution tells you the result: `processed/` or `failed/`.
+
+```bash
+BUCKET=$(aws ssm get-parameter --name /${DEPLOY_APP}-storage/DataLakeBucketName --query Parameter.Value --output text)
+aws s3 cp /app/data/faults/fault_malformed.json "s3://${BUCKET}/raw/"
+aws s3 cp /app/data/faults/fault_bad_keys.json "s3://${BUCKET}/raw/"
+aws s3 cp /app/data/faults/fault_data_quality.json "s3://${BUCKET}/raw/"
+aws s3 cp /app/data/faults/fault_data_quality_rejected.json "s3://${BUCKET}/raw/"
+```
+
+Wait for the execution to finish before copying the next file. Two objects under `raw/` at once do not run together: Glue allows one run, and Step Functions waits and retries.
+
+| File | What is wrong | Expected result |
+| --- | --- | --- |
+| `fault_malformed.json` | Not valid JSON | Glue fails. Object moves to `failed/`. |
+| `fault_bad_keys.json` | Root object and field names that are not in the schema | The row lands with a null `customer_id`. dbt `not_null` fails. Object moves to `failed/`. |
+| `fault_data_quality.json` | Invalid email, symbols in the amount, Spanish labels, a USD account on a CO customer, credit score 900, duplicate `customer_id` | Execution succeeds. The row is kept and flagged. Spark keeps one of the two duplicate customers. |
+| `fault_data_quality_rejected.json` | Null name and email, age 11, risk score 250, unknown status, negative amount, `lat` set to `"no"` | dbt errors or a test fails. Object moves to `failed/`. |
+
+Reload the sample when you want the full warehouse back:
+
+```bash
+aws s3 cp /app/data/raw/fintech_banking_dataset.json "s3://${BUCKET}/raw/"
+```
+
 ## Connect to RDS
 
 The instance is public on port `5432`. Use any PostgreSQL client. Connect to the database `payload_analytics`. The default database `postgres` only has an empty `public` schema; the warehouse is not there.
