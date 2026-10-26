@@ -13,7 +13,15 @@ passes; dbt falls back to seed_fx_rates for those rows.
 
 Rows are written with psycopg2 upserts inside foreachBatch, so replaying a
 micro-batch after a restart does not duplicate anything. Offsets and join
-state live in CHECKPOINT_DIR.
+state live in CHECKPOINT_DIR. A transient database error (dropped SSL
+connection, server restart) is retried a few times on a fresh connection
+before the batch fails.
+
+processed_at is taken on the driver, once per micro-batch, right before the
+upsert, and written explicitly. The producers set event_time with the same
+Docker VM clock, so both ends of the latency (processed_at - event_time) come
+from one clock. The table default NOW() runs on the RDS clock instead; the VM
+clock drifts ahead of it, and that produced negative latencies.
 
 Database credentials come from the RDS master secret in Secrets Manager (the
 same secret Glue and dbt use). For a local test database, set DB_HOST and the
@@ -24,6 +32,7 @@ import json
 import logging
 import os
 import time
+from datetime import datetime, timezone
 
 import psycopg2
 from psycopg2.extras import execute_values
@@ -49,6 +58,7 @@ TRIGGER_SECONDS = int(env("TRIGGER_SECONDS", "1"))
 WATERMARK = env("WATERMARK", "2 minutes")
 FX_JOIN_SECONDS = int(env("FX_JOIN_SECONDS", "60"))
 SECRET_NAME = env("DB_SECRET_NAME", "/payload-analytics-rds/MasterCredentials")
+DB_RETRY_DELAYS = (1, 2, 4)  # seconds before each retry of a failed upsert
 
 FX_TOPIC = "fx.rates"
 TX_TOPIC = "fintech.live_transactions"
@@ -88,16 +98,20 @@ TX_COLUMNS = [
     "kafka_ts", "fx_usd_per_unit", "fx_event_time", "fx_provider_updated_at",
 ]
 
+# processed_at is not selected from Spark: the driver adds it per micro-batch.
+FX_INSERT_COLUMNS = [*FX_COLUMNS, "processed_at"]
+TX_INSERT_COLUMNS = [*TX_COLUMNS, "processed_at"]
+
 FX_UPSERT = f"""
-    INSERT INTO silver.stream_fx_rates ({", ".join(FX_COLUMNS)})
+    INSERT INTO silver.stream_fx_rates ({", ".join(FX_INSERT_COLUMNS)})
     VALUES %s
     ON CONFLICT (event_id) DO NOTHING
 """
 
-# On replay, keep the first processed_at (it is the latency measurement) and
-# only replace the FX match with a later tick.
+# On replay, keep the first processed_at (it is the latency measurement, so it
+# is not in the SET list) and only replace the FX match with a later tick.
 TX_UPSERT = f"""
-    INSERT INTO silver.stream_transactions AS t ({", ".join(TX_COLUMNS)})
+    INSERT INTO silver.stream_transactions AS t ({", ".join(TX_INSERT_COLUMNS)})
     VALUES %s
     ON CONFLICT (transaction_id) DO UPDATE SET
         fx_usd_per_unit        = EXCLUDED.fx_usd_per_unit,
@@ -153,18 +167,44 @@ class Sink:
             )
         return self.conn
 
-    def upsert(self, sql, columns, rows):
+    def _close(self):
+        if self.conn is not None:
+            try:
+                self.conn.close()
+            except Exception:
+                pass
+
+    def upsert(self, sql, columns, rows, processed_at):
+        """Write rows plus processed_at (aware UTC, from the driver clock).
+
+        The statements are idempotent upserts, so a batch that failed halfway
+        is retried whole on a new connection. Only connection-level errors are
+        retried; after the last attempt the error is raised and the container
+        restarts from the checkpoint.
+        """
         if not rows:
             return
-        values = [tuple(row[c] for c in columns) for row in rows]
-        conn = self._connection()
-        try:
-            with conn.cursor() as cur:
-                execute_values(cur, sql, values, page_size=500)
-            conn.commit()
-        except Exception:
-            conn.close()
-            raise
+        values = [(*(row[c] for c in columns), processed_at) for row in rows]
+        for attempt in range(len(DB_RETRY_DELAYS) + 1):
+            try:
+                conn = self._connection()
+                with conn.cursor() as cur:
+                    execute_values(cur, sql, values, page_size=500)
+                conn.commit()
+                return
+            except (psycopg2.OperationalError, psycopg2.InterfaceError) as exc:
+                self._close()
+                if attempt == len(DB_RETRY_DELAYS):
+                    raise
+                delay = DB_RETRY_DELAYS[attempt]
+                log.warning(
+                    "database error, retry %d/%d in %ds: %s",
+                    attempt + 1, len(DB_RETRY_DELAYS), delay, str(exc).strip(),
+                )
+                time.sleep(delay)
+            except Exception:
+                self._close()
+                raise
 
 
 def read_topic(spark, topic, schema):
@@ -205,7 +245,7 @@ def main():
         started = time.perf_counter()
         rows = batch_df.select(*FX_COLUMNS).collect()
         collected = time.perf_counter()
-        sink.upsert(FX_UPSERT, FX_COLUMNS, rows)
+        sink.upsert(FX_UPSERT, FX_COLUMNS, rows, datetime.now(timezone.utc))
         log.info(
             "fx batch=%s rows=%d spark_ms=%d db_ms=%d", batch_id, len(rows),
             (collected - started) * 1000, (time.perf_counter() - collected) * 1000,
@@ -253,7 +293,7 @@ def main():
                 latest[row["transaction_id"]] = row
         rows = list(latest.values())
         collected = time.perf_counter()
-        sink.upsert(TX_UPSERT, TX_COLUMNS, rows)
+        sink.upsert(TX_UPSERT, TX_COLUMNS, rows, datetime.now(timezone.utc))
         unmatched = sum(1 for r in rows if r["fx_usd_per_unit"] is None)
         log.info(
             "tx batch=%s rows=%d without_fx=%d spark_ms=%d db_ms=%d",

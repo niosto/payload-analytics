@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Negative `latency_seconds` in `fct_live_transactions`: the streaming job now writes `processed_at` from its own clock (the same Docker clock as the producers' `event_time`) instead of the RDS default `NOW()`, and retries transient database disconnects on a new connection
 - `fct_transactions_revenue_idx` disappeared on every other dbt run: the `post_hook` ran inside the transaction, while the previous table's backup still owned an index with that name. The hook now runs with `transaction: False`
 
 ### Added
