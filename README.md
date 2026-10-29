@@ -440,7 +440,7 @@ These tests validate both the warehouse structure and the business logic used in
 
 | Page | Business question | Main content |
 | --- | --- | --- |
-| **Resumen ejecutivo** | How is the business doing and where does revenue come from? | Customers, USD balance, revenue, 90+ delinquency and transactions; monthly revenue trend, segment mix, balance by country, transaction mix and average ticket. |
+| **Resumen ejecutivo** | How is the business doing and where does revenue come from? | Customers, USD balance, revenue, 90+ delinquency and transactions; revenue trend, segment mix, balance by country, transaction mix and average ticket. |
 | **Clientes y riesgo crediticio** | Where is credit risk concentrated? | Score distribution by band, 90+ delinquency by segment and country, delinquency by country, loan portfolio by product and DPD buckets. |
 | **Operación en tiempo real** | Is streaming flowing, how fresh is it and at what rate? | p95 latency, transactions in the last hour, USD volume in 24 h, FX coverage, latency by minute, volume by minute and the current rate per currency. |
 | **Calidad y gobierno del dato** | Is the data trustworthy and fresh? | 206 dbt rules, marked records, invalid emails, currency mismatches by country, streaming/FX/batch freshness and the governance scope. |
@@ -448,7 +448,7 @@ These tests validate both the warehouse structure and the business logic used in
 ### Semantic model
 
 - 9 tables: `dim_customer`, `dim_account`, `dim_date`, `fct_transactions`, `fct_loans`, `fct_live_transactions`, `dim_fx_rate_current`, `mart_customer_summary` (hidden) and `Medidas`.
-- 35 measures in `Medidas`, organised in display folders: `01 KPIs`, `02 Clientes`, `03 Crecimiento`, `04 Riesgo`, `05 Streaming`, `06 Gobierno`.
+- 42 measures in `Medidas`, organised in display folders: `01 KPIs`, `02 Clientes`, `03 Crecimiento`, `04 Riesgo`, `05 Streaming`, `06 Gobierno`.
 - `dim_date` is the marked date table; relationships are single-direction from each fact to its dimensions. The automatic date tables were removed.
 - `dim_customer` exposes `email_status` and `dim_account` exposes `is_currency_mismatch`, so the governance page reads the same flags Silver produces instead of reimplementing the rules.
 - `dim_fx_rate_current` exposes the rate `to_usd` uses, its source (`stream` or `seed`) and the age of the tick.
