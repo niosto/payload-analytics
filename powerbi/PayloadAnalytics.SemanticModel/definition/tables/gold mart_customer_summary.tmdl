@@ -1,0 +1,88 @@
+table 'gold mart_customer_summary'
+	isHidden
+	lineageTag: 33d135b1-c95a-43d5-b4e7-520bdbc9e99d
+
+	column customer_id
+		dataType: string
+		lineageTag: 603c30d4-eba5-4c7b-b2dd-be2963cd75b6
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_segment
+		dataType: string
+		lineageTag: 74bec3ef-50a4-46aa-91cc-44ae392d7ca8
+		summarizeBy: none
+		sourceColumn: customer_segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column country
+		dataType: string
+		lineageTag: bb0b0214-70aa-42e5-b970-7ae85e210a0b
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_revenue
+		dataType: double
+		lineageTag: 2a043747-c451-4fa6-8e17-803b4f0e1954
+		summarizeBy: sum
+		sourceColumn: total_revenue
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column account_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 89b48a13-b44c-4fa3-b8d4-35055eb16fd4
+		summarizeBy: sum
+		sourceColumn: account_count
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_balance
+		dataType: double
+		lineageTag: 47e014de-1598-4d81-b6b3-67bbb9078a5a
+		summarizeBy: sum
+		sourceColumn: total_balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column loan_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 773e91f1-f7c4-4876-a163-73ca1925ea23
+		summarizeBy: sum
+		sourceColumn: loan_count
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_count
+		dataType: int64
+		formatString: 0
+		lineageTag: b0c63652-0559-4c5e-b53e-0848d2c71c02
+		summarizeBy: sum
+		sourceColumn: product_count
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'gold mart_customer_summary' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5433", "payload_analytics"),
+				    gold_mart_customer_summary = Source{[Schema="gold",Item="mart_customer_summary"]}[Data]
+				in
+				    gold_mart_customer_summary
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

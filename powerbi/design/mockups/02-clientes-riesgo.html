@@ -1,0 +1,126 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Clientes y riesgo crediticio</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1280px;height:720px;overflow:hidden;background:#F4F6F8;font-family:"Segoe UI",Arial,sans-serif;color:#1B1B1B;font-variant-numeric:tabular-nums}
+.page{position:relative;width:1280px;height:720px;background:#F4F6F8}
+.head{position:absolute;left:0;top:0;width:1280px;height:64px;background:#0B2545}
+.mark{position:absolute;left:24px;top:17px;width:30px;height:30px;border-radius:6px;background:#C9A227;color:#0B2545;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;letter-spacing:.5px}
+.brand{position:absolute;left:64px;top:14px;color:#fff}
+.brand b{display:block;font-size:10.5px;letter-spacing:1.7px;font-weight:700}
+.brand span{display:block;font-size:8.5px;color:#AFC0D6;margin-top:2px;letter-spacing:.3px}
+.ptitle{position:absolute;left:300px;top:21px;color:#fff;font-size:17px;font-weight:600;letter-spacing:.2px}
+.nav{position:absolute;left:700px;top:0;height:64px;display:flex;align-items:center;gap:22px}
+.tab{font-size:10.5px;color:#AFC0D6;height:64px;display:flex;align-items:center;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{color:#fff;font-weight:600;border-bottom-color:#C9A227}
+.date{position:absolute;right:24px;top:19px;font-size:9.5px;color:#D6E0EE;border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:6px 10px}
+.filters{position:absolute;left:0;top:64px;width:1280px;height:56px;background:#fff;border-bottom:1px solid #E2E7EE}
+.pill{position:absolute;top:13px;height:30px;border:1px solid #D9E0E9;border-radius:15px;padding:0 12px;display:flex;align-items:center;gap:6px;font-size:10px;background:#fff}
+.pill span{color:#5C6B73} .pill b{color:#0B2545;font-weight:600} .pill i{font-style:normal;color:#5C6B73;font-size:9px;margin-left:2px}
+.pill:nth-child(1){left:24px} .pill:nth-child(2){left:170px} .pill:nth-child(3){left:326px}
+.fresh{position:absolute;right:24px;top:20px;font-size:9.5px;color:#5C6B73;display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.foot{position:absolute;left:24px;right:24px;bottom:10px;height:22px;border-top:1px solid #E2E7EE;display:flex;align-items:flex-end;justify-content:space-between;font-size:9px;color:#7A8798}
+.kpi{position:absolute;top:124px;height:92px;background:#fff;border:1px solid #E2E7EE;border-radius:6px;box-shadow:0 1px 2px rgba(11,37,69,.05);padding:12px 14px 10px 16px;overflow:hidden}
+.kpi .accent{position:absolute;left:0;top:0;width:3px;height:92px}
+.kl{font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:#5C6B73;font-weight:600}
+.kv{font-size:25px;line-height:31px;color:#0B2545;font-weight:650;letter-spacing:-.3px;margin-top:2px}
+.kd{font-size:9px;color:#1B7F79;margin-top:1px}
+.ks{font-size:8px;color:#8A97A8;margin-top:1px}
+.spark{position:absolute;right:10px;bottom:8px;width:80px;height:28px;opacity:.9}
+.card{position:absolute;background:#fff;border:1px solid #E2E7EE;border-radius:6px;box-shadow:0 1px 2px rgba(11,37,69,.05);overflow:hidden}
+.ch{padding:12px 14px 0 14px;display:flex;justify-content:space-between}
+.ct{font-size:12px;font-weight:650;color:#0B2545;letter-spacing:.1px}
+.ck{font-size:8.5px;color:#8492A4;margin-top:2px;letter-spacing:.2px}
+.cb{position:absolute;left:14px;right:14px;top:44px;bottom:10px}
+.chart{width:100%;height:100%}
+.ax{font-size:8px;fill:#8492A4;font-family:"Segoe UI",Arial,sans-serif}
+.ax.red{fill:#B23A48}
+.legendline{position:absolute;left:0;bottom:-2px;display:flex;gap:14px;font-size:8.5px;color:#5C6B73;align-items:center;width:100%}
+.legendline i{width:9px;height:3px;display:inline-block;border-radius:2px;margin-right:4px;vertical-align:middle}
+.legendline i.dash{background:repeating-linear-gradient(90deg,#B23A48 0 4px,transparent 4px 7px);height:2px}
+.legendline .right{margin-left:auto;color:#0B2545;font-weight:600}
+.hbar{display:flex;align-items:center;gap:8px;height:18px;font-size:8.8px}
+.hl{width:78px;color:#0B2545;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ht{flex:1;height:8px;background:#F0F3F7;border-radius:3px;overflow:hidden}
+.hf{height:8px;border-radius:3px}
+.hv{width:46px;text-align:right;color:#5C6B73;font-size:8.5px}
+.donutwrap{display:flex;align-items:center;gap:18px;height:100%;justify-content:center}
+.donut{border-radius:50%;position:relative;flex:none}
+.hole{position:absolute;inset:16px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hole b{font-size:18px;color:#0B2545;font-weight:650} .hole span{font-size:8px;color:#5C6B73;margin-top:2px}
+.legend{display:flex;flex-direction:column;gap:7px;min-width:120px}
+.lg{display:flex;align-items:center;gap:7px;font-size:9.5px;color:#5C6B73}
+.lg b{margin-left:auto;color:#0B2545;font-weight:600} .sw{width:8px;height:8px;border-radius:2px;display:inline-block}
+.big{font-size:34px;color:#1B7F79;font-weight:650;letter-spacing:-1px;margin-top:2px}
+.subtle{font-size:8.5px;color:#8492A4}
+.mini{width:100%;height:54px;margin:6px 0 2px 0}
+.smallrow{display:flex;justify-content:space-between;font-size:9px;color:#5C6B73;padding:3px 0;border-top:1px solid #F0F3F7}
+.smallrow b{color:#0B2545;font-weight:600}
+.cols{display:flex;align-items:flex-end;gap:10px;padding:0 4px;height:150px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.cbar{width:70%;border-radius:3px 3px 0 0;min-height:3px}
+.cval{font-size:7.5px;color:#0B2545;font-weight:600;margin-bottom:-1px}
+.col span{font-size:8px;color:#5C6B73;white-space:nowrap}
+.note{position:absolute;left:0;bottom:-2px;font-size:8px;color:#8492A4}
+.heat{width:100%;border-collapse:separate;border-spacing:3px;font-size:8.5px;text-align:center;margin-top:-4px}
+.heat th{color:#5C6B73;font-weight:600;font-size:8px;padding:2px}
+.heat td{color:#0B2545;padding:7px 2px;border-radius:3px;font-weight:600}
+.heat .rowh{text-align:left;color:#0B2545;font-size:8.5px;width:62px;background:transparent}
+.fx{width:100%;border-collapse:collapse;font-size:8px}
+.fx th{text-align:left;color:#8492A4;font-weight:600;font-size:7.2px;text-transform:uppercase;letter-spacing:.4px;padding:1px 3px;border-bottom:1px solid #E2E7EE}
+.fx td{padding:1.5px 3px;line-height:12px;border-bottom:1px solid #F2F5F8;color:#0B2545}
+.fx .cur{font-weight:700} .fx .num{text-align:right} .fx .muted{color:#8492A4} .fx .pos{color:#1B7F79;text-align:right} .fx .neg{color:#B23A48;text-align:right}
+.tag{font-size:7.5px;padding:2px 5px;border-radius:8px;font-weight:600;text-transform:uppercase;letter-spacing:.2px}
+.tag.stream{background:#E6F2F0;color:#1B7F79} .tag.seed{background:#F6F1DF;color:#8A6D12} .tag.ok{background:#E6F2F0;color:#1B7F79} .tag.warn{background:#F6F1DF;color:#8A6D12}
+.statusline{position:absolute;left:0;bottom:-2px;font-size:8.5px;color:#5C6B73;display:flex;align-items:center;gap:6px}
+.statusline .dot{width:7px;height:7px}
+.freshtable{border-collapse:collapse;width:100%;font-size:9px}
+.freshtable th{text-align:left;color:#8492A4;font-size:8px;text-transform:uppercase;letter-spacing:.4px;padding:3px;border-bottom:1px solid #E2E7EE}
+.freshtable td{padding:8px 3px;border-bottom:1px solid #F2F5F8;color:#0B2545}
+.gov{display:flex;align-items:center;gap:16px;height:100%}
+.ring{position:relative;width:86px;height:86px;flex:none}
+.ring svg{width:86px;height:86px} .ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:#1B7F79}
+.govlist{display:flex;flex-direction:column;gap:7px;font-size:9px;color:#5C6B73}
+.govlist b{color:#0B2545;font-size:11px}
+</style></head><body><div class="page"><div class="head">
+      <div class="mark">PA</div>
+      <div class="brand"><b>PAYLOAD ANALYTICS</b><span>Fintech LATAM · 7 países</span></div>
+      <div class="ptitle">Clientes y riesgo crediticio</div>
+      <div class="nav"><div class="tab ">Resumen</div><div class="tab on">Clientes y riesgo</div><div class="tab ">Tiempo real</div><div class="tab ">Gobierno</div></div>
+      <div class="date">Datos al 29 oct 2026</div>
+    </div><div class="filters">
+      <div class="pill"><span>País</span><b>Todos</b><i>▾</i></div>
+      <div class="pill"><span>Segmento</span><b>Todos</b><i>▾</i></div>
+      <div class="pill"><span>Periodo</span><b>Últimos 12 meses</b><i>▾</i></div>
+      <div class="fresh"><span class="dot" style="background:#C9A227"></span>Actualizado hace 2 h</div>
+    </div><div class="kpi" style="left:24px;top:124px;width:299px">
+      <div class="accent" style="background:#1B7F79"></div>
+      <div class="kl">Score promedio</div><div class="kv">569</div>
+      <div class="kd">3.745 clientes con score</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,18 10,17 20,17 30,16 40,16 50,15 60,15 70,14" fill="none" stroke="#1B7F79" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:335px;top:124px;width:299px">
+      <div class="accent" style="background:#B23A48"></div>
+      <div class="kl">Mora &gt; 90 días</div><div class="kv">25,1%</div>
+      <div class="kd">1.920 de 7.663 créditos</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,10 10,10 20,11 30,11 40,12 50,12 60,13 70,13" fill="none" stroke="#B23A48" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:646px;top:124px;width:299px">
+      <div class="accent" style="background:#0B2545"></div>
+      <div class="kl">Cartera USD</div><div class="kv">1,86 B</div>
+      <div class="kd">+0,9% vs mes anterior</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,18 10,18 20,17 30,17 40,16 50,16 60,15 70,15" fill="none" stroke="#0B2545" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:957px;top:124px;width:299px">
+      <div class="accent" style="background:#C9A227"></div>
+      <div class="kl">DPD promedio</div><div class="kv">67 días</div>
+      <div class="kd">Máximo 365 días</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,13 10,13 20,12 30,12 40,11 50,11 60,10 70,10" fill="none" stroke="#C9A227" stroke-width="1.6"/></svg>
+    </div><div class="card" style="left:24px;top:232px;width:620px;height:220px">
+      <div class="ch"><div><div class="ct">Distribución por banda de score</div><div class="ck">3.745 clientes con score válido</div></div></div>
+      <div class="cb"><div class="cols" style="height:150px"><div class="col"><div class="cval">674</div><div class="cbar" style="height:58.1%;background:#B23A48"></div><span>Poor</span></div><div class="col"><div class="cval">899</div><div class="cbar" style="height:77.4%;background:#D08C3C"></div><span>Fair</span></div><div class="col"><div class="cval">1.161</div><div class="cbar" style="height:100.0%;background:#8FA3BF"></div><span>Good</span></div><div class="col"><div class="cval">712</div><div class="cbar" style="height:61.3%;background:#1B7F79"></div><span>Very good</span></div><div class="col"><div class="cval">300</div><div class="cbar" style="height:25.8%;background:#0B2545"></div><span>Exceptional</span></div></div><div class="note">1.355 clientes sin score válido (fuera del rango 350–800)</div></div>
+    </div><div class="card" style="left:660px;top:232px;width:596px;height:220px">
+      <div class="ch"><div><div class="ct">Mora 90+ por segmento y país</div><div class="ck">% de créditos sobre el total del segmento</div></div></div>
+      <div class="cb"><table class="heat"><thead><tr><th></th><th>AR</th><th>BR</th><th>CL</th><th>CO</th><th>MX</th><th>PE</th><th>UY</th></tr></thead><tbody><tr><th class="rowh">premium</th><td style="background:rgba(178,58,72,0.27)">22%</td><td style="background:rgba(178,58,72,0.22)">19%</td><td style="background:rgba(178,58,72,0.33)">27%</td><td style="background:rgba(178,58,72,0.39)">31%</td><td style="background:rgba(178,58,72,0.29)">24%</td><td style="background:rgba(178,58,72,0.35)">28%</td><td style="background:rgba(178,58,72,0.25)">21%</td></tr><tr><th class="rowh">retail</th><td style="background:rgba(178,58,72,0.39)">31%</td><td style="background:rgba(178,58,72,0.35)">28%</td><td style="background:rgba(178,58,72,0.44)">35%</td><td style="background:rgba(178,58,72,0.48)">38%</td><td style="background:rgba(178,58,72,0.42)">33%</td><td style="background:rgba(178,58,72,0.46)">36%</td><td style="background:rgba(178,58,72,0.38)">30%</td></tr><tr><th class="rowh">sme</th><td style="background:rgba(178,58,72,0.32)">26%</td><td style="background:rgba(178,58,72,0.29)">24%</td><td style="background:rgba(178,58,72,0.36)">29%</td><td style="background:rgba(178,58,72,0.43)">34%</td><td style="background:rgba(178,58,72,0.33)">27%</td><td style="background:rgba(178,58,72,0.39)">31%</td><td style="background:rgba(178,58,72,0.31)">25%</td></tr><tr><th class="rowh">private</th><td style="background:rgba(178,58,72,0.16)">14%</td><td style="background:rgba(178,58,72,0.13)">12%</td><td style="background:rgba(178,58,72,0.21)">18%</td><td style="background:rgba(178,58,72,0.25)">21%</td><td style="background:rgba(178,58,72,0.18)">16%</td><td style="background:rgba(178,58,72,0.22)">19%</td><td style="background:rgba(178,58,72,0.14)">13%</td></tr></tbody></table></div>
+    </div><div class="card" style="left:24px;top:468px;width:400px;height:204px">
+      <div class="ch"><div><div class="ct">Mora por país</div><div class="ck">% de créditos con DPD ≥ 90</div></div></div>
+      <div class="cb"><div class="hbar"><span class="hl">AR</span><div class="ht"><div class="hf" style="width:93.8%;background:#B23A48"></div></div><span class="hv">30,2%</span></div><div class="hbar"><span class="hl">BR</span><div class="ht"><div class="hf" style="width:87.5%;background:#B23A48"></div></div><span class="hv">28,4%</span></div><div class="hbar"><span class="hl">MX</span><div class="ht"><div class="hf" style="width:84.4%;background:#B23A48"></div></div><span class="hv">26,8%</span></div><div class="hbar"><span class="hl">CO</span><div class="ht"><div class="hf" style="width:78.1%;background:#B23A48"></div></div><span class="hv">25,1%</span></div><div class="hbar"><span class="hl">PE</span><div class="ht"><div class="hf" style="width:75.0%;background:#B23A48"></div></div><span class="hv">24,3%</span></div><div class="hbar"><span class="hl">CL</span><div class="ht"><div class="hf" style="width:71.9%;background:#B23A48"></div></div><span class="hv">23,0%</span></div><div class="hbar"><span class="hl">UY</span><div class="ht"><div class="hf" style="width:68.8%;background:#B23A48"></div></div><span class="hv">22,1%</span></div></div>
+    </div><div class="card" style="left:440px;top:468px;width:400px;height:204px">
+      <div class="ch"><div><div class="ct">Cartera por producto</div><div class="ck">USD · participación</div></div></div>
+      <div class="cb"><div class="donutwrap"><div class="donut" style="background:conic-gradient(#0B2545 0.00% 38.00%,#1B7F79 38.00% 65.00%,#C9A227 65.00% 86.00%,#8FA3BF 86.00% 100.00%);width:104px;height:104px"><div class="hole"><b>1,86 B</b><span>Cartera</span></div></div><div class="legend"><div class="lg"><span class="sw" style="background:#0B2545"></span><span class="ln">Personal</span><b>38%</b></div><div class="lg"><span class="sw" style="background:#1B7F79"></span><span class="ln">Hipotecario</span><b>27%</b></div><div class="lg"><span class="sw" style="background:#C9A227"></span><span class="ln">Auto</span><b>21%</b></div><div class="lg"><span class="sw" style="background:#8FA3BF"></span><span class="ln">Empresarial</span><b>14%</b></div></div></div></div>
+    </div><div class="card" style="left:856px;top:468px;width:400px;height:204px">
+      <div class="ch"><div><div class="ct">Buckets DPD</div><div class="ck">Créditos por días de mora</div></div></div>
+      <div class="cb"><div class="hbar"><span class="hl">0</span><div class="ht"><div class="hf" style="width:96.0%;background:#8FA3BF"></div></div><span class="hv">2.400</span></div><div class="hbar"><span class="hl">1–30</span><div class="ht"><div class="hf" style="width:44.0%;background:#C9A227"></div></div><span class="hv">1.100</span></div><div class="hbar"><span class="hl">31–60</span><div class="ht"><div class="hf" style="width:36.0%;background:#D08C3C"></div></div><span class="hv">900</span></div><div class="hbar"><span class="hl">61–90</span><div class="ht"><div class="hf" style="width:52.0%;background:#B23A48"></div></div><span class="hv">1.300</span></div><div class="hbar"><span class="hl">90+</span><div class="ht"><div class="hf" style="width:76.8%;background:#7A1F2B"></div></div><span class="hv">1.920</span></div></div>
+    </div><div class="foot"><span>Fuente: Gold · PostgreSQL · 206 reglas dbt · cifras ilustrativas</span><span>02 / 04</span></div></div></body></html>

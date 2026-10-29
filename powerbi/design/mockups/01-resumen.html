@@ -1,0 +1,134 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Resumen ejecutivo</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1280px;height:720px;overflow:hidden;background:#F4F6F8;font-family:"Segoe UI",Arial,sans-serif;color:#1B1B1B;font-variant-numeric:tabular-nums}
+.page{position:relative;width:1280px;height:720px;background:#F4F6F8}
+.head{position:absolute;left:0;top:0;width:1280px;height:64px;background:#0B2545}
+.mark{position:absolute;left:24px;top:17px;width:30px;height:30px;border-radius:6px;background:#C9A227;color:#0B2545;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;letter-spacing:.5px}
+.brand{position:absolute;left:64px;top:14px;color:#fff}
+.brand b{display:block;font-size:10.5px;letter-spacing:1.7px;font-weight:700}
+.brand span{display:block;font-size:8.5px;color:#AFC0D6;margin-top:2px;letter-spacing:.3px}
+.ptitle{position:absolute;left:300px;top:21px;color:#fff;font-size:17px;font-weight:600;letter-spacing:.2px}
+.nav{position:absolute;left:700px;top:0;height:64px;display:flex;align-items:center;gap:22px}
+.tab{font-size:10.5px;color:#AFC0D6;height:64px;display:flex;align-items:center;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{color:#fff;font-weight:600;border-bottom-color:#C9A227}
+.date{position:absolute;right:24px;top:19px;font-size:9.5px;color:#D6E0EE;border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:6px 10px}
+.filters{position:absolute;left:0;top:64px;width:1280px;height:56px;background:#fff;border-bottom:1px solid #E2E7EE}
+.pill{position:absolute;top:13px;height:30px;border:1px solid #D9E0E9;border-radius:15px;padding:0 12px;display:flex;align-items:center;gap:6px;font-size:10px;background:#fff}
+.pill span{color:#5C6B73} .pill b{color:#0B2545;font-weight:600} .pill i{font-style:normal;color:#5C6B73;font-size:9px;margin-left:2px}
+.pill:nth-child(1){left:24px} .pill:nth-child(2){left:170px} .pill:nth-child(3){left:326px}
+.fresh{position:absolute;right:24px;top:20px;font-size:9.5px;color:#5C6B73;display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.foot{position:absolute;left:24px;right:24px;bottom:10px;height:22px;border-top:1px solid #E2E7EE;display:flex;align-items:flex-end;justify-content:space-between;font-size:9px;color:#7A8798}
+.kpi{position:absolute;top:124px;height:92px;background:#fff;border:1px solid #E2E7EE;border-radius:6px;box-shadow:0 1px 2px rgba(11,37,69,.05);padding:12px 14px 10px 16px;overflow:hidden}
+.kpi .accent{position:absolute;left:0;top:0;width:3px;height:92px}
+.kl{font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:#5C6B73;font-weight:600}
+.kv{font-size:25px;line-height:31px;color:#0B2545;font-weight:650;letter-spacing:-.3px;margin-top:2px}
+.kd{font-size:9px;color:#1B7F79;margin-top:1px}
+.ks{font-size:8px;color:#8A97A8;margin-top:1px}
+.spark{position:absolute;right:10px;bottom:8px;width:80px;height:28px;opacity:.9}
+.card{position:absolute;background:#fff;border:1px solid #E2E7EE;border-radius:6px;box-shadow:0 1px 2px rgba(11,37,69,.05);overflow:hidden}
+.ch{padding:12px 14px 0 14px;display:flex;justify-content:space-between}
+.ct{font-size:12px;font-weight:650;color:#0B2545;letter-spacing:.1px}
+.ck{font-size:8.5px;color:#8492A4;margin-top:2px;letter-spacing:.2px}
+.cb{position:absolute;left:14px;right:14px;top:44px;bottom:10px}
+.chart{width:100%;height:100%}
+.ax{font-size:8px;fill:#8492A4;font-family:"Segoe UI",Arial,sans-serif}
+.ax.red{fill:#B23A48}
+.legendline{position:absolute;left:0;bottom:-2px;display:flex;gap:14px;font-size:8.5px;color:#5C6B73;align-items:center;width:100%}
+.legendline i{width:9px;height:3px;display:inline-block;border-radius:2px;margin-right:4px;vertical-align:middle}
+.legendline i.dash{background:repeating-linear-gradient(90deg,#B23A48 0 4px,transparent 4px 7px);height:2px}
+.legendline .right{margin-left:auto;color:#0B2545;font-weight:600}
+.hbar{display:flex;align-items:center;gap:8px;height:18px;font-size:8.8px}
+.hl{width:78px;color:#0B2545;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ht{flex:1;height:8px;background:#F0F3F7;border-radius:3px;overflow:hidden}
+.hf{height:8px;border-radius:3px}
+.hv{width:46px;text-align:right;color:#5C6B73;font-size:8.5px}
+.donutwrap{display:flex;align-items:center;gap:18px;height:100%;justify-content:center}
+.donut{border-radius:50%;position:relative;flex:none}
+.hole{position:absolute;inset:16px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hole b{font-size:18px;color:#0B2545;font-weight:650} .hole span{font-size:8px;color:#5C6B73;margin-top:2px}
+.legend{display:flex;flex-direction:column;gap:7px;min-width:120px}
+.lg{display:flex;align-items:center;gap:7px;font-size:9.5px;color:#5C6B73}
+.lg b{margin-left:auto;color:#0B2545;font-weight:600} .sw{width:8px;height:8px;border-radius:2px;display:inline-block}
+.big{font-size:34px;color:#1B7F79;font-weight:650;letter-spacing:-1px;margin-top:2px}
+.subtle{font-size:8.5px;color:#8492A4}
+.mini{width:100%;height:54px;margin:6px 0 2px 0}
+.smallrow{display:flex;justify-content:space-between;font-size:9px;color:#5C6B73;padding:3px 0;border-top:1px solid #F0F3F7}
+.smallrow b{color:#0B2545;font-weight:600}
+.cols{display:flex;align-items:flex-end;gap:10px;padding:0 4px;height:150px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.cbar{width:70%;border-radius:3px 3px 0 0;min-height:3px}
+.cval{font-size:7.5px;color:#0B2545;font-weight:600;margin-bottom:-1px}
+.col span{font-size:8px;color:#5C6B73;white-space:nowrap}
+.note{position:absolute;left:0;bottom:-2px;font-size:8px;color:#8492A4}
+.heat{width:100%;border-collapse:separate;border-spacing:3px;font-size:8.5px;text-align:center;margin-top:-4px}
+.heat th{color:#5C6B73;font-weight:600;font-size:8px;padding:2px}
+.heat td{color:#0B2545;padding:7px 2px;border-radius:3px;font-weight:600}
+.heat .rowh{text-align:left;color:#0B2545;font-size:8.5px;width:62px;background:transparent}
+.fx{width:100%;border-collapse:collapse;font-size:8px}
+.fx th{text-align:left;color:#8492A4;font-weight:600;font-size:7.2px;text-transform:uppercase;letter-spacing:.4px;padding:1px 3px;border-bottom:1px solid #E2E7EE}
+.fx td{padding:1.5px 3px;line-height:12px;border-bottom:1px solid #F2F5F8;color:#0B2545}
+.fx .cur{font-weight:700} .fx .num{text-align:right} .fx .muted{color:#8492A4} .fx .pos{color:#1B7F79;text-align:right} .fx .neg{color:#B23A48;text-align:right}
+.tag{font-size:7.5px;padding:2px 5px;border-radius:8px;font-weight:600;text-transform:uppercase;letter-spacing:.2px}
+.tag.stream{background:#E6F2F0;color:#1B7F79} .tag.seed{background:#F6F1DF;color:#8A6D12} .tag.ok{background:#E6F2F0;color:#1B7F79} .tag.warn{background:#F6F1DF;color:#8A6D12}
+.statusline{position:absolute;left:0;bottom:-2px;font-size:8.5px;color:#5C6B73;display:flex;align-items:center;gap:6px}
+.statusline .dot{width:7px;height:7px}
+.freshtable{border-collapse:collapse;width:100%;font-size:9px}
+.freshtable th{text-align:left;color:#8492A4;font-size:8px;text-transform:uppercase;letter-spacing:.4px;padding:3px;border-bottom:1px solid #E2E7EE}
+.freshtable td{padding:8px 3px;border-bottom:1px solid #F2F5F8;color:#0B2545}
+.gov{display:flex;align-items:center;gap:16px;height:100%}
+.ring{position:relative;width:86px;height:86px;flex:none}
+.ring svg{width:86px;height:86px} .ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:#1B7F79}
+.govlist{display:flex;flex-direction:column;gap:7px;font-size:9px;color:#5C6B73}
+.govlist b{color:#0B2545;font-size:11px}
+</style></head><body><div class="page"><div class="head">
+      <div class="mark">PA</div>
+      <div class="brand"><b>PAYLOAD ANALYTICS</b><span>Fintech LATAM · 7 países</span></div>
+      <div class="ptitle">Resumen ejecutivo</div>
+      <div class="nav"><div class="tab on">Resumen</div><div class="tab ">Clientes y riesgo</div><div class="tab ">Tiempo real</div><div class="tab ">Gobierno</div></div>
+      <div class="date">Datos al 29 oct 2026</div>
+    </div><div class="filters">
+      <div class="pill"><span>País</span><b>Todos</b><i>▾</i></div>
+      <div class="pill"><span>Segmento</span><b>Todos</b><i>▾</i></div>
+      <div class="pill"><span>Periodo</span><b>Últimos 12 meses</b><i>▾</i></div>
+      <div class="fresh"><span class="dot" style="background:#C9A227"></span>Actualizado hace 2 h</div>
+    </div><div class="kpi" style="left:24px;top:124px;width:236px">
+      <div class="accent" style="background:#0B2545"></div>
+      <div class="kl">Clientes</div><div class="kv">5.100</div>
+      <div class="kd">+2,4% vs mes anterior</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,18 10,17 20,16 30,16 40,15 50,14 60,14 70,13" fill="none" stroke="#0B2545" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:273px;top:124px;width:236px">
+      <div class="accent" style="background:#1B7F79"></div>
+      <div class="kl">Saldo total USD</div><div class="kv">3,24 B</div>
+      <div class="kd">+1,8% vs mes anterior</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,18 10,18 20,17 30,17 40,16 50,15 60,15 70,15" fill="none" stroke="#1B7F79" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:522px;top:124px;width:236px">
+      <div class="accent" style="background:#C9A227"></div>
+      <div class="kl">Ingresos USD</div><div class="kv">78,4 M</div>
+      <div class="kd">+6,2% vs mes anterior</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,19 10,18 20,18 30,17 40,17 50,16 60,15 70,14" fill="none" stroke="#C9A227" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:771px;top:124px;width:236px">
+      <div class="accent" style="background:#B23A48"></div>
+      <div class="kl">Mora &gt; 90 días</div><div class="kv">25,1%</div>
+      <div class="kd">-0,8 pp vs mes anterior</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,10 10,11 20,11 30,12 40,12 50,13 60,13 70,14" fill="none" stroke="#B23A48" stroke-width="1.6"/></svg><div class="ks">1.920 de 7.663 créditos</div>
+    </div><div class="kpi" style="left:1020px;top:124px;width:236px">
+      <div class="accent" style="background:#8FA3BF"></div>
+      <div class="kl">Transacciones</div><div class="kv">87.686</div>
+      <div class="kd">+4,1% vs mes anterior</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,18 10,17 20,17 30,16 40,16 50,15 60,14 70,14" fill="none" stroke="#8FA3BF" stroke-width="1.6"/></svg>
+    </div><div class="card" style="left:24px;top:232px;width:620px;height:220px">
+      <div class="ch"><div><div class="ct">Ingresos por mes</div><div class="ck">USD millones · meta 7,0 M · últimos 12 meses</div></div></div>
+      <div class="cb"><svg class="chart" viewBox="0 0 560 150" preserveAspectRatio="none">
+      <defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0B2545" stop-opacity=".22"/><stop offset="100%" stop-color="#0B2545" stop-opacity="0"/></linearGradient></defs>
+      <line x1="34" y1="8.0" x2="552" y2="8.0" stroke="#E2E7EE" stroke-width="1"/><text x="28" y="11.0" text-anchor="end" class="ax">8</text><line x1="34" y1="38.5" x2="552" y2="38.5" stroke="#E2E7EE" stroke-width="1"/><text x="28" y="41.5" text-anchor="end" class="ax">6</text><line x1="34" y1="69.0" x2="552" y2="69.0" stroke="#E2E7EE" stroke-width="1"/><text x="28" y="72.0" text-anchor="end" class="ax">4</text><line x1="34" y1="99.5" x2="552" y2="99.5" stroke="#E2E7EE" stroke-width="1"/><text x="28" y="102.5" text-anchor="end" class="ax">2</text><line x1="34" y1="130.0" x2="552" y2="130.0" stroke="#E2E7EE" stroke-width="1"/><text x="28" y="133.0" text-anchor="end" class="ax">0</text><path d="M 34.0,130.0 L 34.0,56.8 L 81.1,50.7 L 128.2,44.6 L 175.3,52.2 L 222.4,40.0 L 269.5,35.4 L 316.5,38.5 L 363.6,32.4 L 410.7,26.3 L 457.8,30.9 L 504.9,21.7 L 552.0,17.1 L 552.0,130.0 Z" fill="url(#grad)" opacity=".9"/><path d="M 34.0,56.8 L 81.1,50.7 L 128.2,44.6 L 175.3,52.2 L 222.4,40.0 L 269.5,35.4 L 316.5,38.5 L 363.6,32.4 L 410.7,26.3 L 457.8,30.9 L 504.9,21.7 L 552.0,17.1" fill="none" stroke="#0B2545" stroke-width="2.2"/><line x1="34" y1="23.2" x2="552" y2="23.2" stroke="#B23A48" stroke-width="1" stroke-dasharray="4 3"/><text x="38" y="19.2" text-anchor="start" class="ax red">objetivo 7</text><text x="34.0" y="145" text-anchor="middle" class="ax">nov</text><text x="128.2" y="145" text-anchor="middle" class="ax">ene</text><text x="222.4" y="145" text-anchor="middle" class="ax">mar</text><text x="316.5" y="145" text-anchor="middle" class="ax">may</text><text x="410.7" y="145" text-anchor="middle" class="ax">jul</text><text x="504.9" y="145" text-anchor="middle" class="ax">sep</text>
+      <circle cx="552.0" cy="17.1" r="3.2" fill="#0B2545"/>
+    </svg></div>
+    </div><div class="card" style="left:660px;top:232px;width:596px;height:220px">
+      <div class="ch"><div><div class="ct">Mezcla por segmento</div><div class="ck">Participación sobre ingresos</div></div></div>
+      <div class="cb"><div class="donutwrap"><div class="donut" style="background:conic-gradient(#0B2545 0.00% 32.00%,#1B7F79 32.00% 60.00%,#C9A227 60.00% 84.00%,#8FA3BF 84.00% 100.00%);width:132px;height:132px"><div class="hole"><b>78,4 M</b><span>Ingresos</span></div></div><div class="legend"><div class="lg"><span class="sw" style="background:#0B2545"></span><span class="ln">Premium</span><b>32%</b></div><div class="lg"><span class="sw" style="background:#1B7F79"></span><span class="ln">Retail</span><b>28%</b></div><div class="lg"><span class="sw" style="background:#C9A227"></span><span class="ln">SME</span><b>24%</b></div><div class="lg"><span class="sw" style="background:#8FA3BF"></span><span class="ln">Private banking</span><b>16%</b></div></div></div></div>
+    </div><div class="card" style="left:24px;top:468px;width:620px;height:204px">
+      <div class="ch"><div><div class="ct">Saldo por país</div><div class="ck">USD · millones</div></div></div>
+      <div class="cb"><div class="hbar"><span class="hl">MX</span><div class="ht"><div class="hf" style="width:94.3%;background:#0B2545"></div></div><span class="hv">0,66 B</span></div><div class="hbar"><span class="hl">PE</span><div class="ht"><div class="hf" style="width:94.3%;background:#0B2545"></div></div><span class="hv">0,66 B</span></div><div class="hbar"><span class="hl">BR</span><div class="ht"><div class="hf" style="width:90.0%;background:#0B2545"></div></div><span class="hv">0,63 B</span></div><div class="hbar"><span class="hl">UY</span><div class="ht"><div class="hf" style="width:52.9%;background:#0B2545"></div></div><span class="hv">0,37 B</span></div><div class="hbar"><span class="hl">CO</span><div class="ht"><div class="hf" style="width:44.3%;background:#0B2545"></div></div><span class="hv">0,31 B</span></div><div class="hbar"><span class="hl">AR</span><div class="ht"><div class="hf" style="width:44.3%;background:#0B2545"></div></div><span class="hv">0,31 B</span></div><div class="hbar"><span class="hl">CL</span><div class="ht"><div class="hf" style="width:41.4%;background:#0B2545"></div></div><span class="hv">0,29 B</span></div></div>
+    </div><div class="card" style="left:660px;top:468px;width:290px;height:204px">
+      <div class="ch"><div><div class="ct">Transacciones por tipo</div><div class="ck">Participación del volumen</div></div></div>
+      <div class="cb"><div class="hbar"><span class="hl">Transfer</span><div class="ht"><div class="hf" style="width:80.0%;background:#1B7F79"></div></div><span class="hv">32%</span></div><div class="hbar"><span class="hl">Compra</span><div class="ht"><div class="hf" style="width:60.0%;background:#1B7F79"></div></div><span class="hv">24%</span></div><div class="hbar"><span class="hl">Retiro</span><div class="ht"><div class="hf" style="width:45.0%;background:#1B7F79"></div></div><span class="hv">18%</span></div><div class="hbar"><span class="hl">Fee</span><div class="ht"><div class="hf" style="width:22.5%;background:#1B7F79"></div></div><span class="hv">9%</span></div><div class="hbar"><span class="hl">Pago</span><div class="ht"><div class="hf" style="width:10.0%;background:#1B7F79"></div></div><span class="hv">4%</span></div></div>
+    </div><div class="card" style="left:966px;top:468px;width:290px;height:204px">
+      <div class="ch"><div><div class="ct">Crecimiento</div><div class="ck">Variación mensual</div></div></div>
+      <div class="cb"><div class="big">+6,2%</div><div class="subtle">Ingresos vs septiembre</div><svg class="mini" viewBox="0 0 240 54"><polyline points="0,44 30,40 60,42 90,34 120,30 150,33 180,22 210,18 240,12" fill="none" stroke="#C9A227" stroke-width="2.4"/></svg><div class="smallrow"><span>Ticket promedio</span><b>894 USD</b></div><div class="smallrow"><span>Ingreso / cliente</span><b>15.373 USD</b></div></div>
+    </div><div class="foot"><span>Fuente: Gold · PostgreSQL · 206 reglas dbt · cifras ilustrativas</span><span>01 / 04</span></div></div></body></html>

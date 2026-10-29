@@ -1,0 +1,14 @@
+# Local runtime, tooling and data used to build the report.
+.backup_tmdl/
+.extract/
+.tmp/
+.tools/
+.venv/
+.localpg/
+.npm-cache/
+.mcp/
+backup/
+
+# Power BI writes the model cache and per-machine settings here.
+**/.pbi/
+*.pbix~

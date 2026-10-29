@@ -1,0 +1,36 @@
+relationship 55002b9a-e616-4d2d-b4f3-c2a3aafeb9e7
+	fromColumn: 'gold fct_transactions'.customer_id
+	toColumn: 'gold dim_customer'.customer_id
+
+relationship 433021c7-65d6-48f7-87e4-f13c40af07a6
+	fromColumn: 'gold fct_transactions'.account_id
+	toColumn: 'gold dim_account'.account_id
+
+relationship bc2b1885-7e9b-42ff-a1ee-69a829598fcb
+	fromColumn: 'gold fct_transactions'.date_id
+	toColumn: 'gold dim_date'.date_id
+
+relationship 2ceaeebb-219e-40af-afad-080a23279929
+	fromColumn: 'gold fct_loans'.customer_id
+	toColumn: 'gold dim_customer'.customer_id
+
+relationship 58b7f501-de02-4b59-b4cc-2156946f4ea7
+	fromColumn: 'gold fct_loans'.date_id
+	toColumn: 'gold dim_date'.date_id
+
+relationship 98b57e8a-268a-4a17-ac5d-d2ca8fa6239b
+	fromColumn: 'gold fct_live_transactions'.customer_id
+	toColumn: 'gold dim_customer'.customer_id
+
+relationship dbef12ae-82d5-4eab-8fd3-1a967c0337e2
+	fromColumn: 'gold fct_live_transactions'.account_id
+	toColumn: 'gold dim_account'.account_id
+
+relationship 4f0a9cc5-e49c-44d7-8121-658a4da2517d
+	fromColumn: 'gold fct_live_transactions'.date_id
+	toColumn: 'gold dim_date'.date_id
+
+relationship dda66cee-1538-49d8-8e65-faedd0acd6ee
+	fromColumn: 'gold fct_live_transactions'.currency
+	toColumn: 'gold dim_fx_rate_current'.currency
+

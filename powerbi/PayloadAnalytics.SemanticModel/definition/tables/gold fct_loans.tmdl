@@ -1,0 +1,198 @@
+table 'gold fct_loans'
+	lineageTag: 0792b288-87f7-48c1-a55a-37233de2d5ae
+
+	measure 'Delinquency Rate' = DIVIDE(COUNTROWS(FILTER('gold fct_loans', 'gold fct_loans'[is_delinquent])), COUNTROWS('gold fct_loans'))
+		lineageTag: 09b4b24a-f673-4fed-9b7b-55f484e638c6
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column loan_id
+		dataType: string
+		isHidden
+		lineageTag: 4211de99-95b6-41e5-9d17-846a0e0bc354
+		summarizeBy: none
+		sourceColumn: loan_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		isHidden
+		lineageTag: 541c4a1f-c8f4-4c44-aaa5-e3c324a58ed1
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 338d7289-afec-4fc2-98de-d2f496ee7bc1
+		summarizeBy: none
+		sourceColumn: date_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column loan_type
+		dataType: string
+		lineageTag: 8ebd4db4-af78-4f5f-90d2-2b569249b822
+		summarizeBy: none
+		sourceColumn: loan_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column currency
+		dataType: string
+		lineageTag: 6f644e7d-586f-420e-8749-7f1359a13f7e
+		summarizeBy: none
+		sourceColumn: currency
+
+		annotation SummarizationSetBy = Automatic
+
+	column principal
+		dataType: double
+		lineageTag: 78f5c4b1-d231-4987-8f42-c90a1b257896
+		summarizeBy: sum
+		sourceColumn: principal
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column outstanding_balance
+		dataType: double
+		lineageTag: 603a23dc-34de-4865-a7f8-802e048909b5
+		summarizeBy: sum
+		sourceColumn: outstanding_balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column interest_rate
+		dataType: double
+		lineageTag: ed9c9d05-ba8b-4641-bf90-0a9b4dfbbb39
+		summarizeBy: sum
+		sourceColumn: interest_rate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column term_months
+		dataType: int64
+		formatString: 0
+		lineageTag: b9b35932-fd26-4903-857a-04d70cd10c25
+		summarizeBy: sum
+		sourceColumn: term_months
+
+		annotation SummarizationSetBy = Automatic
+
+	column monthly_payment
+		dataType: double
+		lineageTag: 49168ddd-b7db-44d2-9cb1-7cd72cd40bfa
+		summarizeBy: sum
+		sourceColumn: monthly_payment
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column loan_age_months
+		dataType: int64
+		formatString: 0
+		lineageTag: 5fefb717-03d8-45a2-9de1-2c3ce61d4928
+		summarizeBy: sum
+		sourceColumn: loan_age_months
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 7de8ddf0-2e25-4217-aa97-af3d100e1726
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_delinquent
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 88a74f45-3449-4a2a-a105-078035f7c97d
+		summarizeBy: none
+		sourceColumn: is_delinquent
+
+		annotation SummarizationSetBy = Automatic
+
+	column days_past_due
+		dataType: int64
+		formatString: 0
+		lineageTag: 9516361e-33c2-4183-a2c4-0a240fc28aaa
+		summarizeBy: sum
+		sourceColumn: days_past_due
+
+		annotation SummarizationSetBy = Automatic
+
+	column dpd_bucket
+		dataType: string
+		lineageTag: 546f2dcb-1b5b-43da-87ab-984c304c4926
+		summarizeBy: none
+		sourceColumn: dpd_bucket
+
+		annotation SummarizationSetBy = Automatic
+
+	column pct_outstanding
+		dataType: double
+		lineageTag: d84a3baf-f456-4218-8a09-368fbe3e0004
+		summarizeBy: sum
+		sourceColumn: pct_outstanding
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column estimated_monthly_interest
+		dataType: double
+		lineageTag: f03c625d-049c-448d-8b09-ef0009f72792
+		summarizeBy: sum
+		sourceColumn: estimated_monthly_interest
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column collateral_type
+		dataType: string
+		lineageTag: 3c4c79ba-c232-4c77-9c26-e288ae332fdd
+		summarizeBy: none
+		sourceColumn: collateral_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column OrdenDPD = SWITCH([dpd_bucket], "current", 1, "1-30", 2, "31-60", 3, "61-90", 4, "90+", 5)
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: ff389cd2-888e-4d0c-a440-9cc1b5fd9eb6
+		summarizeBy: none
+
+	column Producto = SWITCH([loan_type], "personal", "Personal", "mortgage", "Hipotecario", "auto", "Auto", "business", "Empresarial", "education", "Educación", [loan_type])
+		dataType: string
+		lineageTag: ca09f423-e7d3-406d-b0ca-52bf10212fc3
+		summarizeBy: none
+
+	column Bucket = SWITCH([dpd_bucket], "current", "Al día", "1-30", "1-30", "31-60", "31-60", "61-90", "61-90", "90+", "90+", [dpd_bucket])
+		dataType: string
+		lineageTag: c52ea7f7-bc67-4fb6-a077-faa039851869
+		summarizeBy: none
+		sortByColumn: OrdenDPD
+
+	partition 'gold fct_loans' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5433", "payload_analytics"),
+				    gold_fct_loans = Source{[Schema="gold",Item="fct_loans"]}[Data]
+				in
+				    gold_fct_loans
+

@@ -1,0 +1,132 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Calidad y gobierno del dato</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1280px;height:720px;overflow:hidden;background:#F4F6F8;font-family:"Segoe UI",Arial,sans-serif;color:#1B1B1B;font-variant-numeric:tabular-nums}
+.page{position:relative;width:1280px;height:720px;background:#F4F6F8}
+.head{position:absolute;left:0;top:0;width:1280px;height:64px;background:#0B2545}
+.mark{position:absolute;left:24px;top:17px;width:30px;height:30px;border-radius:6px;background:#C9A227;color:#0B2545;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;letter-spacing:.5px}
+.brand{position:absolute;left:64px;top:14px;color:#fff}
+.brand b{display:block;font-size:10.5px;letter-spacing:1.7px;font-weight:700}
+.brand span{display:block;font-size:8.5px;color:#AFC0D6;margin-top:2px;letter-spacing:.3px}
+.ptitle{position:absolute;left:300px;top:21px;color:#fff;font-size:17px;font-weight:600;letter-spacing:.2px}
+.nav{position:absolute;left:700px;top:0;height:64px;display:flex;align-items:center;gap:22px}
+.tab{font-size:10.5px;color:#AFC0D6;height:64px;display:flex;align-items:center;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{color:#fff;font-weight:600;border-bottom-color:#C9A227}
+.date{position:absolute;right:24px;top:19px;font-size:9.5px;color:#D6E0EE;border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:6px 10px}
+.filters{position:absolute;left:0;top:64px;width:1280px;height:56px;background:#fff;border-bottom:1px solid #E2E7EE}
+.pill{position:absolute;top:13px;height:30px;border:1px solid #D9E0E9;border-radius:15px;padding:0 12px;display:flex;align-items:center;gap:6px;font-size:10px;background:#fff}
+.pill span{color:#5C6B73} .pill b{color:#0B2545;font-weight:600} .pill i{font-style:normal;color:#5C6B73;font-size:9px;margin-left:2px}
+.pill:nth-child(1){left:24px} .pill:nth-child(2){left:170px} .pill:nth-child(3){left:326px}
+.fresh{position:absolute;right:24px;top:20px;font-size:9.5px;color:#5C6B73;display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.foot{position:absolute;left:24px;right:24px;bottom:10px;height:22px;border-top:1px solid #E2E7EE;display:flex;align-items:flex-end;justify-content:space-between;font-size:9px;color:#7A8798}
+.kpi{position:absolute;top:124px;height:92px;background:#fff;border:1px solid #E2E7EE;border-radius:6px;box-shadow:0 1px 2px rgba(11,37,69,.05);padding:12px 14px 10px 16px;overflow:hidden}
+.kpi .accent{position:absolute;left:0;top:0;width:3px;height:92px}
+.kl{font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:#5C6B73;font-weight:600}
+.kv{font-size:25px;line-height:31px;color:#0B2545;font-weight:650;letter-spacing:-.3px;margin-top:2px}
+.kd{font-size:9px;color:#1B7F79;margin-top:1px}
+.ks{font-size:8px;color:#8A97A8;margin-top:1px}
+.spark{position:absolute;right:10px;bottom:8px;width:80px;height:28px;opacity:.9}
+.card{position:absolute;background:#fff;border:1px solid #E2E7EE;border-radius:6px;box-shadow:0 1px 2px rgba(11,37,69,.05);overflow:hidden}
+.ch{padding:12px 14px 0 14px;display:flex;justify-content:space-between}
+.ct{font-size:12px;font-weight:650;color:#0B2545;letter-spacing:.1px}
+.ck{font-size:8.5px;color:#8492A4;margin-top:2px;letter-spacing:.2px}
+.cb{position:absolute;left:14px;right:14px;top:44px;bottom:10px}
+.chart{width:100%;height:100%}
+.ax{font-size:8px;fill:#8492A4;font-family:"Segoe UI",Arial,sans-serif}
+.ax.red{fill:#B23A48}
+.legendline{position:absolute;left:0;bottom:-2px;display:flex;gap:14px;font-size:8.5px;color:#5C6B73;align-items:center;width:100%}
+.legendline i{width:9px;height:3px;display:inline-block;border-radius:2px;margin-right:4px;vertical-align:middle}
+.legendline i.dash{background:repeating-linear-gradient(90deg,#B23A48 0 4px,transparent 4px 7px);height:2px}
+.legendline .right{margin-left:auto;color:#0B2545;font-weight:600}
+.hbar{display:flex;align-items:center;gap:8px;height:18px;font-size:8.8px}
+.hl{width:78px;color:#0B2545;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ht{flex:1;height:8px;background:#F0F3F7;border-radius:3px;overflow:hidden}
+.hf{height:8px;border-radius:3px}
+.hv{width:46px;text-align:right;color:#5C6B73;font-size:8.5px}
+.donutwrap{display:flex;align-items:center;gap:18px;height:100%;justify-content:center}
+.donut{border-radius:50%;position:relative;flex:none}
+.hole{position:absolute;inset:16px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hole b{font-size:18px;color:#0B2545;font-weight:650} .hole span{font-size:8px;color:#5C6B73;margin-top:2px}
+.legend{display:flex;flex-direction:column;gap:7px;min-width:120px}
+.lg{display:flex;align-items:center;gap:7px;font-size:9.5px;color:#5C6B73}
+.lg b{margin-left:auto;color:#0B2545;font-weight:600} .sw{width:8px;height:8px;border-radius:2px;display:inline-block}
+.big{font-size:34px;color:#1B7F79;font-weight:650;letter-spacing:-1px;margin-top:2px}
+.subtle{font-size:8.5px;color:#8492A4}
+.mini{width:100%;height:54px;margin:6px 0 2px 0}
+.smallrow{display:flex;justify-content:space-between;font-size:9px;color:#5C6B73;padding:3px 0;border-top:1px solid #F0F3F7}
+.smallrow b{color:#0B2545;font-weight:600}
+.cols{display:flex;align-items:flex-end;gap:10px;padding:0 4px;height:150px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.cbar{width:70%;border-radius:3px 3px 0 0;min-height:3px}
+.cval{font-size:7.5px;color:#0B2545;font-weight:600;margin-bottom:-1px}
+.col span{font-size:8px;color:#5C6B73;white-space:nowrap}
+.note{position:absolute;left:0;bottom:-2px;font-size:8px;color:#8492A4}
+.heat{width:100%;border-collapse:separate;border-spacing:3px;font-size:8.5px;text-align:center;margin-top:-4px}
+.heat th{color:#5C6B73;font-weight:600;font-size:8px;padding:2px}
+.heat td{color:#0B2545;padding:7px 2px;border-radius:3px;font-weight:600}
+.heat .rowh{text-align:left;color:#0B2545;font-size:8.5px;width:62px;background:transparent}
+.fx{width:100%;border-collapse:collapse;font-size:8px}
+.fx th{text-align:left;color:#8492A4;font-weight:600;font-size:7.2px;text-transform:uppercase;letter-spacing:.4px;padding:1px 3px;border-bottom:1px solid #E2E7EE}
+.fx td{padding:1.5px 3px;line-height:12px;border-bottom:1px solid #F2F5F8;color:#0B2545}
+.fx .cur{font-weight:700} .fx .num{text-align:right} .fx .muted{color:#8492A4} .fx .pos{color:#1B7F79;text-align:right} .fx .neg{color:#B23A48;text-align:right}
+.tag{font-size:7.5px;padding:2px 5px;border-radius:8px;font-weight:600;text-transform:uppercase;letter-spacing:.2px}
+.tag.stream{background:#E6F2F0;color:#1B7F79} .tag.seed{background:#F6F1DF;color:#8A6D12} .tag.ok{background:#E6F2F0;color:#1B7F79} .tag.warn{background:#F6F1DF;color:#8A6D12}
+.statusline{position:absolute;left:0;bottom:-2px;font-size:8.5px;color:#5C6B73;display:flex;align-items:center;gap:6px}
+.statusline .dot{width:7px;height:7px}
+.freshtable{border-collapse:collapse;width:100%;font-size:9px}
+.freshtable th{text-align:left;color:#8492A4;font-size:8px;text-transform:uppercase;letter-spacing:.4px;padding:3px;border-bottom:1px solid #E2E7EE}
+.freshtable td{padding:8px 3px;border-bottom:1px solid #F2F5F8;color:#0B2545}
+.gov{display:flex;align-items:center;gap:16px;height:100%}
+.ring{position:relative;width:86px;height:86px;flex:none}
+.ring svg{width:86px;height:86px} .ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:#1B7F79}
+.govlist{display:flex;flex-direction:column;gap:7px;font-size:9px;color:#5C6B73}
+.govlist b{color:#0B2545;font-size:11px}
+</style></head><body><div class="page"><div class="head">
+      <div class="mark">PA</div>
+      <div class="brand"><b>PAYLOAD ANALYTICS</b><span>Fintech LATAM · 7 países</span></div>
+      <div class="ptitle">Calidad y gobierno del dato</div>
+      <div class="nav"><div class="tab ">Resumen</div><div class="tab ">Clientes y riesgo</div><div class="tab ">Tiempo real</div><div class="tab on">Gobierno</div></div>
+      <div class="date">Datos al 29 oct 2026</div>
+    </div><div class="filters">
+      <div class="pill"><span>País</span><b>Todos</b><i>▾</i></div>
+      <div class="pill"><span>Segmento</span><b>Todos</b><i>▾</i></div>
+      <div class="pill"><span>Periodo</span><b>Últimos 12 meses</b><i>▾</i></div>
+      <div class="fresh"><span class="dot" style="background:#C9A227"></span>Actualizado hace 2 h</div>
+    </div><div class="kpi" style="left:24px;top:124px;width:236px">
+      <div class="accent" style="background:#0B2545"></div>
+      <div class="kl">Reglas de calidad</div><div class="kv">206</div>
+      <div class="kd">9 tipos · dbt test</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,18 10,18 20,18 30,18 40,18 50,18 60,18 70,18" fill="none" stroke="#0B2545" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:273px;top:124px;width:236px">
+      <div class="accent" style="background:#1B7F79"></div>
+      <div class="kl">Cumplimiento</div><div class="kv">100%</div>
+      <div class="kd">0 fallos en la última corrida</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,18 10,18 20,18 30,18 40,18 50,18 60,18 70,18" fill="none" stroke="#1B7F79" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:522px;top:124px;width:236px">
+      <div class="accent" style="background:#C9A227"></div>
+      <div class="kl">Registros marcados</div><div class="kv">10.738</div>
+      <div class="kd">se conservan y se señalan</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,18 10,17 20,17 30,16 40,16 50,15 60,15 70,14" fill="none" stroke="#C9A227" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:771px;top:124px;width:236px">
+      <div class="accent" style="background:#B23A48"></div>
+      <div class="kl">Emails inválidos</div><div class="kv">1.842</div>
+      <div class="kd">36,1% de los clientes</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,16 10,15 20,15 30,14 40,14 50,13 60,13 70,12" fill="none" stroke="#B23A48" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:1020px;top:124px;width:236px">
+      <div class="accent" style="background:#1B7F79"></div>
+      <div class="kl">Frescura streaming</div><div class="kv">18 s</div>
+      <div class="kd">último processed_at</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,18 10,18 20,18 30,18 40,18 50,18 60,18 70,18" fill="none" stroke="#1B7F79" stroke-width="1.6"/></svg>
+    </div><div class="card" style="left:24px;top:232px;width:620px;height:220px">
+      <div class="ch"><div><div class="ct">Reglas por tipo</div><div class="ck">206 reglas activas en cada corrida</div></div></div>
+      <div class="cb"><div class="hbar"><span class="hl">No nulos</span><div class="ht"><div class="hf" style="width:90.0%;background:#0B2545"></div></div><span class="hv">90</span></div><div class="hbar"><span class="hl">No negativos</span><div class="ht"><div class="hf" style="width:30.0%;background:#0B2545"></div></div><span class="hv">30</span></div><div class="hbar"><span class="hl">Aceptados</span><div class="ht"><div class="hf" style="width:19.0%;background:#0B2545"></div></div><span class="hv">19</span></div><div class="hbar"><span class="hl">Relaciones</span><div class="ht"><div class="hf" style="width:17.0%;background:#0B2545"></div></div><span class="hv">17</span></div><div class="hbar"><span class="hl">Únicos</span><div class="ht"><div class="hf" style="width:14.0%;background:#0B2545"></div></div><span class="hv">14</span></div><div class="hbar"><span class="hl">Rangos</span><div class="ht"><div class="hf" style="width:11.0%;background:#0B2545"></div></div><span class="hv">11</span></div><div class="hbar"><span class="hl">Fechas</span><div class="ht"><div class="hf" style="width:6.0%;background:#0B2545"></div></div><span class="hv">6</span></div><div class="hbar"><span class="hl">Positivos</span><div class="ht"><div class="hf" style="width:5.0%;background:#0B2545"></div></div><span class="hv">5</span></div><div class="hbar"><span class="hl">Negocio</span><div class="ht"><div class="hf" style="width:14.0%;background:#0B2545"></div></div><span class="hv">14</span></div></div>
+    </div><div class="card" style="left:660px;top:232px;width:596px;height:220px">
+      <div class="ch"><div><div class="ct">Monedas inconsistentes por país</div><div class="ck">8.896 de 17.529 cuentas (50,8%) · moneda distinta a la esperada</div></div></div>
+      <div class="cb"><div class="hbar"><span class="hl">BR</span><div class="ht"><div class="hf" style="width:94.7%;background:#B23A48"></div></div><span class="hv">1.420</span></div><div class="hbar"><span class="hl">PE</span><div class="ht"><div class="hf" style="width:92.0%;background:#B23A48"></div></div><span class="hv">1.380</span></div><div class="hbar"><span class="hl">MX</span><div class="ht"><div class="hf" style="width:88.7%;background:#B23A48"></div></div><span class="hv">1.330</span></div><div class="hbar"><span class="hl">AR</span><div class="ht"><div class="hf" style="width:86.0%;background:#B23A48"></div></div><span class="hv">1.290</span></div><div class="hbar"><span class="hl">CO</span><div class="ht"><div class="hf" style="width:82.7%;background:#B23A48"></div></div><span class="hv">1.240</span></div><div class="hbar"><span class="hl">UY</span><div class="ht"><div class="hf" style="width:78.7%;background:#B23A48"></div></div><span class="hv">1.180</span></div><div class="hbar"><span class="hl">CL</span><div class="ht"><div class="hf" style="width:70.4%;background:#B23A48"></div></div><span class="hv">1.056</span></div></div>
+    </div><div class="card" style="left:24px;top:468px;width:760px;height:204px">
+      <div class="ch"><div><div class="ct">Frescura por dominio</div><div class="ck">Última marca disponible y antigüedad</div></div></div>
+      <div class="cb"><table class="freshtable"><thead><tr><th>Dominio</th><th>Última marca</th><th>Antigüedad</th><th>Estado</th></tr></thead><tbody>
+      <tr><td>Gold batch</td><td>29 oct 2026 · 10:12</td><td>2 h 14 min</td><td><span class="tag warn">programado</span></td></tr>
+      <tr><td>Streaming transactions</td><td>29 oct 2026 · 16:45</td><td>18 s</td><td><span class="tag ok">al día</span></td></tr>
+      <tr><td>FX rates</td><td>29 oct 2026 · 16:45</td><td>4 s</td><td><span class="tag ok">al día</span></td></tr>
+      <tr><td>dbt tests</td><td>29 oct 2026 · 10:20</td><td>206 / 206</td><td><span class="tag ok">ok</span></td></tr>
+    </tbody></table></div>
+    </div><div class="card" style="left:800px;top:468px;width:456px;height:204px">
+      <div class="ch"><div><div class="ct">Gobierno del dato</div><div class="ck">Cobertura y clasificación</div></div></div>
+      <div class="cb"><div class="gov"><div class="ring"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="30" fill="none" stroke="#E2E7EE" stroke-width="8"/><circle cx="40" cy="40" r="30" fill="none" stroke="#1B7F79" stroke-width="8" stroke-dasharray="188.5" stroke-dashoffset="0" transform="rotate(-90 40 40)"/></svg><b>100%</b></div><div class="govlist"><div><b>375</b> columnas documentadas</div><div><b>17</b> PII directa · <b>43</b> financieras</div><div><b>206</b> reglas en cada corrida</div><div class="subtle">Catálogo y linaje en docs/governance</div></div></div></div>
+    </div><div class="foot"><span>Fuente: Gold · PostgreSQL · 206 reglas dbt · cifras ilustrativas</span><span>04 / 04</span></div></div></body></html>
