@@ -424,6 +424,47 @@ The project includes dbt tests for:
 
 These tests validate both the warehouse structure and the business logic used in reporting.
 
+## Dashboard
+
+`powerbi/dashboard.pbix` is a four-page report on Gold. Its versionable source is `powerbi/PayloadAnalytics.pbip` (TMDL semantic model, PBIR report and the `PayloadCorporate` theme). The screenshots below are in `powerbi/screenshots/`.
+
+![Executive summary](powerbi/screenshots/01-resumen.png)
+
+![Customers and credit risk](powerbi/screenshots/02-clientes-riesgo.png)
+
+![Real-time operations](powerbi/screenshots/03-tiempo-real.png)
+
+![Data quality and governance](powerbi/screenshots/04-gobierno.png)
+
+### What each page answers
+
+| Page | Business question | Main content |
+| --- | --- | --- |
+| **Resumen ejecutivo** | How is the business doing and where does revenue come from? | Customers, USD balance, revenue, 90+ delinquency and transactions; monthly revenue trend, segment mix, balance by country, transaction mix and average ticket. |
+| **Clientes y riesgo crediticio** | Where is credit risk concentrated? | Score distribution by band, 90+ delinquency by segment and country, delinquency by country, loan portfolio by product and DPD buckets. |
+| **Operación en tiempo real** | Is streaming flowing, how fresh is it and at what rate? | p95 latency, transactions in the last hour, USD volume in 24 h, FX coverage, latency by minute, volume by minute and the current rate per currency. |
+| **Calidad y gobierno del dato** | Is the data trustworthy and fresh? | 206 dbt rules, marked records, invalid emails, currency mismatches by country, streaming/FX/batch freshness and the governance scope. |
+
+### Semantic model
+
+- 9 tables: `dim_customer`, `dim_account`, `dim_date`, `fct_transactions`, `fct_loans`, `fct_live_transactions`, `dim_fx_rate_current`, `mart_customer_summary` (hidden) and `Medidas`.
+- 35 measures in `Medidas`, organised in display folders: `01 KPIs`, `02 Clientes`, `03 Crecimiento`, `04 Riesgo`, `05 Streaming`, `06 Gobierno`.
+- `dim_date` is the marked date table; relationships are single-direction from each fact to its dimensions. The automatic date tables were removed.
+- `dim_customer` exposes `email_status` and `dim_account` exposes `is_currency_mismatch`, so the governance page reads the same flags Silver produces instead of reimplementing the rules.
+- `dim_fx_rate_current` exposes the rate `to_usd` uses, its source (`stream` or `seed`) and the age of the tick.
+
+### Data and refresh
+
+The report was built against a local Gold database (`localhost:5433`, database `payload_analytics`) while RDS was unavailable. The `.pbix` carries the imported snapshot, so it opens without a database. To refresh it:
+
+1. Load the batch JSON into `silver.stg_*` and run the dbt project (`dbt seed`, `dbt run`, `dbt test`). The 206 tests pass on the 5,000-customer sample.
+2. For the streaming page, run the local Redpanda/Spark stack and rebuild `fct_live_transactions` and `dim_fx_rate_current`.
+3. In Power BI Desktop, refresh the model. The PostgreSQL source is `localhost:5433` / `payload_analytics`.
+
+To point the report at RDS instead, change the server and database in the Power Query source and refresh; the table and column names are the same Gold contract.
+
+**Reading the delinquency KPI.** The headline `Tasa de mora 90+` is the share of loans with `days_past_due >= 90` (25.1%). The balance-weighted ratio is higher (66.4%) because the synthetic dataset concentrates outstanding balance in delinquent and defaulted loans; the page 2 matrix and the measure descriptions keep both definitions visible.
+
 ## Governance
 
 Everything about the data itself lives in [`docs/governance/`](docs/governance/README.md):

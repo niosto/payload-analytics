@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Four-page corporate Power BI dashboard in `powerbi/dashboard.pbix`, with the versionable `powerbi/PayloadAnalytics.pbip` (TMDL model, PBIR report and `PayloadCorporate` theme), navigation, slicers, tooltips and screenshots for each page
+- `Medidas` table with 35 business measures in display folders, a marked `dim_date`, single-direction relationships and the automatic date tables removed
+- `gold.dim_fx_rate_current`: one row per currency with the rate `to_usd` applies, its `stream`/`seed` source and the age of the tick
+- `gold.dim_customer.email_status` and `gold.dim_account.is_currency_mismatch`, so the governance page reports the same quality flags Silver produces
+- README Dashboard section with the four screenshots and what each page answers
 - `docs/optimizations/README.md`: before/after table and write-up of the four index experiments, including the `LATERAL` result for optimization 1
 - `docs/governance/`: data dictionary with a sensitivity class per column (375 columns), dbt docs catalog as a single HTML file, end-to-end lineage, the 206 quality rules, and the RACI matrix with Nicolás Ospina as data owner
 - `docs/governance/build_governance_docs.py`: regenerates the dictionary, quality rules, and lineage from dbt's `manifest.json` and `catalog.json`
