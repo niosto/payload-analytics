@@ -119,3 +119,5 @@ Thumbs.db
 # Devcontainers and Serverless
 node_modules/
 .serverless/
+# Power BI Modeling MCP local audit logs
+.mcp-audit/*.log

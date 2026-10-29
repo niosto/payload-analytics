@@ -1,0 +1,15 @@
+{
+  "servers": {
+    "powerbi-modeling": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@microsoft/powerbi-modeling-mcp@latest",
+        "--start",
+        "--accepteula",
+        "--audit-log-path=${workspaceFolder}/.mcp-audit"
+      ]
+    }
+  }
+}
