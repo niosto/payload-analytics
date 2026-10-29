@@ -12,6 +12,7 @@ select
     c.first_name,
     c.last_name,
     c.email,
+    c.email_status,
     c.country,
     c.city,
     c.gender,

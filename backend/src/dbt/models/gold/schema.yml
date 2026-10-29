@@ -56,6 +56,8 @@ models:
           - relationships:
               to: ref('customers')
               field: customer_id
+      - name: email_status
+        description: valid, invalid or null, inherited from Silver so quality reporting does not reimplement the rule.
 
   - name: dim_account
     description: Account dimension with USD balances and customer context.
@@ -72,6 +74,8 @@ models:
           - relationships:
               to: ref('dim_customer')
               field: customer_id
+      - name: is_currency_mismatch
+        description: True when the account currency differs from the expected currency for the customer's country.
       - name: is_credit_product
         description: True when account_type is credit_card.
         tests:
@@ -276,3 +280,19 @@ models:
         tests:
           - not_null
           - is_non_negative
+
+  - name: dim_fx_rate_current
+    description: One row per currency with the rate to_usd applies, its source (stream or seed) and the age of the tick.
+    columns:
+      - name: currency
+        description: ISO currency code. Primary key.
+      - name: usd_per_unit
+        description: USD per unit of the currency, the same value to_usd uses.
+      - name: rate_source
+        description: stream when a recent tick exists, seed for the fallback.
+      - name: rate_event_time
+        description: Publication time of the tick used, NULL when the rate comes from the seed.
+      - name: provider_updated_at
+        description: Time the provider set the price, NULL for the seed fallback.
+      - name: seed_usd_per_unit
+        description: Seed rate for comparison.

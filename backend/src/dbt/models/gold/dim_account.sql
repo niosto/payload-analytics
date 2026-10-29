@@ -12,6 +12,7 @@ select
     a.account_type,
     (a.account_type = 'credit_card') as is_credit_product,
     a.currency,
+    a.is_currency_mismatch,
     a.balance_usd as balance,
     a.credit_limit_usd as credit_limit,
     a.interest_rate,
