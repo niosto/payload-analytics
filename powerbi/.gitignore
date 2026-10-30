@@ -6,7 +6,6 @@
 .venv/
 .localpg/
 .npm-cache/
-.mcp/
 backup/
 
 # Power BI writes the model cache and per-machine settings here.
