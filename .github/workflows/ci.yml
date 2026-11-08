@@ -1,0 +1,189 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: test-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: payload_analytics_admin
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: payload_analytics
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U payload_analytics_admin -d payload_analytics"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      # Throwaway service container, not a real credential.
+      DBT_HOST: localhost
+      DBT_PORT: '5432'
+      DBT_DBNAME: payload_analytics
+      DBT_USER: payload_analytics_admin
+      DBT_PASSWORD: ci
+      DBT_THREADS: '4'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Unit tests
+        run: pytest -v
+
+      - name: dbt integration test
+        run: bash scripts/ci/dbt_integration.sh
+
+      - name: Upload dbt logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-logs
+          path: |
+            backend/src/dbt/logs/
+            backend/src/dbt/target/run_results.json
+          if-no-files-found: ignore
+
+  deploy:
+    name: deploy
+    needs: test
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      id-token: write
+      contents: read
+    # Deploys never overlap and are never cancelled half-way.
+    concurrency:
+      group: deploy-aws-backend
+      cancel-in-progress: false
+    env:
+      # Not secrets: the role is assumable only through GitHub OIDC from main
+      # of this repository (stack infrastructure/serverless/cicd).
+      AWS_DEPLOY_ROLE_ARN: arn:aws:iam::682322555511:role/payload-analytics-cicd-github-deploy
+      SERVERLESS_KEY_SECRET: /payload-analytics-cicd/ServerlessAccessKey
+      AWS_DEFAULT_REGION: us-east-2
+      DEPLOY_APP: payload-analytics
+      # The shared account's stacks belong to this developer; a different value
+      # would try to replace their buckets.
+      DEVELOPER: nico11
+      DEFAULT_VPC_ID: vpc-022599d4a7e81ab6e
+      DEFAULT_VPC_SUBNET_IDS: subnet-024a4d3f0160120aa,subnet-0259af7f41c08c374,subnet-0de5798e0de8aa6c4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deploy tools
+        run: |
+          pip install yoyo-migrations==9.0.0 psycopg2-binary==2.9.10
+          npm install -g serverless@4
+          npm install --no-audit --no-fund --prefix backend
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: github-deploy-${{ github.run_id }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Load Serverless access key
+        run: |
+          key=$(aws secretsmanager get-secret-value --secret-id "$SERVERLESS_KEY_SECRET" \
+            --query SecretString --output text)
+          echo "::add-mask::$key"
+          echo "SERVERLESS_ACCESS_KEY=$key" >> "$GITHUB_ENV"
+
+      - name: Detect Glue code changes
+        id: changes
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+            || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            echo "No previous commit to compare; deploying Glue."
+            echo "spark=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BEFORE" "$GITHUB_SHA" -- backend/src/spark backend/serverless/spark; then
+            echo "Glue code unchanged since $BEFORE."
+            echo "spark=false" >> "$GITHUB_OUTPUT"
+          else
+            git diff --name-only "$BEFORE" "$GITHUB_SHA" -- backend/src/spark backend/serverless/spark
+            echo "spark=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Migrate database (yoyo)
+        run: bash backend/database/rds/migrate.sh
+
+      - name: Deploy Glue job
+        if: steps.changes.outputs.spark == 'true'
+        run: bash backend/serverless/spark/deploy.sh
+
+      - name: Build and push dbt image
+        id: image
+        run: |
+          repo_uri=$(aws ssm get-parameter --name "/${DEPLOY_APP}-registry/DbtRepositoryUri" \
+            --query Parameter.Value --output text)
+          image="${repo_uri}:${GITHUB_SHA}"
+          aws ecr get-login-password --region "$AWS_DEFAULT_REGION" \
+            | docker login --username AWS --password-stdin "${repo_uri%%/*}"
+          docker build -t "$image" -f backend/src/dbt/Dockerfile backend/src/dbt
+          docker push "$image"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy dbt task (backend-dbt)
+        working-directory: backend/serverless/dbt
+        run: serverless deploy --param="imageTag=${GITHUB_SHA}"
+
+      # Orchestration reads the task definition ARN at deploy time, so it must
+      # follow every dbt deploy.
+      - name: Deploy orchestration (backend-orchestration)
+        working-directory: backend/serverless/orchestration
+        run: serverless deploy
+
+      - name: Summary
+        run: |
+          task_def=$(aws ssm get-parameter --name "/${DEPLOY_APP}-backend-dbt/TaskDefinitionArn" \
+            --query Parameter.Value --output text)
+          {
+            echo "### Deploy"
+            echo "- dbt image: \`${{ steps.image.outputs.image }}\`"
+            echo "- task definition: \`${task_def}\`"
+            echo "- Glue deployed: ${{ steps.changes.outputs.spark }}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,24 @@
+Resources:
+  DeployRoleArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/DeployRoleArn
+      Tier: Standard
+      Type: String
+      Value: !GetAtt GitHubDeployRole.Arn
+
+  GitHubOidcProviderArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/GitHubOidcProviderArn
+      Tier: Standard
+      Type: String
+      Value: !Ref GitHubOidcProvider
+
+  ServerlessAccessKeySecretName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/ServerlessAccessKeySecretName
+      Tier: Standard
+      Type: String
+      Value: /${self:custom.servicePrefix}/ServerlessAccessKey

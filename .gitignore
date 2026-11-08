@@ -91,6 +91,7 @@ data/temp/
 *.pdf
 !backend/src/dbt/seeds/*
 !data/raw/*.json
+!tests/fixtures/*.json
 !infrastructure/package.json
 !backend/package.json
 

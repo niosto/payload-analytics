@@ -1,0 +1,96 @@
+[
+  {
+    "customer_id": "CUST-0000001",
+    "first_name": "Lucas",
+    "last_name": "Brito",
+    "email": "lucas.brito@gmail.com",
+    "phone_number": "+569611566924",
+    "date_of_birth": "1975-01-11",
+    "gender": "F",
+    "nationality": "CL",
+    "city": "La Serna",
+    "country": "CL",
+    "address": "Pasaje Bolivia 637",
+    "lat": -18.551408,
+    "lon": -69.638686,
+    "registration_date": "12-21-2025",
+    "kyc_status": "EXPIRED",
+    "risk_score": 68.06,
+    "customer_segment": "retail",
+    "relationship_manager": "Luis Hernandez",
+    "status": "suspended",
+    "accounts": [
+      {"account_id": "ACC-000000000001", "account_type": "investment", "currency": "USD", "balance": 292109.25, "credit_limit": null, "interest_rate": 2.19, "opened_date": "20260111", "status": "frozen", "branch_code": "BR-692"},
+      {"account_id": "ACC-000000000002", "account_type": "credit_card", "currency": " clp ", "balance": "$396395.98", "credit_limit": 23505.19, "interest_rate": 18.19, "opened_date": "27/02/2026", "status": "active", "branch_code": "BR-771"}
+    ],
+    "transactions": [
+      {"transaction_id": "TXN-000000000001", "account_id": "ACC-000000000001", "date": "2026-04-11", "amount": 14039.03, "currency": "USD", "type": "Withdrawal", "category": "insurance", "merchant": null, "channel": "pos", "status": "pending", "description": "Pago de seguro"},
+      {"transaction_id": "TXN-000000000002", "account_id": "ACC-000000000002", "date": "05-05-2026", "amount": "$33593.14", "currency": "clp", "type": "fee", "category": "N/A", "merchant": "Falabella", "channel": "online", "status": "completed", "description": "Comision"}
+    ],
+    "loans": [
+      {"loan_id": "LOAN-000000001", "type": "personal", "currency": "USD", "principal": 5000, "outstanding_balance": 1200.5, "interest_rate": 12.5, "term_months": 24, "monthly_payment": 236.5, "start_date": "2025-01-01", "end_date": "2027-01-01", "status": "active", "days_past_due": 0, "collateral_type": null}
+    ],
+    "credit_info": {"credit_score": 712, "currency": "USD", "utilization_pct": 31.2, "total_limit": 10000, "total_used": 3120, "num_credit_accounts": 3, "oldest_account_age_months": 48, "late_payments_12m": 0, "inquiries_6m": 1, "bankruptcy_flag": false},
+    "digital_engagement": {"mobile_app_registered": true, "web_banking_registered": "yes", "last_login_date": "2026-10-01", "avg_monthly_logins": 14, "preferred_channel": "mobile", "push_notifications": true, "paperless_statements": false}
+  },
+  {
+    "customer_id": "CUST-0000002",
+    "first_name": "ana",
+    "last_name": "PEREZ",
+    "email": "ana.perez@@mail",
+    "phone_number": "3001234567",
+    "date_of_birth": "02/03/1990",
+    "gender": "M",
+    "nationality": "CO",
+    "city": "Bogota",
+    "country": "CO",
+    "address": "Calle 1",
+    "lat": 4.6,
+    "lon": -74.08,
+    "registration_date": "2024-06-01",
+    "kyc_status": "VERIFIED",
+    "risk_score": 12.0,
+    "customer_segment": "premium",
+    "relationship_manager": null,
+    "status": "active",
+    "accounts": [
+      {"account_id": "ACC-000000000003", "account_type": "savings", "currency": "COP", "balance": 1500000, "credit_limit": null, "interest_rate": 4.1, "opened_date": "2024-06-02", "status": "active", "branch_code": "BR-100"}
+    ],
+    "transactions": [
+      {"transaction_id": "TXN-000000000003", "account_id": "ACC-000000000003", "date": "20260901", "amount": "250000", "currency": "COP", "type": "Purchase", "category": "groceries", "merchant": "Exito", "channel": "pos", "status": "completed", "description": null}
+    ],
+    "loans": [],
+    "credit_info": null,
+    "digital_engagement": {"mobile_app_registered": false, "web_banking_registered": "no", "last_login_date": null, "avg_monthly_logins": 0, "preferred_channel": "branch", "push_notifications": false, "paperless_statements": true}
+  },
+  {
+    "customer_id": "CUST-0000001",
+    "first_name": "Lucas",
+    "last_name": "Brito",
+    "email": "lucas.brito@gmail.com",
+    "phone_number": "+569611566924",
+    "date_of_birth": "1975-01-11",
+    "gender": "F",
+    "nationality": "CL",
+    "city": "La Serna",
+    "country": "CL",
+    "address": "Pasaje Bolivia 637",
+    "lat": -18.551408,
+    "lon": -69.638686,
+    "registration_date": "12-21-2025",
+    "kyc_status": "EXPIRED",
+    "risk_score": 68.06,
+    "customer_segment": "retail",
+    "relationship_manager": "Luis Hernandez",
+    "status": "suspended",
+    "accounts": [
+      {"account_id": "ACC-000000000001", "account_type": "investment", "currency": "USD", "balance": 292109.25, "credit_limit": null, "interest_rate": 2.19, "opened_date": "20260111", "status": "frozen", "branch_code": "BR-692"}
+    ],
+    "transactions": [
+      {"transaction_id": "TXN-000000000001", "account_id": "ACC-000000000001", "date": "2026-04-11", "amount": 14039.03, "currency": "USD", "type": "Withdrawal", "category": "insurance", "merchant": null, "channel": "pos", "status": "pending", "description": "Pago de seguro"}
+    ],
+    "loans": [],
+    "credit_info": null,
+    "digital_engagement": null
+  }
+]
