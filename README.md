@@ -506,7 +506,7 @@ These tests validate both the warehouse structure and the business logic used in
 
 ## Dashboard
 
-`powerbi/dashboard.pbix` is a four-page report on Gold. Its versionable source is `powerbi/PayloadAnalytics.pbip` (TMDL semantic model, PBIR report and the `PayloadCorporate` theme). The screenshots below are in `powerbi/screenshots/`.
+`powerbi/dashboard.pbix` is a four-page report on Gold. `powerbi/PayloadAnalytics.pbip` is the versionable source of its semantic model (TMDL: tables, relationships and the 42 measures). The report pages and the `PayloadCorporate` theme live only in the `.pbix`, so open `dashboard.pbix` to see the dashboard. The screenshots below are in `powerbi/screenshots/`.
 
 ![Executive summary](powerbi/screenshots/01-resumen.png)
 
@@ -524,6 +524,15 @@ These tests validate both the warehouse structure and the business logic used in
 | **Clientes y riesgo crediticio** | Where is credit risk concentrated? | Score distribution by band, 90+ delinquency by segment and country, delinquency by country, loan portfolio by product and DPD buckets. |
 | **Operación en tiempo real** | Is streaming flowing, how fresh is it and at what rate? | p95 latency, transactions in the last hour, USD volume in 24 h, FX coverage, latency by minute, volume by minute and the current rate per currency. |
 | **Calidad y gobierno del dato** | Is the data trustworthy and fresh? | 212 dbt rules, marked records, invalid emails, currency mismatches by country, streaming/FX/batch freshness and the governance scope. |
+
+### Who uses it and what they decide
+
+| Page | Who uses it | What they decide with it |
+| --- | --- | --- |
+| **Resumen ejecutivo** | Commercial management | Which segments and countries to push, and whether revenue, volume and average ticket are growing. |
+| **Clientes y riesgo crediticio** | Credit risk | Where to tighten limits or start collections: the bands, segments, countries and loan products with the most delinquency. |
+| **Operación en tiempo real** | Operations and treasury | Whether the live flow is healthy, how fresh it is, and which FX rate is applied to each currency right now. |
+| **Calidad y gobierno del dato** | Data owner | Whether the numbers can be trusted before they are shared, and which source to fix first: invalid emails, currency mismatches or stale loads. |
 
 ### Semantic model
 
