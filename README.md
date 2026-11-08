@@ -37,6 +37,19 @@ There is no NAT Gateway. The database is a public `db.t4g.micro` in the default 
 
 Each new file replaces `silver.stg_*` and dbt rebuilds the tables on top. Two uploads close together do not run at once: Glue allows one run, and Step Functions waits and retries.
 
+## Design decisions
+
+| Decision | Why | More |
+| --- | --- | --- |
+| Hybrid: batch in AWS, streaming in local Docker | A managed Kafka costs USD 70–500 a month and Kinesis plus a Glue streaming job about USD 1 per hour, against a USD 1 monthly budget alert. Both sides write to the same RDS, so dbt does not care where a row came from. | [`docs/cost/`](docs/cost/README.md) |
+| Public RDS, no NAT Gateway | A NAT Gateway bills by the hour and the budget is USD 1 a month. The dbt task runs in the default public subnets with a public IP, and the database is reached with `sslmode=require` and a password kept in Secrets Manager. The price is a public endpoint, listed in the limitations. | [Architecture](#architecture) |
+| Glue without a Glue Connection | Glue uses AWS's managed network and reaches the public RDS endpoint, so the job has no VPC attachment. | [Architecture](#architecture) |
+| GitHub OIDC instead of AWS keys | GitHub stores no AWS secret. The role can be assumed only from `main` of this repository and can change only the `payload-analytics-backend-*` stacks. | [`docs/cicd.md`](docs/cicd.md) |
+| Every merge to `main` deploys | One workflow with `test` and `deploy` keeps what runs in AWS equal to what is on `main`. Deploys never overlap and never cancel a running one, so changes go in as one pull request. | [`docs/cicd.md`](docs/cicd.md) |
+| Spark only explodes and deduplicates; dbt cleans | The cleaning rules are SQL models with tests (212 dbt tests), not code inside the Glue job. | [What the models do](#what-the-models-do) |
+| `fx_rates_current` with `LATERAL` and an expression index | `DISTINCT ON` read the whole 48-hour window and ignored the index: 1,593 ms. One `LATERAL ... LIMIT 1` per currency uses it: 0.19 ms. | [`docs/optimizations/`](docs/optimizations/README.md) |
+| Index on `fct_live_transactions` through a `post_hook` | dbt builds the `indexes` of an incremental model only when it creates the table, and the table already existed in RDS. | [`docs/optimizations/`](docs/optimizations/README.md) |
+
 ## Layers
 
 - **Bronze** is the JSON object in S3 for batch, with nested accounts, transactions, loans, credit info, and digital engagement intact. For streaming it is the Redpanda topics, which keep every event as it was published.
