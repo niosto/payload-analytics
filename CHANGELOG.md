@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 09/11/2026
+
 ### Changed
 
 - `fx_rates_current` reads the latest tick per currency with `LATERAL ... LIMIT 1` instead of `DISTINCT ON`, so it uses `stream_fx_rates_norm_currency_event_time_idx`: 1,593 ms down to 0.19 ms on 2M ticks. The seed now drives the currency list
@@ -16,12 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- README step 5 said to run `psql` from the backend container, which does not include it; it now says to use any PostgreSQL client
+- Governance documents regenerated: `dim_fx_rate_current`, `email_status` and `is_currency_mismatch` were missing, and the test count was 206 instead of 212
 - Negative `latency_seconds` in `fct_live_transactions`: the streaming job now writes `processed_at` from its own clock (the same Docker clock as the producers' `event_time`) instead of the RDS default `NOW()`, and retries transient database disconnects on a new connection
 - `fct_transactions_revenue_idx` disappeared on every other dbt run: the `post_hook` ran inside the transaction, while the previous table's backup still owned an index with that name. The hook now runs with `transaction: False`
 
 ### Added
 
-- Four-page corporate Power BI dashboard in `powerbi/dashboard.pbix`, with the versionable `powerbi/PayloadAnalytics.pbip` (TMDL model, PBIR report and `PayloadCorporate` theme), navigation, slicers, tooltips and screenshots for each page
+- Four-page corporate Power BI dashboard in `powerbi/dashboard.pbix`, with the versionable `powerbi/PayloadAnalytics.pbip` (TMDL semantic model; the report pages and the `PayloadCorporate` theme live in the `.pbix`), navigation, slicers, tooltips and screenshots for each page
 - `Medidas` table with 42 business measures in display folders, a marked `dim_date`, single-direction relationships and the automatic date tables removed
 - `gold.dim_fx_rate_current`: one row per currency with the rate `to_usd` applies, its `stream`/`seed` source and the age of the tick
 - `gold.dim_customer.email_status` and `gold.dim_account.is_currency_mismatch`, so the governance page reports the same quality flags Silver produces
@@ -36,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stack `infrastructure/serverless/monitoring`: CloudWatch dashboard `payload-analytics` and four alarms (failed pipeline, low RDS disk, high RDS CPU, streaming lag) that email the alerts topic
 - The streaming job publishes rows written, p95 latency, and lag to CloudWatch (`PayloadAnalytics/Streaming`) once a minute
 - `docs/cost/`: cost sensitivity model on AWS Price List prices against the data ingested and consumed, checked against Cost Explorer, with tables and charts
+- README: a design decisions table with the reason for each choice, a table of who uses each dashboard page and what they decide, and the `monitoring` and `cicd` stacks in the deployment guide, with the values to change in another AWS account
+- RACI rows for CI/CD and deployment, monitoring and alerts, and cost and scalability, and the rule that a merge to `main` deploys
 
 ## [1.2.0] - 23/10/2026
 
