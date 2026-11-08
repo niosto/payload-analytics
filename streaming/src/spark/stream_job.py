@@ -23,6 +23,13 @@ Docker VM clock, so both ends of the latency (processed_at - event_time) come
 from one clock. The table default NOW() runs on the RDS clock instead; the VM
 clock drifts ahead of it, and that produced negative latencies.
 
+Every METRICS_INTERVAL_SECONDS a daemon thread sends four custom metrics to
+CloudWatch (namespace PayloadAnalytics/Streaming): rows written per sink, the
+p95 transaction latency and the stream lag (now minus the newest event_time
+written). They are aggregated in memory, so it is one put_metric_data call per
+interval, not one per micro-batch. A metrics failure only logs a warning; it
+never stops the stream. METRICS_ENABLED=false turns them off.
+
 Database credentials come from the RDS master secret in Secrets Manager (the
 same secret Glue and dbt use). For a local test database, set DB_HOST and the
 other DB_* variables instead and the secret is not read.
@@ -30,7 +37,9 @@ other DB_* variables instead and the secret is not read.
 
 import json
 import logging
+import math
 import os
+import threading
 import time
 from datetime import datetime, timezone
 
@@ -59,6 +68,9 @@ WATERMARK = env("WATERMARK", "2 minutes")
 FX_JOIN_SECONDS = int(env("FX_JOIN_SECONDS", "60"))
 SECRET_NAME = env("DB_SECRET_NAME", "/payload-analytics-rds/MasterCredentials")
 DB_RETRY_DELAYS = (1, 2, 4)  # seconds before each retry of a failed upsert
+METRICS_ENABLED = env("METRICS_ENABLED", "true").lower() not in ("0", "false", "no")
+METRICS_NAMESPACE = env("METRICS_NAMESPACE", "PayloadAnalytics/Streaming")
+METRICS_INTERVAL_SECONDS = int(env("METRICS_INTERVAL_SECONDS", "60"))
 
 FX_TOPIC = "fx.rates"
 TX_TOPIC = "fintech.live_transactions"
@@ -207,6 +219,116 @@ class Sink:
                 raise
 
 
+def as_utc(ts):
+    """collect() returns naive datetimes that are already UTC (session zone)."""
+    return ts.replace(tzinfo=timezone.utc) if ts.tzinfo is None else ts
+
+
+def percentile(values, q):
+    """Nearest-rank percentile of a non-empty list."""
+    ordered = sorted(values)
+    rank = max(1, math.ceil(q / 100 * len(ordered)))
+    return ordered[rank - 1]
+
+
+class StreamMetrics:
+    """Aggregates per-batch counters and flushes them to CloudWatch.
+
+    record() is called from both foreachBatch callbacks (driver threads), so the
+    state is guarded by a lock. A daemon thread flushes every interval, also
+    when no rows arrived, so the lag keeps growing if the stream stalls.
+    """
+
+    def __init__(self, namespace, interval):
+        self.namespace = namespace
+        self.interval = interval
+        self.lock = threading.Lock()
+        self.client = None
+        self.tx_rows = 0
+        self.fx_rows = 0
+        self.tx_latencies = []
+        self.newest_event_time = None
+        self.stopped = threading.Event()
+
+    def record(self, kind, rows, processed_at):
+        try:
+            self._record(kind, rows, processed_at)
+        except Exception as exc:  # metrics must never break the stream
+            log.warning("could not record metrics: %s", exc)
+
+    def _record(self, kind, rows, processed_at):
+        if not rows:
+            return
+        newest = max(as_utc(r["event_time"]) for r in rows)
+        with self.lock:
+            if kind == "tx":
+                self.tx_rows += len(rows)
+                self.tx_latencies.extend(
+                    (processed_at - as_utc(r["event_time"])).total_seconds() for r in rows
+                )
+            else:
+                self.fx_rows += len(rows)
+            if self.newest_event_time is None or newest > self.newest_event_time:
+                self.newest_event_time = newest
+
+    def _drain(self):
+        with self.lock:
+            snapshot = (self.tx_rows, self.fx_rows, self.tx_latencies, self.newest_event_time)
+            self.tx_rows, self.fx_rows, self.tx_latencies = 0, 0, []
+        return snapshot
+
+    def flush(self):
+        tx_rows, fx_rows, latencies, newest = self._drain()
+        now = datetime.now(timezone.utc)
+        data = [
+            {"MetricName": "TransactionsWritten", "Value": tx_rows, "Unit": "Count"},
+            {"MetricName": "FxTicksWritten", "Value": fx_rows, "Unit": "Count"},
+        ]
+        if latencies:
+            data.append({
+                "MetricName": "TransactionLatencyP95Seconds",
+                "Value": percentile(latencies, 95), "Unit": "Seconds",
+            })
+        if newest is not None:
+            data.append({
+                "MetricName": "StreamLagSeconds",
+                "Value": max(0.0, (now - newest).total_seconds()), "Unit": "Seconds",
+            })
+        for item in data:
+            item["Timestamp"] = now
+        try:
+            if self.client is None:
+                import boto3
+
+                self.client = boto3.client("cloudwatch")
+            self.client.put_metric_data(Namespace=self.namespace, MetricData=data)
+            log.info(
+                "metrics sent tx=%d fx=%d %s",
+                tx_rows, fx_rows,
+                " ".join(f"{d['MetricName']}={d['Value']:.1f}" for d in data[2:]),
+            )
+        except Exception as exc:  # metrics must never break the stream
+            log.warning("could not publish CloudWatch metrics: %s", exc)
+
+    def _loop(self):
+        while not self.stopped.wait(self.interval):
+            try:
+                self.flush()
+            except Exception as exc:
+                log.warning("metrics flush failed: %s", exc)
+
+    def start(self):
+        threading.Thread(target=self._loop, name="cloudwatch-metrics", daemon=True).start()
+
+
+class NoMetrics:
+    def record(self, kind, rows, processed_at):
+        pass
+
+    def start(self):
+        pass
+
+
 def read_topic(spark, topic, schema):
     return (
         spark.readStream.format("kafka")
@@ -227,6 +349,10 @@ def read_topic(spark, topic, schema):
 
 def main():
     sink = Sink(db_settings())
+    metrics = (
+        StreamMetrics(METRICS_NAMESPACE, METRICS_INTERVAL_SECONDS) if METRICS_ENABLED
+        else NoMetrics()
+    )
 
     spark = (
         SparkSession.builder.appName("payload_analytics_streaming")
@@ -245,7 +371,9 @@ def main():
         started = time.perf_counter()
         rows = batch_df.select(*FX_COLUMNS).collect()
         collected = time.perf_counter()
-        sink.upsert(FX_UPSERT, FX_COLUMNS, rows, datetime.now(timezone.utc))
+        processed_at = datetime.now(timezone.utc)
+        sink.upsert(FX_UPSERT, FX_COLUMNS, rows, processed_at)
+        metrics.record("fx", rows, processed_at)
         log.info(
             "fx batch=%s rows=%d spark_ms=%d db_ms=%d", batch_id, len(rows),
             (collected - started) * 1000, (time.perf_counter() - collected) * 1000,
@@ -293,7 +421,9 @@ def main():
                 latest[row["transaction_id"]] = row
         rows = list(latest.values())
         collected = time.perf_counter()
-        sink.upsert(TX_UPSERT, TX_COLUMNS, rows, datetime.now(timezone.utc))
+        processed_at = datetime.now(timezone.utc)
+        sink.upsert(TX_UPSERT, TX_COLUMNS, rows, processed_at)
+        metrics.record("tx", rows, processed_at)
         unmatched = sum(1 for r in rows if r["fx_usd_per_unit"] is None)
         log.info(
             "tx batch=%s rows=%d without_fx=%d spark_ms=%d db_ms=%d",
@@ -313,6 +443,7 @@ def main():
         "started fx_sink=%s tx_sink=%s offsets=%s trigger=%ss watermark=%s join=%ss",
         fx_query.id, tx_query.id, STARTING_OFFSETS, TRIGGER_SECONDS, WATERMARK, FX_JOIN_SECONDS,
     )
+    metrics.start()
     spark.streams.awaitAnyTermination()
 
 
