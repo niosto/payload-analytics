@@ -59,7 +59,7 @@ select currency, rate_source from silver.fx_rates_current order by currency;
 | 3 | 2 min | Streaming mientras corre el batch | Cada transacción se cruza con la tasa del minuto anterior |
 | 4 | 1 min | Limpieza | El dato sucio entra como texto y sale tipado |
 | 5 | 1 min | Almacenamiento en Gold | Gold queda en USD con la tasa en vivo y responde en milisegundos |
-| 6 | 30 s | Cierre | El pipeline terminó y pasaron las 206 reglas de calidad |
+| 6 | 30 s | Cierre | El pipeline terminó y pasaron las 212 reglas de calidad |
 
 ### 1. Captura en tiempo real (1 min)
 
@@ -162,7 +162,7 @@ group by 1, 2, 3;
 
 Volver a **Step Functions**: la ejecución debe estar en **Succeeded**. En **S3**, mostrar que el archivo pasó de `raw/` a `processed/`.
 
-> "dbt corrió las 206 reglas de calidad dentro del pipeline. Si una fallaba, el archivo iba a `failed/` y llegaba un correo por SNS."
+> "dbt corrió las 212 reglas de calidad dentro del pipeline. Si una fallaba, el archivo iba a `failed/` y llegaba un correo por SNS."
 
 ## Si algo sale mal
 

@@ -498,7 +498,7 @@ These tests validate both the warehouse structure and the business logic used in
 | **Resumen ejecutivo** | How is the business doing and where does revenue come from? | Customers, USD balance, revenue, 90+ delinquency and transactions; revenue trend, segment mix, balance by country, transaction mix and average ticket. |
 | **Clientes y riesgo crediticio** | Where is credit risk concentrated? | Score distribution by band, 90+ delinquency by segment and country, delinquency by country, loan portfolio by product and DPD buckets. |
 | **Operación en tiempo real** | Is streaming flowing, how fresh is it and at what rate? | p95 latency, transactions in the last hour, USD volume in 24 h, FX coverage, latency by minute, volume by minute and the current rate per currency. |
-| **Calidad y gobierno del dato** | Is the data trustworthy and fresh? | 206 dbt rules, marked records, invalid emails, currency mismatches by country, streaming/FX/batch freshness and the governance scope. |
+| **Calidad y gobierno del dato** | Is the data trustworthy and fresh? | 212 dbt rules, marked records, invalid emails, currency mismatches by country, streaming/FX/batch freshness and the governance scope. |
 
 ### Semantic model
 
@@ -512,7 +512,7 @@ These tests validate both the warehouse structure and the business logic used in
 
 The report was built against a local Gold database (`localhost:5433`, database `payload_analytics`) while RDS was unavailable. The `.pbix` carries the imported snapshot, so it opens without a database. To refresh it:
 
-1. Load the batch JSON into `silver.stg_*` and run the dbt project (`dbt seed`, `dbt run`, `dbt test`). The 206 tests pass on the 5,000-customer sample.
+1. Load the batch JSON into `silver.stg_*` and run the dbt project (`dbt seed`, `dbt run`, `dbt test`). The 212 tests pass on the 5,000-customer sample.
 2. For the streaming page, run the local Redpanda/Spark stack and rebuild `fct_live_transactions` and `dim_fx_rate_current`.
 3. In Power BI Desktop, refresh the model. The PostgreSQL source is `localhost:5433` / `payload_analytics`.
 
@@ -529,7 +529,7 @@ Everything about the data itself lives in [`docs/governance/`](docs/governance/R
 | [Data dictionary](docs/governance/data_dictionary.md) | Every warehouse column with type, description, sensitivity class (direct PII, indirect PII, sensitive financial, internal), and tests |
 | [Data catalog](docs/governance/catalog.html) | dbt docs as one HTML file: tables, columns, SQL, and the lineage graph. Open it in a browser |
 | [Lineage](docs/governance/lineage.md) | From the JSON in S3 and the streaming sources to Gold and Power BI |
-| [Quality rules](docs/governance/quality_rules.md) | The 206 rules running as dbt tests, by type and by table |
+| [Quality rules](docs/governance/quality_rules.md) | The 212 rules running as dbt tests, by type and by table |
 | [RACI](docs/governance/raci.md) | Who does, approves, is consulted, and is informed. Data owner: Nicolás Ospina |
 
 Database optimizations, with before and after `EXPLAIN` results, are in [`docs/optimizations/`](docs/optimizations/README.md).
