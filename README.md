@@ -171,12 +171,32 @@ cd /app/infrastructure/serverless/alerts && serverless deploy
 
 Open the SNS confirmation email and confirm the subscription before you rely on failure alerts.
 
+Two more stacks come after `alerts`. `monitoring` reads the alerts topic, so it cannot go earlier. `cicd` needs admin credentials in `.envs/aws.env`, because it creates an IAM OIDC provider and a role. It is deployed once, by hand:
+
+```bash
+cd /app/infrastructure/serverless/monitoring && serverless deploy
+cd /app/infrastructure/serverless/cicd && serverless deploy
+aws secretsmanager put-secret-value --secret-id /payload-analytics-cicd/ServerlessAccessKey \
+  --secret-string "$SERVERLESS_ACCESS_KEY"
+```
+
+The `cicd` stack creates the secret empty; `put-secret-value` stores the Serverless key (it comes from `.envs/sls.env` and is already in the container's environment). The key never goes into git. The pipeline itself runs without these two stacks; they add the alarms and the automatic deploy that the CI/CD and monitoring sections below describe.
+
 | Stack | What it creates |
 | --- | --- |
 | storage | Private data lake bucket and artifacts bucket. EventBridge is enabled on the data lake. |
 | rds | Public Postgres. Database `payload_analytics`, master user `payload_analytics_admin`. |
 | registry | ECR repository for the dbt image. |
 | alerts | Email topic and a monthly cost budget. |
+| monitoring | CloudWatch dashboard `payload-analytics` and four alarms that email the alerts topic. |
+| cicd | GitHub OIDC provider, the deploy role `payload-analytics-cicd-github-deploy`, and the secret that holds the Serverless key. |
+
+**Deploying in another AWS account.** Some values are fixed in the repository and have to change:
+
+- In [`.github/workflows/ci.yml`](.github/workflows/ci.yml): `AWS_DEPLOY_ROLE_ARN` (the account id inside the ARN), `DEVELOPER`, `DEFAULT_VPC_ID` and `DEFAULT_VPC_SUBNET_IDS`. `DEVELOPER` has to match the one used when the stacks were created, because it is part of the bucket names.
+- In `infrastructure/serverless/cicd/serverless.yml`: `custom.github.repository` (today `niosto/payload-analytics`). The role trusts only that repository and its `main` branch.
+- An AWS account can hold only one OIDC provider for `token.actions.githubusercontent.com`. If yours already has one, the `cicd` stack will fail on it.
+- After the first merge, protect `main` in GitHub (pull request and the `test` check required). The security of the deploy role depends on it; see [`docs/cicd.md`](docs/cicd.md).
 
 ## 3. Start the backend container
 
