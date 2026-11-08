@@ -25,7 +25,7 @@ Runs on `ubuntu-latest` with Python 3.11, Java 17, and a `postgres:16` service c
    3. It inserts one fresh tick per currency of `seed_fx_rates.csv` into `silver.stream_fx_rates` (2% off the seed) and six live transactions on fixture accounts into `silver.stream_transactions` (`processed_at` after `event_time`, joined tick inside the 60 s window; the last one has no tick, so it takes the `fx_rates_current` fallback).
    4. `dbt seed`, `dbt run`, `dbt test` with `backend/src/dbt/profiles.yml` (`DBT_*` variables), then `dbt run -s fct_live_transactions` and its tests again so the incremental branch runs too.
 
-   Every dbt test runs; none is skipped or relaxed. Result on the fixture: seed 7, run 15, test 212 PASS, 0 ERROR.
+   Every dbt test runs; none is skipped or relaxed. Result on the fixture: seed 7, run 16, test 212 PASS, 0 ERROR.
 
 Run it locally against a throwaway database (Java 17 needed for Spark):
 

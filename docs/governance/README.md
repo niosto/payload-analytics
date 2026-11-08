@@ -2,7 +2,7 @@
 
 | Documento | Qué contiene |
 | --- | --- |
-| [data_dictionary.md](data_dictionary.md) | Diccionario de datos: las 375 columnas del warehouse con tipo, descripción, clasificación de sensibilidad y tests. |
+| [data_dictionary.md](data_dictionary.md) | Diccionario de datos: las 383 columnas del warehouse con tipo, descripción, clasificación de sensibilidad y tests. |
 | [catalog.html](catalog.html) | Catálogo de datos navegable (dbt docs): tablas, columnas, SQL de cada modelo y grafo de linaje. Se abre en cualquier navegador, sin servidor. |
 | [lineage.md](lineage.md) | Linaje de punta a punta, del JSON en S3 y las fuentes de streaming hasta Gold y Power BI. |
 | [quality_rules.md](quality_rules.md) | Las 212 reglas de calidad implementadas como tests de dbt, por tipo y por tabla. |
