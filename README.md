@@ -9,7 +9,9 @@ dbt converts every amount to USD with the live rate. That is where the two speed
 
 ## Architecture
 
-![Hybrid architecture: batch in AWS and streaming in local Docker meet in RDS PostgreSQL](imgs/architecture.drawio.svg)
+![Hybrid architecture: batch in AWS and streaming in local Docker meet in RDS PostgreSQL, with CI/CD and monitoring](imgs/architecture.drawio.svg)
+
+The diagram is editable: open `imgs/architecture.drawio.svg` in [diagrams.net](https://app.diagrams.net).
 
 | Piece | Where | Role |
 | --- | --- | --- |
@@ -18,13 +20,16 @@ dbt converts every amount to USD with the live rate. That is where the two speed
 | Glue | AWS | Reads one JSON file from S3 and replaces the four `silver.stg_*` tables. |
 | Fargate | AWS | Runs `dbt seed`, `dbt run`, and `dbt test` from a container image in ECR. |
 | RDS PostgreSQL | AWS | Warehouse: Silver staging, streaming Silver, cleaned Silver, seeds, and Gold. |
-| SNS | AWS | Emails the team when a run fails. |
+| SNS | AWS | Emails the team when a run fails or a CloudWatch alarm fires. |
+| CloudWatch | AWS | Dashboard `payload-analytics` and four alarms: failed pipeline, low RDS disk, high RDS CPU, and streaming lag. |
 | Secrets Manager | AWS | The only place the database password lives. Glue, Fargate, and the streaming job read it from there. |
 | Redpanda | Local | Kafka-compatible broker. Its two topics are the raw event log, the Bronze of the streaming side. |
 | FX producers | Local | Real rates: Binance trades for five currencies, a daily API for the other four. Each currency has one source. |
 | Transaction simulator | Local | Live transactions on real customers and accounts from the dataset, with the source's dirt kept. |
 | Spark Structured Streaming | Local | Joins each transaction with the latest FX tick of the minute before it, then upserts `silver.stream_*` on RDS. |
 | dbt `fx_rates_current` | RDS | The latest live rate per currency, or `seed_fx_rates` when the stream has no recent tick. Every USD amount in Silver and Gold uses it. |
+| GitHub Actions | GitHub | Tests every pull request; on `main`, deploys the backend to AWS through OIDC, with no stored keys. |
+| Power BI | Desktop | Four-page dashboard on Gold. |
 
 **Why hybrid.** The streaming side runs in Docker on a laptop and writes to the same RDS as the batch. A managed Kafka (MSK) costs USD 70–500 a month, and Kinesis plus a Glue streaming job about USD 1 per hour while running; the team's budget alert is USD 1 a month. Running it locally keeps the AWS bill at the batch's cost, and nothing downstream changes: dbt reads `silver.stream_*` like any other table.
 
@@ -57,7 +62,9 @@ payload-analytics/
 │       ├── storage/
 │       ├── rds/
 │       ├── registry/
-│       └── alerts/
+│       ├── alerts/
+│       ├── monitoring/              # CloudWatch dashboard and alarms
+│       └── cicd/                    # GitHub OIDC provider, deploy role, Serverless key secret
 ├── backend/
 │   ├── database/rds/                # SQL migration for silver.stg_*
 │   ├── src/spark/                   # Glue job and shared transforms
@@ -66,12 +73,20 @@ payload-analytics/
 │       ├── spark/
 │       ├── dbt/
 │       └── orchestration/
-├── streaming/                       # Local Redpanda and producers (runs on your machine)
+├── streaming/                       # Local Redpanda, producers and Spark job (runs on your machine)
 │   ├── .docker/
-│   └── src/producers/
+│   ├── src/producers/
+│   └── src/spark/
+├── powerbi/                         # Dashboard (.pbix) and its PBIP source
+├── tests/                           # pytest unit tests and fixtures used by CI
+├── scripts/ci/                      # dbt integration test run by CI
+├── .github/workflows/ci.yml         # CI/CD: test on every PR, deploy on main
 ├── docs/
 │   ├── governance/                  # Data dictionary, catalog, lineage, quality rules, RACI
-│   └── optimizations/               # Index experiments with EXPLAIN before and after
+│   ├── optimizations/               # Index experiments with EXPLAIN before and after
+│   ├── cost/                        # Cost sensitivity model, prices and charts
+│   ├── cicd.md                      # CI/CD pipeline and the AWS deploy role
+│   └── monitoring.md                # Dashboard, alarms and streaming metrics
 └── data/raw/                        # Sample JSON used to start a run
 ```
 
@@ -358,6 +373,46 @@ Measured with `TRIGGER_SECONDS=1`:
 | Team RDS (us-east-2) | 1.3–1.7 s / 2.7–2.8 s | 3.1–4.2 s / 7.1–7.3 s |
 
 The FX latency goal (under 5 s) holds on RDS. Each transaction micro-batch spends about 2 s in the stream-stream join and about 0.3 s writing to RDS; the job logs both as `spark_ms` and `db_ms`. Rows without a rate wait for the watermark, so they land about 2 minutes later.
+
+## CI/CD
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on GitHub Actions. Details are in [`docs/cicd.md`](docs/cicd.md).
+
+| Event | `test` | `deploy` |
+| --- | --- | --- |
+| Pull request to `main` | yes | no |
+| Merge (push) to `main` | yes | yes, only if `test` passed |
+| Manual run on `main` | yes | yes, only if `test` passed |
+
+- **`test`**: `pytest` on the producers and the Spark transforms, then an integration run on a throwaway PostgreSQL: the migrations, the real `build_silver_frames` on 300 customers, and the full `dbt build`. Every dbt test runs; none is skipped.
+- **`deploy`**: assumes the AWS role `payload-analytics-cicd-github-deploy` through OIDC, so GitHub stores no AWS key. It applies the migration, deploys Glue when its code changed, pushes the dbt image tagged with the commit, and deploys the dbt task and the state machine. Deploys never overlap.
+
+The role, the OIDC provider, and the secret with the Serverless key are the stack `infrastructure/serverless/cicd`. Only the `main` branch of this repository can assume the role, and it can only change the `payload-analytics-backend-*` stacks.
+
+## Monitoring and alerts
+
+The stack `infrastructure/serverless/monitoring` creates the CloudWatch dashboard `payload-analytics` and four alarms that email the existing alerts topic. Details and screenshots are in [`docs/monitoring.md`](docs/monitoring.md).
+
+| Alarm | Fires when |
+| --- | --- |
+| `pipeline-failed` | A state machine run fails (Glue, dbt, a failing dbt test, or archiving) |
+| `rds-low-storage` | Free disk on RDS drops below 5 GB |
+| `rds-high-cpu` | RDS CPU stays above 80 % for 10 minutes |
+| `streaming-lag` | The streaming job is running but more than 60 s behind for 3 minutes |
+
+The streaming job publishes its own metrics (`PayloadAnalytics/Streaming`): rows written per minute, p95 latency, and lag. When Docker is off, it publishes nothing and the lag alarm stays quiet.
+
+```bash
+cd infrastructure/serverless/monitoring && serverless deploy   # DEVELOPER=nico11
+```
+
+## Operating cost
+
+[`docs/cost/`](docs/cost/README.md) models the monthly AWS bill from real prices (AWS Price List API) against the data ingested and consumed, with every assumption written down.
+
+- Today: USD 18.54 a month modeled vs USD 18.01 billed (Cost Explorer), +2.9 %.
+- RDS is 86–96 % of the bill, so cost is almost fixed until the data grows about 100×. The first limit is the 20 GB disk, not money.
+- Running the streaming side on AWS (MSK or Kinesis plus Glue streaming) would add USD 646–1,180 a month, which is why it runs locally.
 
 ## What the models do
 
