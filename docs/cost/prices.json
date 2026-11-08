@@ -1,0 +1,482 @@
+{
+  "_meta": {
+    "region": "us-east-2",
+    "currency": "USD",
+    "pricing_model": "On-Demand",
+    "fetched": "2026-11-08",
+    "api": "aws pricing get-products --region us-east-1"
+  },
+  "rds_t4g_micro_hr": {
+    "description": "RDS PostgreSQL db.t4g.micro Single-AZ, USD/hora",
+    "service_code": "AmazonRDS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-InstanceUsage:db.t4g.micro",
+    "usd": 0.016,
+    "unit": "Hrs",
+    "tiers": null
+  },
+  "rds_t4g_small_hr": {
+    "description": "RDS PostgreSQL db.t4g.small Single-AZ, USD/hora",
+    "service_code": "AmazonRDS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-InstanceUsage:db.t4g.small",
+    "usd": 0.032,
+    "unit": "Hrs",
+    "tiers": null
+  },
+  "rds_t4g_medium_hr": {
+    "description": "RDS PostgreSQL db.t4g.medium Single-AZ, USD/hora",
+    "service_code": "AmazonRDS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-InstanceUsage:db.t4g.medium",
+    "usd": 0.065,
+    "unit": "Hrs",
+    "tiers": null
+  },
+  "rds_t4g_large_hr": {
+    "description": "RDS PostgreSQL db.t4g.large Single-AZ, USD/hora",
+    "service_code": "AmazonRDS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-InstanceUsage:db.t4g.large",
+    "usd": 0.129,
+    "unit": "Hrs",
+    "tiers": null
+  },
+  "rds_r7g_large_hr": {
+    "description": "RDS PostgreSQL db.r7g.large Single-AZ, USD/hora (escalon superior, no burstable)",
+    "service_code": "AmazonRDS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-InstanceUsage:db.r7g.large",
+    "usd": 0.239,
+    "unit": "Hrs",
+    "tiers": null
+  },
+  "rds_r7g_xlarge_hr": {
+    "description": "RDS PostgreSQL db.r7g.xlarge Single-AZ, USD/hora",
+    "service_code": "AmazonRDS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-InstanceUsage:db.r7g.xl",
+    "usd": 0.478,
+    "unit": "Hrs",
+    "tiers": null
+  },
+  "rds_r7g_2xlarge_hr": {
+    "description": "RDS PostgreSQL db.r7g.2xlarge Single-AZ, USD/hora",
+    "service_code": "AmazonRDS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-InstanceUsage:db.r7g.2xl",
+    "usd": 0.956,
+    "unit": "Hrs",
+    "tiers": null
+  },
+  "rds_gp2_gb_month": {
+    "description": "RDS almacenamiento gp2, USD/GB-mes",
+    "service_code": "AmazonRDS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-RDS:GP2-Storage",
+    "usd": 0.115,
+    "unit": "GB-Mo",
+    "tiers": null
+  },
+  "rds_gp3_gb_month": {
+    "description": "RDS almacenamiento gp3, USD/GB-mes",
+    "service_code": "AmazonRDS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-RDS:GP3-Storage",
+    "usd": 0.115,
+    "unit": "GB-Mo",
+    "tiers": null
+  },
+  "glue_dpu_hour": {
+    "description": "Glue ETL (Glue 5.0 y anteriores, tambien streaming), USD/DPU-hora",
+    "service_code": "AWSGlue",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-ETL-DPU-Hour",
+    "usd": 0.44,
+    "unit": "DPU-Hour",
+    "tiers": null
+  },
+  "fargate_vcpu_hr": {
+    "description": "Fargate Linux/x86 vCPU, USD/hora",
+    "service_code": "AmazonECS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-Fargate-vCPU-Hours:perCPU",
+    "usd": 0.04048,
+    "unit": "hours",
+    "tiers": null
+  },
+  "fargate_gb_hr": {
+    "description": "Fargate Linux/x86 memoria, USD/GB-hora",
+    "service_code": "AmazonECS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-Fargate-GB-Hours",
+    "usd": 0.004445,
+    "unit": "hours",
+    "tiers": null
+  },
+  "fargate_arm_vcpu_hr": {
+    "description": "Fargate ARM vCPU, USD/hora (referencia)",
+    "service_code": "AmazonECS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-Fargate-ARM-vCPU-Hours:perCPU",
+    "usd": 0.03238,
+    "unit": "hours",
+    "tiers": null
+  },
+  "s3_standard_gb_month": {
+    "description": "S3 Standard, USD/GB-mes (primeros 50 TB)",
+    "service_code": "AmazonS3",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-TimedStorage-ByteHrs",
+    "usd": 0.023,
+    "unit": "GB-Mo",
+    "tiers": [
+      {
+        "unit": "GB-Mo",
+        "usd": 0.023,
+        "begin": "0",
+        "end": "51200",
+        "description": "$0.023 per GB - first 50 TB / month of storage used"
+      },
+      {
+        "unit": "GB-Mo",
+        "usd": 0.022,
+        "begin": "51200",
+        "end": "512000",
+        "description": "$0.022 per GB - next 450 TB / month of storage used"
+      },
+      {
+        "unit": "GB-Mo",
+        "usd": 0.021,
+        "begin": "512000",
+        "end": "Inf",
+        "description": "$0.021 per GB - storage used / month over 500 TB"
+      }
+    ]
+  },
+  "s3_put_request": {
+    "description": "S3 PUT/COPY/POST/LIST, USD/solicitud",
+    "service_code": "AmazonS3",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-Requests-Tier1",
+    "usd": 5e-06,
+    "unit": "Requests",
+    "tiers": null
+  },
+  "s3_get_request": {
+    "description": "S3 GET/SELECT, USD/solicitud",
+    "service_code": "AmazonS3",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-Requests-Tier2",
+    "usd": 4e-07,
+    "unit": "Requests",
+    "tiers": null
+  },
+  "sfn_state_transition": {
+    "description": "Step Functions Standard, USD/transicion de estado",
+    "service_code": "AmazonStates",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-StateTransition",
+    "usd": 2.5e-05,
+    "unit": "StateTransitions",
+    "tiers": null
+  },
+  "data_transfer_out_gb": {
+    "description": "Transferencia saliente a Internet, USD/GB por tramos (los 100 GB/mes iniciales son gratis en la capa gratuita permanente)",
+    "service_code": "AWSDataTransfer",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-DataTransfer-Out-Bytes",
+    "usd": 0.09,
+    "unit": "GB",
+    "tiers": [
+      {
+        "unit": "GB",
+        "usd": 0.09,
+        "begin": "0",
+        "end": "10240",
+        "description": "$0.090 per GB - first 10 TB / month data transfer out beyond the global free tier"
+      },
+      {
+        "unit": "GB",
+        "usd": 0.085,
+        "begin": "10240",
+        "end": "51200",
+        "description": "$0.085 per GB - next 40 TB / month data transfer out"
+      },
+      {
+        "unit": "GB",
+        "usd": 0.07,
+        "begin": "51200",
+        "end": "153600",
+        "description": "$0.070 per GB - next 100 TB / month data transfer out"
+      },
+      {
+        "unit": "GB",
+        "usd": 0.05,
+        "begin": "153600",
+        "end": "Inf",
+        "description": "$0.050 per GB - greater than 150 TB / month data transfer out"
+      }
+    ]
+  },
+  "cw_custom_metric_month": {
+    "description": "CloudWatch metrica personalizada, USD/metrica-mes (por tramos)",
+    "service_code": "AmazonCloudWatch",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-CW:MetricMonitorUsage",
+    "usd": 0.3,
+    "unit": "Metrics",
+    "tiers": [
+      {
+        "unit": "Metrics",
+        "usd": 0.3,
+        "begin": "0",
+        "end": "10000",
+        "description": "$0.30 per metric-month for the first 10,000 metrics - US East (Ohio)"
+      },
+      {
+        "unit": "Metrics",
+        "usd": 0.1,
+        "begin": "10000",
+        "end": "250000",
+        "description": "$0.10 per metric-month for the next 240,000 metrics - US East (Ohio)"
+      },
+      {
+        "unit": "Metrics",
+        "usd": 0.05,
+        "begin": "250000",
+        "end": "1000000",
+        "description": "$0.05 per metric-month for the next 750,000 metrics - US East (Ohio)"
+      },
+      {
+        "unit": "Metrics",
+        "usd": 0.02,
+        "begin": "1000000",
+        "end": "Inf",
+        "description": "$0.02 per metric-month for over 1,000,000 metrics - US East (Ohio)"
+      }
+    ]
+  },
+  "cw_alarm_month": {
+    "description": "CloudWatch alarma estandar, USD/alarma-mes",
+    "service_code": "AmazonCloudWatch",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-CW:AlarmMonitorUsage",
+    "usd": 0.1,
+    "unit": "Alarms",
+    "tiers": null
+  },
+  "cw_dashboard_month": {
+    "description": "CloudWatch dashboard personalizado, USD/dashboard-mes",
+    "service_code": "AmazonCloudWatch",
+    "source": "aws-price-list-api",
+    "usagetype": "DashboardsUsageHour-Basic",
+    "usd": 3.0,
+    "unit": "Dashboards",
+    "tiers": null
+  },
+  "cw_logs_ingest_gb": {
+    "description": "CloudWatch Logs ingesta (Standard), USD/GB",
+    "service_code": "AmazonCloudWatch",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-DataProcessing-Bytes",
+    "usd": 0.5,
+    "unit": "GB",
+    "tiers": null
+  },
+  "cw_logs_storage_gb_month": {
+    "description": "CloudWatch Logs almacenamiento, USD/GB-mes",
+    "service_code": "AmazonCloudWatch",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-TimedStorage-ByteHrs",
+    "usd": 0.03,
+    "unit": "GB-Mo",
+    "tiers": null
+  },
+  "secrets_manager_secret_month": {
+    "description": "Secrets Manager, USD/secreto-mes",
+    "service_code": "AWSSecretsManager",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-AWSSecretsManager-Secrets",
+    "usd": 0.4,
+    "unit": "Secrets",
+    "tiers": null
+  },
+  "secrets_manager_api_call": {
+    "description": "Secrets Manager, USD/llamada API",
+    "service_code": "AWSSecretsManager",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-AWSSecretsManagerAPIRequest",
+    "usd": 5e-06,
+    "unit": "API Requests",
+    "tiers": null
+  },
+  "public_ipv4_hr": {
+    "description": "IPv4 publica en uso, USD/hora",
+    "service_code": "AmazonVPC",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-PublicIPv4:InUseAddress",
+    "usd": 0.005,
+    "unit": "Hrs",
+    "tiers": null
+  },
+  "ecr_gb_month": {
+    "description": "ECR almacenamiento, USD/GB-mes",
+    "service_code": "AmazonECR",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-TimedStorage-ByteHrs",
+    "usd": 0.1,
+    "unit": "GB-Mo",
+    "tiers": null
+  },
+  "sns_email_notification": {
+    "description": "SNS entrega por email, USD/notificacion (primeras 1000/mes gratis)",
+    "service_code": "AmazonSNS",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-DeliveryAttempts-SMTP",
+    "usd": 0.0,
+    "unit": "Notifications",
+    "tiers": [
+      {
+        "unit": "Notifications",
+        "usd": 0.0,
+        "begin": "0",
+        "end": "1000",
+        "description": "First 1,000 Amazon SNS Email/Email-JSON Notifications per month are free"
+      },
+      {
+        "unit": "Notifications",
+        "usd": 2e-05,
+        "begin": "1000",
+        "end": "Inf",
+        "description": "$2.00 per 100,000 Amazon SNS Email/Email-JSON Notifications thereafter"
+      }
+    ]
+  },
+  "eventbridge_event": {
+    "description": "EventBridge eventos personalizados, USD/evento de 64 KB",
+    "service_code": "AWSEvents",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-Event-64K-Chunks",
+    "usd": 1e-06,
+    "unit": "64K-Chunks",
+    "tiers": null
+  },
+  "msk_broker_t3_small_hr": {
+    "description": "MSK aprovisionado kafka.t3.small, USD/broker-hora",
+    "service_code": "AmazonMSK",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-Kafka.t3.small",
+    "usd": 0.0456,
+    "unit": "hours",
+    "tiers": null
+  },
+  "msk_broker_m7g_large_hr": {
+    "description": "MSK aprovisionado kafka.m7g.large, USD/broker-hora",
+    "service_code": "AmazonMSK",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-Kafka.m7g.large",
+    "usd": 0.204,
+    "unit": "hours",
+    "tiers": null
+  },
+  "msk_storage_gb_month": {
+    "description": "MSK almacenamiento, USD/GB-mes",
+    "service_code": "AmazonMSK",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-Kafka.Storage.GP2",
+    "usd": 0.1,
+    "unit": "GB-Mo",
+    "tiers": null
+  },
+  "msk_serverless_cluster_hr": {
+    "description": "MSK Serverless, USD/cluster-hora",
+    "service_code": "AmazonMSK",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-KafkaServerless-ClusterHours",
+    "usd": 0.75,
+    "unit": "hours",
+    "tiers": null
+  },
+  "msk_serverless_partition_hr": {
+    "description": "MSK Serverless, USD/particion-hora",
+    "service_code": "AmazonMSK",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-KafkaServerless-PartitionHours",
+    "usd": 0.0015,
+    "unit": "hours",
+    "tiers": null
+  },
+  "msk_serverless_in_gb": {
+    "description": "MSK Serverless datos entrantes, USD/GB",
+    "service_code": "AmazonMSK",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-KafkaServerless-In-Bytes",
+    "usd": 0.1,
+    "unit": "GB",
+    "tiers": null
+  },
+  "msk_serverless_out_gb": {
+    "description": "MSK Serverless datos salientes, USD/GB",
+    "service_code": "AmazonMSK",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-KafkaServerless-Out-Bytes",
+    "usd": 0.05,
+    "unit": "GB",
+    "tiers": null
+  },
+  "msk_serverless_storage_gb_month": {
+    "description": "MSK Serverless almacenamiento, USD/GB-mes",
+    "service_code": "AmazonMSK",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-KafkaServerless-StorageHours",
+    "usd": 0.1,
+    "unit": "GB-Mo",
+    "tiers": null
+  },
+  "kinesis_od_stream_hr": {
+    "description": "Kinesis on-demand Standard, USD/stream-hora",
+    "service_code": "AmazonKinesis",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-OnDemand-StreamHour",
+    "usd": 0.04,
+    "unit": "StreamHr",
+    "tiers": null
+  },
+  "kinesis_od_in_gb": {
+    "description": "Kinesis on-demand datos entrantes, USD/GB",
+    "service_code": "AmazonKinesis",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-OnDemand-BilledIncomingBytes",
+    "usd": 0.08,
+    "unit": "GB",
+    "tiers": null
+  },
+  "kinesis_od_out_gb": {
+    "description": "Kinesis on-demand datos salientes, USD/GB",
+    "service_code": "AmazonKinesis",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-OnDemand-BilledOutgoingBytes",
+    "usd": 0.04,
+    "unit": "GB",
+    "tiers": null
+  },
+  "kinesis_prov_shard_hr": {
+    "description": "Kinesis aprovisionado, USD/shard-hora",
+    "service_code": "AmazonKinesis",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-Storage-ShardHour",
+    "usd": 0.015,
+    "unit": "ShardHour",
+    "tiers": null
+  },
+  "kinesis_prov_put_unit": {
+    "description": "Kinesis aprovisionado PUT payload unit (25 KB), USD/unidad",
+    "service_code": "AmazonKinesis",
+    "source": "aws-price-list-api",
+    "usagetype": "USE2-PutRequestPayloadUnits",
+    "usd": 1.4e-08,
+    "unit": "PutRequest",
+    "tiers": null
+  }
+}
