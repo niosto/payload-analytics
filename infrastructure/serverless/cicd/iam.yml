@@ -1,0 +1,202 @@
+Resources:
+  # Assumed by the GitHub Actions deploy job through OIDC. No access keys exist
+  # for it. It deploys the backend stacks (backend-spark, backend-dbt,
+  # backend-orchestration), runs the database migration, and pushes the dbt
+  # image; it cannot touch the infrastructure stacks or this stack.
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ${self:custom.servicePrefix}-github-deploy
+      Description: GitHub Actions deploy role for ${self:custom.github.repository} (${self:custom.github.branch} only)
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubOidcProvider
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: repo:${self:custom.github.repository}:ref:refs/heads/${self:custom.github.branch}
+      Policies:
+        - PolicyName: ${self:custom.servicePrefix}-deploy-stacks
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: CloudFormationBackendStacks
+                Effect: Allow
+                Action: cloudformation:*
+                Resource: !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${env:DEPLOY_APP}-backend-*/*
+              - Sid: CloudFormationRead
+                Effect: Allow
+                Action:
+                  - cloudformation:ValidateTemplate
+                  - cloudformation:ListStacks
+                  - cloudformation:DescribeStacks
+                  - cloudformation:ListExports
+                Resource: '*'
+              - Sid: ServerlessDeploymentBuckets
+                Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !Sub arn:aws:s3:::${AWS::Region}.backend-*.${env:DEPLOY_APP}.*
+                  - !Sub arn:aws:s3:::${AWS::Region}.backend-*.${env:DEPLOY_APP}.*/*
+              - Sid: GlueArtifacts
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                Resource:
+                  - arn:aws:s3:::${env:DEPLOY_APP}-artifacts-*
+                  - arn:aws:s3:::${env:DEPLOY_APP}-artifacts-*/*
+              - Sid: ListBuckets
+                Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+                  - s3:GetBucketLocation
+                Resource: '*'
+              - Sid: BackendRoles
+                Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:UpdateRole
+                  - iam:UpdateRoleDescription
+                  - iam:UpdateAssumeRolePolicy
+                  - iam:GetRolePolicy
+                  - iam:PutRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:ListAttachedRolePolicies
+                  - iam:TagRole
+                  - iam:UntagRole
+                  - iam:ListRoleTags
+                  - iam:PassRole
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/${env:DEPLOY_APP}-backend-*
+              - Sid: BackendRolesManagedPolicies
+                Effect: Allow
+                Action:
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/${env:DEPLOY_APP}-backend-*
+                Condition:
+                  ArnEquals:
+                    iam:PolicyARN:
+                      - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+                      - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+              - Sid: Glue
+                Effect: Allow
+                Action: glue:*
+                Resource: !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${env:DEPLOY_APP}-*
+              - Sid: StepFunctions
+                Effect: Allow
+                Action: states:*
+                Resource:
+                  - !Sub arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${env:DEPLOY_APP}-*
+                  - !Sub arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${env:DEPLOY_APP}-*:*
+              - Sid: StepFunctionsRead
+                Effect: Allow
+                Action:
+                  - states:ValidateStateMachineDefinition
+                  - states:ListStateMachines
+                Resource: '*'
+              - Sid: EventBridgeRules
+                Effect: Allow
+                Action: events:*
+                Resource: !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${env:DEPLOY_APP}-*
+              - Sid: EcsClusters
+                Effect: Allow
+                Action: ecs:*
+                Resource: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${env:DEPLOY_APP}-*
+              - Sid: EcsTaskDefinitions
+                Effect: Allow
+                Action:
+                  - ecs:RegisterTaskDefinition
+                  - ecs:DeregisterTaskDefinition
+                  - ecs:DeleteTaskDefinitions
+                  - ecs:DescribeTaskDefinition
+                  - ecs:ListTaskDefinitions
+                  - ecs:DescribeClusters
+                  - ecs:TagResource
+                  - ecs:UntagResource
+                  - ecs:ListTagsForResource
+                Resource: '*'
+              - Sid: Ec2SecurityGroups
+                Effect: Allow
+                Action:
+                  - ec2:Describe*
+                  - ec2:CreateSecurityGroup
+                  - ec2:DeleteSecurityGroup
+                  - ec2:AuthorizeSecurityGroupEgress
+                  - ec2:RevokeSecurityGroupEgress
+                  - ec2:AuthorizeSecurityGroupIngress
+                  - ec2:RevokeSecurityGroupIngress
+                  - ec2:CreateTags
+                  - ec2:DeleteTags
+                Resource: '*'
+              - Sid: LogGroups
+                Effect: Allow
+                Action: logs:*
+                Resource:
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/ecs/${env:DEPLOY_APP}-*
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/ecs/${env:DEPLOY_APP}-*:*
+              - Sid: LogGroupsRead
+                Effect: Allow
+                Action: logs:DescribeLogGroups
+                Resource: '*'
+        - PolicyName: ${self:custom.servicePrefix}-deploy-runtime
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: SsmProjectParameters
+                Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:GetParametersByPath
+                  - ssm:PutParameter
+                  - ssm:DeleteParameter
+                  - ssm:AddTagsToResource
+                  - ssm:RemoveTagsFromResource
+                  - ssm:ListTagsForResource
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${env:DEPLOY_APP}-*
+              - Sid: SsmServerlessFrameworkRead
+                Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/serverless-framework/*
+              - Sid: SsmDescribe
+                Effect: Allow
+                Action: ssm:DescribeParameters
+                Resource: '*'
+              - Sid: Secrets
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource:
+                  - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/${env:DEPLOY_APP}-rds/MasterCredentials-*
+                  - !Ref ServerlessAccessKeySecret
+              - Sid: EcrLogin
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: '*'
+              - Sid: EcrPushDbt
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeImages
+                  - ecr:DescribeRepositories
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${env:DEPLOY_APP}-dbt-*
