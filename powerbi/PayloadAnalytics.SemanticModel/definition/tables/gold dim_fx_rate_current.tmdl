@@ -1,0 +1,52 @@
+table 'gold dim_fx_rate_current'
+	lineageTag: ce7841b4-90a1-4868-b801-de8e1610d196
+
+	column currency
+		dataType: string
+		lineageTag: ae530e6d-18fe-4786-8397-45dfe53a107d
+		summarizeBy: none
+		sourceColumn: currency
+
+	column usd_per_unit
+		dataType: double
+		formatString: 0.000000
+		lineageTag: 4bec084e-b49c-4322-a88e-4672dfa1ee82
+		summarizeBy: none
+		sourceColumn: usd_per_unit
+
+	column rate_source
+		dataType: string
+		lineageTag: d50541fd-c206-45ca-b1bf-fc0b0a88297e
+		summarizeBy: none
+		sourceColumn: rate_source
+
+	column rate_event_time
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 946971be-64a3-47b2-856d-b4a52bdcb6b2
+		summarizeBy: none
+		sourceColumn: rate_event_time
+
+	column provider_updated_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 49e29d91-db86-43ec-aeae-625a83b87341
+		summarizeBy: none
+		sourceColumn: provider_updated_at
+
+	column seed_usd_per_unit
+		dataType: double
+		formatString: 0.000000
+		lineageTag: 1128cd84-918e-4041-8e09-02099b8e37f0
+		summarizeBy: none
+		sourceColumn: seed_usd_per_unit
+
+	partition 'gold dim_fx_rate_current' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5433", "payload_analytics"),
+				    t = Source{[Schema="gold",Item="dim_fx_rate_current"]}[Data]
+				in
+				    t
+

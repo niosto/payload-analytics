@@ -1,0 +1,19 @@
+table ReglasCalidad
+	lineageTag: 07f73690-fd92-4602-b522-c6680473a359
+
+	column Tipo
+		dataType: string
+		lineageTag: 2752ef0a-cba9-4657-953b-8c3be8bec7a8
+		summarizeBy: none
+		sourceColumn: Tipo
+
+	column Reglas
+		dataType: int64
+		formatString: 0
+		lineageTag: 1f58d418-29f3-40c4-8602-df829102f866
+		summarizeBy: sum
+		sourceColumn: Reglas
+
+	partition ReglasCalidad = calculated
+		mode: import
+		source = DATATABLE("Tipo", STRING, "Reglas", INTEGER, {{"No nulos",90},{"No negativos",30},{"Aceptados",19},{"Relaciones",17},{"Unicos",14},{"Rangos",11},{"Fechas",6},{"Positivos",5},{"Negocio",14}})

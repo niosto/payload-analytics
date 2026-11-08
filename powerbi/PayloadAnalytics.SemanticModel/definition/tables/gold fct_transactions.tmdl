@@ -1,0 +1,199 @@
+table 'gold fct_transactions'
+	lineageTag: a0763abe-e4a5-4764-953f-922325951d0f
+
+	measure 'Failed Rate' =
+			
+			DIVIDE(
+			    COUNTROWS(FILTER('gold fct_transactions', 'gold fct_transactions'[is_failed] = TRUE())),
+			    COUNTROWS('gold fct_transactions')
+			)
+		lineageTag: 9a281163-e3da-4357-8f0e-638f7357f14d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column transaction_id
+		dataType: string
+		isHidden
+		lineageTag: 223b6845-5573-4bff-ad7b-e49296d4a213
+		summarizeBy: none
+		sourceColumn: transaction_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		isHidden
+		lineageTag: d8adae0e-f2d6-4fd3-b5d9-1df398c89606
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column account_id
+		dataType: string
+		isHidden
+		lineageTag: 0e153d64-5a75-4491-abd5-db82b2e38003
+		summarizeBy: none
+		sourceColumn: account_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 2d18ae58-7d20-49b4-af85-665eb3bcabd0
+		summarizeBy: none
+		sourceColumn: date_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column transaction_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 0d6bd1d7-a544-446b-8509-4eb8f5012653
+		summarizeBy: none
+		sourceColumn: transaction_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column day_of_week
+		dataType: string
+		lineageTag: 746c936b-d6cd-442f-9ffc-910ff71d689d
+		summarizeBy: none
+		sourceColumn: day_of_week
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_weekend
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 9eea1099-ffc6-41b1-8bd8-8289fd019f5a
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_country
+		dataType: string
+		lineageTag: 50711fb4-37b6-48e2-ab1e-149686039de3
+		summarizeBy: none
+		sourceColumn: customer_country
+
+		annotation SummarizationSetBy = Automatic
+
+	column amount
+		dataType: double
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		lineageTag: 9444e2a2-656e-4994-a507-4521070dcc45
+		summarizeBy: sum
+		sourceColumn: amount
+
+		annotation SummarizationSetBy = Automatic
+
+	column currency
+		dataType: string
+		lineageTag: 95b02432-d1a5-4e5e-9f2f-0607f9eb0581
+		summarizeBy: none
+		sourceColumn: currency
+
+		annotation SummarizationSetBy = Automatic
+
+	column type
+		dataType: string
+		lineageTag: 2978b302-6222-40b1-ba8a-2ff65a766855
+		summarizeBy: none
+		sourceColumn: type
+
+		annotation SummarizationSetBy = Automatic
+
+	column category
+		dataType: string
+		lineageTag: 2ca51458-fe7b-408e-9f4b-1d756956e2a4
+		summarizeBy: none
+		sourceColumn: category
+
+		annotation SummarizationSetBy = Automatic
+
+	column merchant
+		dataType: string
+		lineageTag: 058c2a42-4af9-4e8a-aa94-28c860883d48
+		summarizeBy: none
+		sourceColumn: merchant
+
+		annotation SummarizationSetBy = Automatic
+
+	column channel
+		dataType: string
+		lineageTag: 2a51e152-68b7-4b29-bfbc-625a856cf073
+		summarizeBy: none
+		sourceColumn: channel
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 797cc5fe-d091-4aeb-ab05-47925e08dab6
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_failed
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 664dccb4-0c92-4366-a167-5e3be39dc549
+		summarizeBy: none
+		sourceColumn: is_failed
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_international
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 910265f2-9ae4-4adb-a887-2e3fc0dcbe09
+		summarizeBy: none
+		sourceColumn: is_international
+
+		annotation SummarizationSetBy = Automatic
+
+	column revenue_amount
+		dataType: double
+		lineageTag: 6428c289-d205-4e1f-9416-89ca2580e1a7
+		summarizeBy: sum
+		sourceColumn: revenue_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column is_revenue
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 92c07e4c-f29e-42d8-846e-c22e3cb85a90
+		summarizeBy: none
+		sourceColumn: is_revenue
+
+		annotation SummarizationSetBy = Automatic
+
+	column description
+		dataType: string
+		lineageTag: 121e341d-c997-42cd-aa3f-c6c0e6d79a0c
+		summarizeBy: none
+		sourceColumn: description
+
+		annotation SummarizationSetBy = Automatic
+
+
+
+
+	partition 'gold fct_transactions' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5433", "payload_analytics"),
+				    gold_fct_transactions = Source{[Schema="gold",Item="fct_transactions"]}[Data]
+				in
+				    gold_fct_transactions
+

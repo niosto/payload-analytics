@@ -1,0 +1,130 @@
+table 'gold dim_date'
+	lineageTag: d04387cb-30b9-4766-a26a-e870b14ffbd8
+	dataCategory: Time
+
+	column date_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 2070c644-9088-4dc7-bd1c-0841ae6a1c41
+		summarizeBy: none
+		sourceColumn: date_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column full_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: a3148add-4864-435c-b440-34882acc7c79
+		summarizeBy: none
+		sourceColumn: full_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column day_of_week
+		dataType: double
+		lineageTag: 3d0bbde7-ca19-493f-8468-570a2fd0e33a
+		summarizeBy: sum
+		sourceColumn: day_of_week
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column day_name
+		dataType: string
+		lineageTag: 94d4fa03-c62b-4aa9-8d7f-94c6ac26c5ed
+		summarizeBy: none
+		sourceColumn: day_name
+		sortByColumn: day_of_week
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column week_number
+		dataType: int64
+		formatString: 0
+		lineageTag: 399fb5d5-d925-4088-b522-86f35a3e4cbc
+		summarizeBy: sum
+		sourceColumn: week_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_number
+		dataType: int64
+		formatString: 0
+		lineageTag: 71513bdb-ab93-48a8-a9cc-b8bb29d79dd7
+		summarizeBy: sum
+		sourceColumn: month_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_name
+		dataType: string
+		lineageTag: d965ac1d-7dc9-4b83-9ae4-d364c7c8ca21
+		summarizeBy: none
+		sourceColumn: month_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column quarter
+		dataType: int64
+		formatString: 0
+		lineageTag: c14f4e5c-7661-414f-beb1-75d8bf922681
+		summarizeBy: sum
+		sourceColumn: quarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: 895cd1f0-1dcb-49f6-a350-5dc78569aad3
+		summarizeBy: sum
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_weekend
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 09f772ec-3a8d-4796-9185-4bf15ebb728c
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_month_end
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 6e61c203-7862-48a6-b899-5deb01ba2257
+		summarizeBy: none
+		sourceColumn: is_month_end
+
+		annotation SummarizationSetBy = Automatic
+
+	column Periodo = FORMAT([full_date], "MMM yyyy", "es-CO")
+		dataType: string
+		lineageTag: b31f0e22-b85d-429a-92fa-fd4dbafe7372
+		summarizeBy: none
+		sortByColumn: OrdenPeriodo
+
+	column OrdenPeriodo = [year] * 100 + [month_number]
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a148e9fd-cc0f-40b5-83ce-782e8a300d1c
+		summarizeBy: none
+
+	partition 'gold dim_date' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5433", "payload_analytics"),
+				    gold_dim_date = Source{[Schema="gold",Item="dim_date"]}[Data]
+				in
+				    gold_dim_date
+

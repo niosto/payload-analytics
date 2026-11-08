@@ -22,7 +22,6 @@ RUN apt-get install -y sudo lsb-release git curl zip unzip jq libsqlite3-0
 
 # Install VSCode extensions dependencies
 RUN pip3 install pylint yapf isort cfn-lint cfn-lint-serverless
-RUN npm install -g @anthropic-ai/claude-code
 
 # Install CLI utilities
 RUN case "$(dpkg --print-architecture)" in \
@@ -44,7 +43,7 @@ RUN useradd -ms $SHELL $USER
 RUN mkdir -p $VOLUME \
     && chown -R $USER:$USER $VOLUME
 
-# Let non-root user self-update global npm packages (serverless, claude-code) at runtime
+# Let non-root user self-update global npm packages (serverless) at runtime
 RUN chown -R $USER:$USER /usr/local/lib/node_modules /usr/local/bin
 
 # cfn-lint: ignore W3005 (redundant DependsOn already implied by GetAtt)

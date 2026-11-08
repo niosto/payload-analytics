@@ -1,0 +1,27 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: es-CO
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_QueryOrder = ["gold mart_customer_summary","gold dim_account","gold dim_customer","gold dim_date","gold fct_loans","gold fct_transactions","gold dim_fx_rate_current","gold fct_live_transactions"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table 'gold mart_customer_summary'
+ref table 'gold dim_account'
+ref table 'gold dim_customer'
+ref table 'gold dim_date'
+ref table 'gold fct_loans'
+ref table 'gold fct_transactions'
+ref table Medidas
+ref table ReglasCalidad
+ref table 'gold dim_fx_rate_current'
+ref table 'gold fct_live_transactions'
+
+ref cultureInfo en-US
+

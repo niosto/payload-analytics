@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `fx_rates_current` reads the latest tick per currency with `LATERAL ... LIMIT 1` instead of `DISTINCT ON`, so it uses `stream_fx_rates_norm_currency_event_time_idx`: 1,593 ms down to 0.19 ms on 2M ticks. The seed now drives the currency list
 - The `fct_live_transactions` index on `processed_at` moved from `indexes` to a `post_hook`, because dbt builds `indexes` only when an incremental table is created
 - README architecture covers the hybrid platform: a draw.io diagram (`imgs/architecture.drawio.svg`, editable in diagrams.net) of the batch path in AWS and the streaming path in local Docker meeting in RDS, a table of every component, why streaming runs locally, and the streaming layers
+- The architecture diagram adds a DataOps band: GitHub Actions testing and deploying the backend through OIDC, and CloudWatch alarms emailing the team through SNS. The README covers CI/CD, monitoring, and operating cost
 
 ### Fixed
 
@@ -20,10 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Four-page corporate Power BI dashboard in `powerbi/dashboard.pbix`, with the versionable `powerbi/PayloadAnalytics.pbip` (TMDL model, PBIR report and `PayloadCorporate` theme), navigation, slicers, tooltips and screenshots for each page
+- `Medidas` table with 42 business measures in display folders, a marked `dim_date`, single-direction relationships and the automatic date tables removed
+- `gold.dim_fx_rate_current`: one row per currency with the rate `to_usd` applies, its `stream`/`seed` source and the age of the tick
+- `gold.dim_customer.email_status` and `gold.dim_account.is_currency_mismatch`, so the governance page reports the same quality flags Silver produces
+- README Dashboard section with the four screenshots and what each page answers
 - `docs/optimizations/README.md`: before/after table and write-up of the four index experiments, including the `LATERAL` result for optimization 1
 - `docs/governance/`: data dictionary with a sensitivity class per column (375 columns), dbt docs catalog as a single HTML file, end-to-end lineage, the 206 quality rules, and the RACI matrix with Nicolás Ospina as data owner
 - `docs/governance/build_governance_docs.py`: regenerates the dictionary, quality rules, and lineage from dbt's `manifest.json` and `catalog.json`
 - `docs/demo.md`: step-by-step script for the live end-to-end demo (capture, cleaning, storage), with setup checklist, tested SQL queries, fallback plan, and likely questions
+- CI/CD on GitHub Actions (`.github/workflows/ci.yml`): every pull request runs `pytest` and a full `dbt build` on a throwaway PostgreSQL; every merge to `main` deploys the migration, Glue (when its code changed), the dbt image, the dbt task, and the state machine
+- Stack `infrastructure/serverless/cicd`: GitHub OIDC provider, a deploy role limited to the `main` branch and the backend stacks, and a Secrets Manager secret for the Serverless key, so GitHub holds no AWS key
+- Unit tests for the producers and the Spark transforms under `tests/`, with fixtures, plus `scripts/ci/` for the dbt integration run
+- Stack `infrastructure/serverless/monitoring`: CloudWatch dashboard `payload-analytics` and four alarms (failed pipeline, low RDS disk, high RDS CPU, streaming lag) that email the alerts topic
+- The streaming job publishes rows written, p95 latency, and lag to CloudWatch (`PayloadAnalytics/Streaming`) once a minute
+- `docs/cost/`: cost sensitivity model on AWS Price List prices against the data ingested and consumed, checked against Cost Explorer, with tables and charts
 
 ## [1.2.0] - 23/10/2026
 

@@ -1,0 +1,144 @@
+table 'gold dim_account'
+	lineageTag: b860c68f-ea38-4cc1-8383-6e788b0df5ff
+
+	column account_id
+		dataType: string
+		isHidden
+		lineageTag: 3b704f49-ef00-4c2d-be25-a5aed56cf875
+		summarizeBy: none
+		sourceColumn: account_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		isHidden
+		lineageTag: b0ff3c95-c4b7-4ff7-956d-ac421a12e59c
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column account_type
+		dataType: string
+		lineageTag: 32e5aa95-0146-493c-85ae-2f4d8c003a81
+		summarizeBy: none
+		sourceColumn: account_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_credit_product
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 2d7da59f-c222-4af1-93ab-cb8e1ebe2864
+		summarizeBy: none
+		sourceColumn: is_credit_product
+
+		annotation SummarizationSetBy = Automatic
+
+	column currency
+		dataType: string
+		lineageTag: 063d5f2a-4077-4a0c-a08d-1b76a8210086
+		summarizeBy: none
+		sourceColumn: currency
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_currency_mismatch
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 745a5108-a602-4371-a9fa-9913db3c0d7f
+		summarizeBy: none
+		sourceColumn: is_currency_mismatch
+
+	column balance
+		dataType: double
+		lineageTag: 2ce51891-07ef-4e48-a6dc-c736c6180846
+		summarizeBy: sum
+		sourceColumn: balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column credit_limit
+		dataType: double
+		lineageTag: 4b8dc09c-c0f3-4be0-99bd-894995f7bac1
+		summarizeBy: sum
+		sourceColumn: credit_limit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column interest_rate
+		dataType: double
+		lineageTag: eb160af9-65f3-4fab-a7cf-be7a84704c58
+		summarizeBy: sum
+		sourceColumn: interest_rate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column opened_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: db36cc12-deaa-4511-b229-1a414c7b0e7b
+		summarizeBy: none
+		sourceColumn: opened_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column account_age_months
+		dataType: int64
+		formatString: 0
+		lineageTag: 16141b93-a383-4c14-8d4e-41c94916629d
+		summarizeBy: sum
+		sourceColumn: account_age_months
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 6c25516a-0b09-4061-829e-fd90f4a0d8ac
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column branch_code
+		dataType: string
+		lineageTag: 35679493-d4cc-4ac6-92e5-bc98dc0d4031
+		summarizeBy: none
+		sourceColumn: branch_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_segment
+		dataType: string
+		lineageTag: 20969341-cc39-42ff-970b-d6983111d99d
+		summarizeBy: none
+		sourceColumn: customer_segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column country
+		dataType: string
+		lineageTag: ce89d504-028a-4add-ba6b-d0e776ed62b5
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'gold dim_account' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5433", "payload_analytics"),
+				    gold_dim_account = Source{[Schema="gold",Item="dim_account"]}[Data]
+				in
+				    gold_dim_account
+

@@ -1,0 +1,213 @@
+table 'gold fct_live_transactions'
+	lineageTag: 277015fe-00d6-4ff2-900b-ce7131dcaeef
+
+	column transaction_id
+		dataType: string
+		isHidden
+		lineageTag: d8a7c1ec-c6bc-4071-987a-d3d53c0956ce
+		summarizeBy: none
+		sourceColumn: transaction_id
+
+	column customer_id
+		dataType: string
+		isHidden
+		lineageTag: 96f4bedf-af69-4ab7-86ef-969e3042acb6
+		summarizeBy: none
+		sourceColumn: customer_id
+
+	column account_id
+		dataType: string
+		isHidden
+		lineageTag: 3c465c91-7a1e-43ca-954a-b6d2b5330be0
+		summarizeBy: none
+		sourceColumn: account_id
+
+	column date_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 2ef83d43-49af-4c9f-88b0-80d9881d7d66
+		summarizeBy: none
+		sourceColumn: date_id
+
+	column transaction_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: c77e9a97-55cb-4dc3-8179-521ca27a392e
+		summarizeBy: none
+		sourceColumn: transaction_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column day_of_week
+		dataType: string
+		lineageTag: f82d5932-9610-4be8-b488-94916d021c54
+		summarizeBy: none
+		sourceColumn: day_of_week
+
+	column is_weekend
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 5444a3d6-d7b4-4f02-8095-8b292007733f
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+	column customer_country
+		dataType: string
+		lineageTag: 3ee21478-4829-45f3-93b9-ae3129f74ee6
+		summarizeBy: none
+		sourceColumn: customer_country
+
+	column amount
+		dataType: double
+		formatString: \$#,0.00
+		lineageTag: 7c6654ba-4134-40e6-b413-4acb5110854c
+		summarizeBy: none
+		sourceColumn: amount
+
+	column amount_native
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 7922430a-0eef-414f-9e93-0e1511341f20
+		summarizeBy: none
+		sourceColumn: amount_native
+
+	column currency
+		dataType: string
+		lineageTag: f1abca26-bfb8-4139-85b4-fed632e99edc
+		summarizeBy: none
+		sourceColumn: currency
+
+	column fx_usd_per_unit
+		dataType: double
+		formatString: 0.000000
+		lineageTag: bd330db0-56ff-479f-8608-2df7b683ff91
+		summarizeBy: none
+		sourceColumn: fx_usd_per_unit
+
+	column fx_rate_source
+		dataType: string
+		lineageTag: 251b5d70-6503-49fd-ae77-3ac460c9d53c
+		summarizeBy: none
+		sourceColumn: fx_rate_source
+
+	column fx_event_time
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 5135c1df-38de-449e-837a-16920c346a98
+		summarizeBy: none
+		sourceColumn: fx_event_time
+
+	column fx_provider_updated_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 748002c7-c0cf-45ea-868b-55f1c7f5cb21
+		summarizeBy: none
+		sourceColumn: fx_provider_updated_at
+
+	column type
+		dataType: string
+		lineageTag: 0ea6ebc7-cdc2-4429-97aa-e3d6580cddcf
+		summarizeBy: none
+		sourceColumn: type
+
+	column category
+		dataType: string
+		lineageTag: 4b0ee318-612f-4cdd-adf9-0a8e2ae28790
+		summarizeBy: none
+		sourceColumn: category
+
+	column merchant
+		dataType: string
+		lineageTag: b6e01b08-2c3d-4cee-ae57-7369132f98a4
+		summarizeBy: none
+		sourceColumn: merchant
+
+	column channel
+		dataType: string
+		lineageTag: 90d7a211-875f-491a-8e4e-1e7a074e7d4d
+		summarizeBy: none
+		sourceColumn: channel
+
+	column status
+		dataType: string
+		lineageTag: 7c1b8338-8729-4032-ba2d-612677856827
+		summarizeBy: none
+		sourceColumn: status
+
+	column is_failed
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 14b73872-0161-46ac-b11c-ea4f5efdda35
+		summarizeBy: none
+		sourceColumn: is_failed
+
+	column is_international
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: fc263d5b-13e9-482a-9b45-1d0b8f055528
+		summarizeBy: none
+		sourceColumn: is_international
+
+	column revenue_amount
+		dataType: double
+		formatString: \$#,0.00
+		lineageTag: 4dd1b7d9-2b51-4be3-a873-50038e940f16
+		summarizeBy: none
+		sourceColumn: revenue_amount
+
+	column is_revenue
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: d4c49d04-406b-4e26-b09c-2b38ac0a2738
+		summarizeBy: none
+		sourceColumn: is_revenue
+
+	column description
+		dataType: string
+		lineageTag: 9a210bdb-4445-421a-a05d-1b0c694d40e7
+		summarizeBy: none
+		sourceColumn: description
+
+	column event_time
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: ab30db46-5c67-48d8-be18-d4c3a77a5feb
+		summarizeBy: none
+		sourceColumn: event_time
+
+	column kafka_ts
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 613d62fa-281c-4c26-ad2f-b5bb1ba8fd00
+		summarizeBy: none
+		sourceColumn: kafka_ts
+
+	column processed_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: ae109a57-af05-4149-957e-4fab46546ed0
+		summarizeBy: none
+		sourceColumn: processed_at
+
+	column latency_seconds
+		dataType: double
+		formatString: 0.0
+		lineageTag: db36bb0d-e0c9-4612-a1e4-3f5101d04020
+		summarizeBy: none
+		sourceColumn: latency_seconds
+
+	column Minuto = FORMAT([event_time], "HH:mm")
+		dataType: string
+		lineageTag: ade4eb88-7e1b-499b-8ebb-e811ddfa54ab
+		summarizeBy: none
+
+	partition 'gold fct_live_transactions' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5433", "payload_analytics"),
+				    t = Source{[Schema="gold",Item="fct_live_transactions"]}[Data]
+				in
+				    t
+

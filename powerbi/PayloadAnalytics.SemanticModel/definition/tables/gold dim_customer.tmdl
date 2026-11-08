@@ -1,0 +1,375 @@
+table 'gold dim_customer'
+	lineageTag: dd6a4729-ff58-4a22-b723-8a7472292873
+
+	measure 'Mobile App Adoption Rate' =
+			
+			DIVIDE (
+			    CALCULATE (
+			        COUNTROWS ( 'gold dim_customer' ),
+			        'gold dim_customer'[mobile_app_registered] = TRUE ()
+			    ),
+			    COUNTROWS ( 'gold dim_customer' ),
+			    0
+			)
+		lineageTag: 214a16d6-5a64-4a9f-ad6e-a4c729318051
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'App Adopters Rate' =
+			
+			DIVIDE(
+			    COUNTROWS(FILTER('gold dim_customer', 'gold dim_customer'[mobile_app_registered] = TRUE())),
+			    COUNTROWS('gold dim_customer')
+			)
+		lineageTag: 938bcb79-b61f-49ef-99bd-a30aa6cbba45
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column customer_id
+		dataType: string
+		isHidden
+		lineageTag: ea180732-792a-4a6d-a666-e94b67bf253b
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column first_name
+		dataType: string
+		lineageTag: e290544a-00dd-4416-96d5-ea9bfd50e726
+		summarizeBy: none
+		sourceColumn: first_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column last_name
+		dataType: string
+		lineageTag: a42ead3d-93e8-4079-85b2-68d7a37fd9ef
+		summarizeBy: none
+		sourceColumn: last_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column email
+		dataType: string
+		lineageTag: 26d0d9a1-c309-41ef-b1f2-1f2f100000ec
+		summarizeBy: none
+		sourceColumn: email
+
+		annotation SummarizationSetBy = Automatic
+
+	column email_status
+		dataType: string
+		lineageTag: 9e1cdc37-7a20-4988-b543-5f97b1414137
+		summarizeBy: none
+		sourceColumn: email_status
+
+	column country
+		dataType: string
+		lineageTag: f6e8e4e3-6287-4028-aae2-e3d2b29a1a07
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	column city
+		dataType: string
+		lineageTag: ea065c2f-b922-481e-8c9b-8461e19cdfb0
+		summarizeBy: none
+		sourceColumn: city
+
+		annotation SummarizationSetBy = Automatic
+
+	column gender
+		dataType: string
+		lineageTag: a4e0e89d-ae78-4108-ab8a-cb8cd4290ab8
+		summarizeBy: none
+		sourceColumn: gender
+
+		annotation SummarizationSetBy = Automatic
+
+	column nationality
+		dataType: string
+		lineageTag: f087bf52-1745-4c5a-a0e0-4aa4ae2830e1
+		summarizeBy: none
+		sourceColumn: nationality
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_of_birth
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 63af863a-39ad-4593-a388-f14d2ecc9fc7
+		summarizeBy: none
+		sourceColumn: date_of_birth
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column age
+		dataType: int64
+		formatString: 0
+		lineageTag: b4eafbf8-93a9-4bdd-b767-fcebdfe122bf
+		summarizeBy: sum
+		sourceColumn: age
+
+		annotation SummarizationSetBy = Automatic
+
+	column age_bucket
+		dataType: string
+		lineageTag: dbd246bf-4cc1-4424-abc0-3602ac14f9db
+		summarizeBy: none
+		sourceColumn: age_bucket
+
+		annotation SummarizationSetBy = Automatic
+
+	column registration_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 9803a6c2-2b62-4a84-b7f7-e638caef0b30
+		summarizeBy: none
+		sourceColumn: registration_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column registration_month
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: a023a003-dfa4-47ca-9d0a-c27b99bab4ec
+		summarizeBy: none
+		sourceColumn: registration_month
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column tenure_days
+		dataType: int64
+		formatString: 0
+		lineageTag: 50556969-1d59-4e6d-b706-ed31c5f4b66e
+		summarizeBy: sum
+		sourceColumn: tenure_days
+
+		annotation SummarizationSetBy = Automatic
+
+	column tenure_years
+		dataType: int64
+		formatString: 0
+		lineageTag: 45adac7a-49e8-43c8-a78c-760ec879ae41
+		summarizeBy: sum
+		sourceColumn: tenure_years
+
+		annotation SummarizationSetBy = Automatic
+
+	column kyc_status
+		dataType: string
+		lineageTag: 3cf42133-178f-4078-aa45-e83b993483fa
+		summarizeBy: none
+		sourceColumn: kyc_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column risk_score
+		dataType: double
+		lineageTag: a39f0721-da0e-4da6-aaa0-3028771c7cc2
+		summarizeBy: sum
+		sourceColumn: risk_score
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column risk_tier
+		dataType: string
+		lineageTag: 93a3ecca-b0f1-48e0-aed7-9f11338d6529
+		summarizeBy: none
+		sourceColumn: risk_tier
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_segment
+		dataType: string
+		lineageTag: 786f7d75-aec8-48da-a3be-3e92bbd8a1a3
+		summarizeBy: none
+		sourceColumn: customer_segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: e56585f6-c750-464a-9ad3-7c95a9734fe7
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column relationship_manager
+		dataType: string
+		lineageTag: 341ef912-fd2a-419c-9893-5eab4ebbf484
+		summarizeBy: none
+		sourceColumn: relationship_manager
+
+		annotation SummarizationSetBy = Automatic
+
+	column credit_score
+		dataType: int64
+		formatString: 0
+		lineageTag: cfa9ebde-afed-4476-948b-7bc8b3b6ac34
+		summarizeBy: sum
+		sourceColumn: credit_score
+
+		annotation SummarizationSetBy = Automatic
+
+	column credit_score_band
+		dataType: string
+		lineageTag: 93bed96e-08fc-4b23-9c38-aa10eb51882f
+		summarizeBy: none
+		sourceColumn: credit_score_band
+
+		annotation SummarizationSetBy = Automatic
+
+	column utilization_pct
+		dataType: double
+		lineageTag: 68839124-9b91-436b-8b67-da963a35e826
+		summarizeBy: sum
+		sourceColumn: utilization_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column utilization_tier
+		dataType: string
+		lineageTag: 8bf0ba01-9553-4a4f-a579-89774ab80b93
+		summarizeBy: none
+		sourceColumn: utilization_tier
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_limit
+		dataType: double
+		lineageTag: d3db9677-af2c-400b-a6b7-bb376b12d9b0
+		summarizeBy: sum
+		sourceColumn: total_limit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_used
+		dataType: double
+		lineageTag: 2209d3f0-ab83-4b8b-aa60-f454867fd0e2
+		summarizeBy: sum
+		sourceColumn: total_used
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column late_payments_12m
+		dataType: int64
+		formatString: 0
+		lineageTag: 52ef84f0-fa23-46a9-a992-c23aff0a381f
+		summarizeBy: sum
+		sourceColumn: late_payments_12m
+
+		annotation SummarizationSetBy = Automatic
+
+	column bankruptcy_flag
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: b6f38075-7df6-4f69-976a-f39d57eb72f4
+		summarizeBy: none
+		sourceColumn: bankruptcy_flag
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_digital
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 5235a280-c03e-4644-9974-0c854751e904
+		summarizeBy: none
+		sourceColumn: is_digital
+
+		annotation SummarizationSetBy = Automatic
+
+	column preferred_channel
+		dataType: string
+		lineageTag: 893744de-3480-4876-acb1-5cdcf67d9471
+		summarizeBy: none
+		sourceColumn: preferred_channel
+
+		annotation SummarizationSetBy = Automatic
+
+	column avg_monthly_logins
+		dataType: int64
+		formatString: 0
+		lineageTag: 62834ec5-d442-46de-a424-f9c3032228a4
+		summarizeBy: sum
+		sourceColumn: avg_monthly_logins
+
+		annotation SummarizationSetBy = Automatic
+
+	column days_since_last_login
+		dataType: int64
+		formatString: 0
+		lineageTag: 3eeda624-ed9f-416c-9ed1-bbc502e161f8
+		summarizeBy: sum
+		sourceColumn: days_since_last_login
+
+		annotation SummarizationSetBy = Automatic
+
+	column has_delinquent_loan =
+			
+			CALCULATE(
+			    MAXX('gold fct_loans', 'gold fct_loans'[is_delinquent] * 1),
+			    FILTER(
+			        'gold fct_loans',
+			        'gold fct_loans'[customer_id] = EARLIER('gold dim_customer'[customer_id])
+			    )
+			) > 0
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: c1cff109-0f2f-417a-bc1c-7088228eeeee
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column mobile_app_registered
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 1da67356-4b3a-4b3e-8c74-243d1f8d1e7f
+		summarizeBy: none
+		sourceColumn: mobile_app_registered
+
+		annotation SummarizationSetBy = Automatic
+
+	column OrdenBanda = SWITCH([credit_score_band], "poor", 1, "fair", 2, "good", 3, "very_good", 4, "exceptional", 5)
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: e269c455-2c51-44e9-b279-61cc48368200
+		summarizeBy: none
+
+	column Segmento = SWITCH([customer_segment], "premium", "Premium", "retail", "Retail", "sme", "SME", "private_banking", "Private banking", [customer_segment])
+		dataType: string
+		lineageTag: eaff6f4e-e745-4557-b5f6-980d43a65c51
+		summarizeBy: none
+
+	column Banda = SWITCH([credit_score_band], "poor", "Bajo", "fair", "Regular", "good", "Bueno", "very_good", "Muy bueno", "exceptional", "Excepcional", [credit_score_band])
+		dataType: string
+		lineageTag: a0dccd6c-35fd-4eca-8d61-a3c33017ae74
+		summarizeBy: none
+		sortByColumn: OrdenBanda
+
+	partition 'gold dim_customer' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5433", "payload_analytics"),
+				    gold_dim_customer = Source{[Schema="gold",Item="dim_customer"]}[Data]
+				in
+				    gold_dim_customer
+

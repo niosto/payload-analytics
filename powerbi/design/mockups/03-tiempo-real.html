@@ -1,0 +1,127 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Operación en tiempo real</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1280px;height:720px;overflow:hidden;background:#F4F6F8;font-family:"Segoe UI",Arial,sans-serif;color:#1B1B1B;font-variant-numeric:tabular-nums}
+.page{position:relative;width:1280px;height:720px;background:#F4F6F8}
+.head{position:absolute;left:0;top:0;width:1280px;height:64px;background:#0B2545}
+.mark{position:absolute;left:24px;top:17px;width:30px;height:30px;border-radius:6px;background:#C9A227;color:#0B2545;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;letter-spacing:.5px}
+.brand{position:absolute;left:64px;top:14px;color:#fff}
+.brand b{display:block;font-size:10.5px;letter-spacing:1.7px;font-weight:700}
+.brand span{display:block;font-size:8.5px;color:#AFC0D6;margin-top:2px;letter-spacing:.3px}
+.ptitle{position:absolute;left:300px;top:21px;color:#fff;font-size:17px;font-weight:600;letter-spacing:.2px}
+.nav{position:absolute;left:700px;top:0;height:64px;display:flex;align-items:center;gap:22px}
+.tab{font-size:10.5px;color:#AFC0D6;height:64px;display:flex;align-items:center;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{color:#fff;font-weight:600;border-bottom-color:#C9A227}
+.date{position:absolute;right:24px;top:19px;font-size:9.5px;color:#D6E0EE;border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:6px 10px}
+.filters{position:absolute;left:0;top:64px;width:1280px;height:56px;background:#fff;border-bottom:1px solid #E2E7EE}
+.pill{position:absolute;top:13px;height:30px;border:1px solid #D9E0E9;border-radius:15px;padding:0 12px;display:flex;align-items:center;gap:6px;font-size:10px;background:#fff}
+.pill span{color:#5C6B73} .pill b{color:#0B2545;font-weight:600} .pill i{font-style:normal;color:#5C6B73;font-size:9px;margin-left:2px}
+.pill:nth-child(1){left:24px} .pill:nth-child(2){left:170px} .pill:nth-child(3){left:326px}
+.fresh{position:absolute;right:24px;top:20px;font-size:9.5px;color:#5C6B73;display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.foot{position:absolute;left:24px;right:24px;bottom:10px;height:22px;border-top:1px solid #E2E7EE;display:flex;align-items:flex-end;justify-content:space-between;font-size:9px;color:#7A8798}
+.kpi{position:absolute;top:124px;height:92px;background:#fff;border:1px solid #E2E7EE;border-radius:6px;box-shadow:0 1px 2px rgba(11,37,69,.05);padding:12px 14px 10px 16px;overflow:hidden}
+.kpi .accent{position:absolute;left:0;top:0;width:3px;height:92px}
+.kl{font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:#5C6B73;font-weight:600}
+.kv{font-size:25px;line-height:31px;color:#0B2545;font-weight:650;letter-spacing:-.3px;margin-top:2px}
+.kd{font-size:9px;color:#1B7F79;margin-top:1px}
+.ks{font-size:8px;color:#8A97A8;margin-top:1px}
+.spark{position:absolute;right:10px;bottom:8px;width:80px;height:28px;opacity:.9}
+.card{position:absolute;background:#fff;border:1px solid #E2E7EE;border-radius:6px;box-shadow:0 1px 2px rgba(11,37,69,.05);overflow:hidden}
+.ch{padding:12px 14px 0 14px;display:flex;justify-content:space-between}
+.ct{font-size:12px;font-weight:650;color:#0B2545;letter-spacing:.1px}
+.ck{font-size:8.5px;color:#8492A4;margin-top:2px;letter-spacing:.2px}
+.cb{position:absolute;left:14px;right:14px;top:44px;bottom:10px}
+.chart{width:100%;height:100%}
+.ax{font-size:8px;fill:#8492A4;font-family:"Segoe UI",Arial,sans-serif}
+.ax.red{fill:#B23A48}
+.legendline{position:absolute;left:0;bottom:-2px;display:flex;gap:14px;font-size:8.5px;color:#5C6B73;align-items:center;width:100%}
+.legendline i{width:9px;height:3px;display:inline-block;border-radius:2px;margin-right:4px;vertical-align:middle}
+.legendline i.dash{background:repeating-linear-gradient(90deg,#B23A48 0 4px,transparent 4px 7px);height:2px}
+.legendline .right{margin-left:auto;color:#0B2545;font-weight:600}
+.hbar{display:flex;align-items:center;gap:8px;height:18px;font-size:8.8px}
+.hl{width:78px;color:#0B2545;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ht{flex:1;height:8px;background:#F0F3F7;border-radius:3px;overflow:hidden}
+.hf{height:8px;border-radius:3px}
+.hv{width:46px;text-align:right;color:#5C6B73;font-size:8.5px}
+.donutwrap{display:flex;align-items:center;gap:18px;height:100%;justify-content:center}
+.donut{border-radius:50%;position:relative;flex:none}
+.hole{position:absolute;inset:16px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hole b{font-size:18px;color:#0B2545;font-weight:650} .hole span{font-size:8px;color:#5C6B73;margin-top:2px}
+.legend{display:flex;flex-direction:column;gap:7px;min-width:120px}
+.lg{display:flex;align-items:center;gap:7px;font-size:9.5px;color:#5C6B73}
+.lg b{margin-left:auto;color:#0B2545;font-weight:600} .sw{width:8px;height:8px;border-radius:2px;display:inline-block}
+.big{font-size:34px;color:#1B7F79;font-weight:650;letter-spacing:-1px;margin-top:2px}
+.subtle{font-size:8.5px;color:#8492A4}
+.mini{width:100%;height:54px;margin:6px 0 2px 0}
+.smallrow{display:flex;justify-content:space-between;font-size:9px;color:#5C6B73;padding:3px 0;border-top:1px solid #F0F3F7}
+.smallrow b{color:#0B2545;font-weight:600}
+.cols{display:flex;align-items:flex-end;gap:10px;padding:0 4px;height:150px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.cbar{width:70%;border-radius:3px 3px 0 0;min-height:3px}
+.cval{font-size:7.5px;color:#0B2545;font-weight:600;margin-bottom:-1px}
+.col span{font-size:8px;color:#5C6B73;white-space:nowrap}
+.note{position:absolute;left:0;bottom:-2px;font-size:8px;color:#8492A4}
+.heat{width:100%;border-collapse:separate;border-spacing:3px;font-size:8.5px;text-align:center;margin-top:-4px}
+.heat th{color:#5C6B73;font-weight:600;font-size:8px;padding:2px}
+.heat td{color:#0B2545;padding:7px 2px;border-radius:3px;font-weight:600}
+.heat .rowh{text-align:left;color:#0B2545;font-size:8.5px;width:62px;background:transparent}
+.fx{width:100%;border-collapse:collapse;font-size:8px}
+.fx th{text-align:left;color:#8492A4;font-weight:600;font-size:7.2px;text-transform:uppercase;letter-spacing:.4px;padding:1px 3px;border-bottom:1px solid #E2E7EE}
+.fx td{padding:1.5px 3px;line-height:12px;border-bottom:1px solid #F2F5F8;color:#0B2545}
+.fx .cur{font-weight:700} .fx .num{text-align:right} .fx .muted{color:#8492A4} .fx .pos{color:#1B7F79;text-align:right} .fx .neg{color:#B23A48;text-align:right}
+.tag{font-size:7.5px;padding:2px 5px;border-radius:8px;font-weight:600;text-transform:uppercase;letter-spacing:.2px}
+.tag.stream{background:#E6F2F0;color:#1B7F79} .tag.seed{background:#F6F1DF;color:#8A6D12} .tag.ok{background:#E6F2F0;color:#1B7F79} .tag.warn{background:#F6F1DF;color:#8A6D12}
+.statusline{position:absolute;left:0;bottom:-2px;font-size:8.5px;color:#5C6B73;display:flex;align-items:center;gap:6px}
+.statusline .dot{width:7px;height:7px}
+.freshtable{border-collapse:collapse;width:100%;font-size:9px}
+.freshtable th{text-align:left;color:#8492A4;font-size:8px;text-transform:uppercase;letter-spacing:.4px;padding:3px;border-bottom:1px solid #E2E7EE}
+.freshtable td{padding:8px 3px;border-bottom:1px solid #F2F5F8;color:#0B2545}
+.gov{display:flex;align-items:center;gap:16px;height:100%}
+.ring{position:relative;width:86px;height:86px;flex:none}
+.ring svg{width:86px;height:86px} .ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:#1B7F79}
+.govlist{display:flex;flex-direction:column;gap:7px;font-size:9px;color:#5C6B73}
+.govlist b{color:#0B2545;font-size:11px}
+</style></head><body><div class="page"><div class="head">
+      <div class="mark">PA</div>
+      <div class="brand"><b>PAYLOAD ANALYTICS</b><span>Fintech LATAM · 7 países</span></div>
+      <div class="ptitle">Operación en tiempo real</div>
+      <div class="nav"><div class="tab ">Resumen</div><div class="tab ">Clientes y riesgo</div><div class="tab on">Tiempo real</div><div class="tab ">Gobierno</div></div>
+      <div class="date">Datos al 29 oct 2026</div>
+    </div><div class="filters">
+      <div class="pill"><span>País</span><b>Todos</b><i>▾</i></div>
+      <div class="pill"><span>Segmento</span><b>Todos</b><i>▾</i></div>
+      <div class="pill"><span>Periodo</span><b>Últimos 12 meses</b><i>▾</i></div>
+      <div class="fresh"><span class="dot" style="background:#C9A227"></span>Actualizado hace 2 h</div>
+    </div><div class="kpi" style="left:24px;top:124px;width:299px">
+      <div class="accent" style="background:#1B7F79"></div>
+      <div class="kl">Latencia p95</div><div class="kv">2,8 s</div>
+      <div class="kd">objetivo < 5 s</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,12 10,14 20,15 30,16 40,16 50,17 60,18 70,18" fill="none" stroke="#1B7F79" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:335px;top:124px;width:299px">
+      <div class="accent" style="background:#0B2545"></div>
+      <div class="kl">Transacciones / hora</div><div class="kv">7.240</div>
+      <div class="kd">última ventana de 60 min</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,18 10,17 20,17 30,16 40,16 50,15 60,15 70,14" fill="none" stroke="#0B2545" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:646px;top:124px;width:299px">
+      <div class="accent" style="background:#C9A227"></div>
+      <div class="kl">Volumen 24 h</div><div class="kv">1,24 M USD</div>
+      <div class="kd">12.480 transacciones</div><svg class="spark" viewBox="0 0 90 30"><polyline points="0,19 10,18 20,18 30,17 40,17 50,16 60,16 70,15" fill="none" stroke="#C9A227" stroke-width="1.6"/></svg>
+    </div><div class="kpi" style="left:957px;top:124px;width:299px">
+      <div class="accent" style="background:#8FA3BF"></div>
+      <div class="kl">Monedas</div><div class="kv">9</div>
+      <div class="kd">4 con tasa de mercado</div>
+    </div><div class="card" style="left:24px;top:232px;width:760px;height:220px">
+      <div class="ch"><div><div class="ct">Latencia del streaming</div><div class="ck">p50 1,3 s · p95 2,8 s · objetivo 5 s</div></div></div>
+      <div class="cb"><svg class="chart" viewBox="0 0 700 155" preserveAspectRatio="none">
+      <defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1B7F79" stop-opacity=".22"/><stop offset="100%" stop-color="#1B7F79" stop-opacity="0"/></linearGradient></defs>
+      <line x1="34" y1="8.0" x2="692" y2="8.0" stroke="#E2E7EE" stroke-width="1"/><text x="28" y="11.0" text-anchor="end" class="ax">6.0</text><line x1="34" y1="39.8" x2="692" y2="39.8" stroke="#E2E7EE" stroke-width="1"/><text x="28" y="42.8" text-anchor="end" class="ax">4.5</text><line x1="34" y1="71.5" x2="692" y2="71.5" stroke="#E2E7EE" stroke-width="1"/><text x="28" y="74.5" text-anchor="end" class="ax">3.0</text><line x1="34" y1="103.2" x2="692" y2="103.2" stroke="#E2E7EE" stroke-width="1"/><text x="28" y="106.2" text-anchor="end" class="ax">1.5</text><line x1="34" y1="135.0" x2="692" y2="135.0" stroke="#E2E7EE" stroke-width="1"/><text x="28" y="138.0" text-anchor="end" class="ax">0.0</text><path d="M 34.0,135.0 L 34.0,111.7 L 93.8,107.5 L 153.6,109.6 L 213.5,105.4 L 273.3,107.5 L 333.1,109.6 L 392.9,103.2 L 452.7,105.4 L 512.5,107.5 L 572.4,109.6 L 632.2,105.4 L 692.0,107.5 L 692.0,135.0 Z" fill="url(#grad)" opacity=".9"/><path d="M 34.0,111.7 L 93.8,107.5 L 153.6,109.6 L 213.5,105.4 L 273.3,107.5 L 333.1,109.6 L 392.9,103.2 L 452.7,105.4 L 512.5,107.5 L 572.4,109.6 L 632.2,105.4 L 692.0,107.5" fill="none" stroke="#1B7F79" stroke-width="2.2"/><path d="M 34.0,84.2 L 93.8,73.6 L 153.6,80.0 L 213.5,69.4 L 273.3,75.7 L 333.1,80.0 L 392.9,67.3 L 452.7,73.6 L 512.5,77.9 L 572.4,75.7 L 632.2,71.5 L 692.0,75.7" fill="none" stroke="#0B2545" stroke-width="2"/><circle cx="692.0" cy="75.7" r="2.4" fill="#0B2545"/><line x1="34" y1="29.2" x2="692" y2="29.2" stroke="#B23A48" stroke-width="1" stroke-dasharray="4 3"/><text x="38" y="25.2" text-anchor="start" class="ax red">objetivo 5</text><text x="34.0" y="150" text-anchor="middle" class="ax">16:20</text><text x="153.6" y="150" text-anchor="middle" class="ax">16:25</text><text x="273.3" y="150" text-anchor="middle" class="ax">16:30</text><text x="392.9" y="150" text-anchor="middle" class="ax">16:35</text><text x="512.5" y="150" text-anchor="middle" class="ax">16:40</text><text x="632.2" y="150" text-anchor="middle" class="ax">16:45</text>
+      <circle cx="692.0" cy="107.5" r="3.2" fill="#1B7F79"/>
+    </svg></div>
+    </div><div class="card" style="left:800px;top:232px;width:456px;height:220px">
+      <div class="ch"><div><div class="ct">Fuente de la tasa</div><div class="ck">Transacciones con tasa en ventana</div></div></div>
+      <div class="cb"><div class="donutwrap"><div class="donut" style="background:conic-gradient(#1B7F79 0.00% 86.00%,#C9A227 86.00% 100.00%);width:110px;height:110px"><div class="hole"><b>86%</b><span>en ventana</span></div></div><div class="legend"><div class="lg"><span class="sw" style="background:#1B7F79"></span><span class="ln">Event window</span><b>86%</b></div><div class="lg"><span class="sw" style="background:#C9A227"></span><span class="ln">Fallback</span><b>14%</b></div></div></div><div class="statusline"><span class="dot" style="background:#1B7F79"></span>Streaming conectado · último evento hace 18 s</div></div>
+    </div><div class="card" style="left:24px;top:468px;width:760px;height:204px">
+      <div class="ch"><div><div class="ct">Volumen por minuto</div><div class="ck">Transacciones · últimos 15 minutos</div></div></div>
+      <div class="cb"><div class="cols" style="height:132px"><div class="col"><div class="cbar" style="height:57.5%;background:#0B2545"></div><span>16:31</span></div><div class="col"><div class="cbar" style="height:65.0%;background:#0B2545"></div><span></span></div><div class="col"><div class="cbar" style="height:60.0%;background:#0B2545"></div><span>16:33</span></div><div class="col"><div class="cbar" style="height:73.8%;background:#0B2545"></div><span></span></div><div class="col"><div class="cbar" style="height:78.8%;background:#0B2545"></div><span>16:35</span></div><div class="col"><div class="cbar" style="height:68.8%;background:#0B2545"></div><span></span></div><div class="col"><div class="cbar" style="height:82.5%;background:#0B2545"></div><span>16:37</span></div><div class="col"><div class="cbar" style="height:88.8%;background:#0B2545"></div><span></span></div><div class="col"><div class="cbar" style="height:80.0%;background:#0B2545"></div><span>16:39</span></div><div class="col"><div class="cbar" style="height:93.8%;background:#0B2545"></div><span></span></div><div class="col"><div class="cbar" style="height:86.2%;background:#0B2545"></div><span>16:41</span></div><div class="col"><div class="cbar" style="height:91.2%;background:#0B2545"></div><span></span></div><div class="col"><div class="cbar" style="height:96.9%;background:#0B2545"></div><span>16:43</span></div><div class="col"><div class="cbar" style="height:92.5%;background:#0B2545"></div><span></span></div><div class="col"><div class="cbar" style="height:100.0%;background:#0B2545"></div><span>16:45</span></div></div></div>
+    </div><div class="card" style="left:800px;top:468px;width:456px;height:204px">
+      <div class="ch"><div><div class="ct">Tasas vigentes por moneda</div><div class="ck">USD por unidad · última ventana</div></div></div>
+      <div class="cb"><table class="fx"><thead><tr><th>Moneda</th><th>Tasa USD</th><th>Fuente</th><th>Edad</th><th>Δ seed</th></tr></thead><tbody><tr><td class="cur">USD</td><td class="num">1,0000</td><td><span class="tag seed">seed</span></td><td class="num muted">12 h</td><td class="num muted">—</td></tr><tr><td class="cur">COP</td><td class="num">0,000248</td><td><span class="tag stream">stream</span></td><td class="num muted">3 s</td><td class="num pos">+0,4%</td></tr><tr><td class="cur">MXN</td><td class="num">0,05810</td><td><span class="tag stream">stream</span></td><td class="num muted">2 s</td><td class="num neg">-0,1%</td></tr><tr><td class="cur">BRL</td><td class="num">0,18420</td><td><span class="tag stream">stream</span></td><td class="num muted">2 s</td><td class="num pos">+0,3%</td></tr><tr><td class="cur">ARS</td><td class="num">0,000619</td><td><span class="tag stream">stream</span></td><td class="num muted">1 s</td><td class="num pos">+1,2%</td></tr><tr><td class="cur">CLP</td><td class="num">0,001048</td><td><span class="tag seed">seed</span></td><td class="num muted">11 h</td><td class="num muted">—</td></tr><tr><td class="cur">PEN</td><td class="num">0,26500</td><td><span class="tag seed">seed</span></td><td class="num muted">10 h</td><td class="num muted">—</td></tr><tr><td class="cur">UYU</td><td class="num">0,02500</td><td><span class="tag seed">seed</span></td><td class="num muted">10 h</td><td class="num muted">—</td></tr><tr><td class="cur">EUR</td><td class="num">1,08200</td><td><span class="tag stream">stream</span></td><td class="num muted">3 s</td><td class="num neg">-0,2%</td></tr></tbody></table></div>
+    </div><div class="foot"><span>Fuente: Gold · PostgreSQL · 206 reglas dbt · cifras ilustrativas</span><span>03 / 04</span></div></div></body></html>

@@ -1,0 +1,214 @@
+table Medidas
+	lineageTag: da33e958-7016-4c95-aa0c-db48319f0a92
+
+	measure Clientes = COUNTROWS('gold dim_customer')
+		formatString: #,0
+		displayFolder: 01 KPIs
+		lineageTag: faddae3d-07d9-4a55-9e4a-a011e1a70886
+
+	measure Cuentas = COUNTROWS('gold dim_account')
+		formatString: #,0
+		displayFolder: 01 KPIs
+		lineageTag: e18497d2-b92e-4c30-92b1-6e8082903f95
+
+	measure Transacciones = COUNTROWS('gold fct_transactions')
+		formatString: #,0
+		displayFolder: 01 KPIs
+		lineageTag: c4f86844-57e1-4714-acba-b8c29ef08b3d
+
+	measure 'Saldo total USD' = SUM('gold dim_account'[balance])
+		formatString: \$#,0
+		displayFolder: 01 KPIs
+		lineageTag: e23586ff-b9bc-4ddc-acc3-be71c2f51207
+
+	measure 'Ingresos USD' = SUM('gold fct_transactions'[revenue_amount])
+		formatString: \$#,0
+		displayFolder: 01 KPIs
+		lineageTag: d30aa6d7-8188-4853-bfc7-42877a521bd5
+
+	measure 'Tasa de mora 90+' = DIVIDE(CALCULATE(COUNTROWS('gold fct_loans'), 'gold fct_loans'[days_past_due] >= 90), COUNTROWS('gold fct_loans'))
+		formatString: 0.0%
+		displayFolder: 04 Riesgo
+		lineageTag: e6902e85-9d66-477f-aa36-7da8f3070002
+
+	measure 'Cartera USD' = SUM('gold fct_loans'[outstanding_balance])
+		formatString: \$#,0
+		displayFolder: 04 Riesgo
+		lineageTag: 3bedc7df-741c-437c-b0d9-a9d210ef6455
+
+	measure 'Ticket promedio USD' = DIVIDE(SUM('gold fct_transactions'[amount]), [Transacciones])
+		formatString: \$#,0
+		displayFolder: 01 KPIs
+		lineageTag: 977ea374-8a71-4696-b72b-73e9d45b1925
+
+	measure 'Ingreso por cliente' = DIVIDE([Ingresos USD], [Clientes])
+		formatString: \$#,0
+		displayFolder: 01 KPIs
+		lineageTag: 1036fedf-28d0-403d-8ff6-bb027c9f57f9
+
+	measure 'Saldo promedio por cliente' = DIVIDE([Saldo total USD], [Clientes])
+		formatString: \$#,0
+		displayFolder: 01 KPIs
+		lineageTag: 80084ee4-9c35-4928-884f-ec2da2a860c9
+
+	measure 'Clientes con score' = COUNTROWS(FILTER('gold dim_customer', NOT ISBLANK('gold dim_customer'[credit_score])))
+		formatString: #,0
+		displayFolder: 02 Clientes
+		lineageTag: 5e2603be-b677-4ee3-8041-55e039a85afa
+
+	measure 'Score promedio' = AVERAGE('gold dim_customer'[credit_score])
+		formatString: 0
+		displayFolder: 02 Clientes
+		lineageTag: 7f512333-55d7-4c72-96f0-ec2e51f13176
+
+	measure 'Créditos' = COUNTROWS('gold fct_loans')
+		formatString: #,0
+		displayFolder: 04 Riesgo
+		lineageTag: 0589c9ba-2208-459b-a44c-ec598e96383b
+
+	measure 'Cartera en mora USD' = CALCULATE([Cartera USD], 'gold fct_loans'[is_delinquent] = TRUE())
+		formatString: \$#,0
+		displayFolder: 04 Riesgo
+		lineageTag: 59779612-0da9-4f9d-9f83-6e7a66c70821
+
+	measure 'Mora sobre cartera %' = DIVIDE([Cartera en mora USD], [Cartera USD])
+		formatString: 0.0%
+		displayFolder: 04 Riesgo
+		lineageTag: acd9891a-4bd3-499f-81bd-01edb59bb777
+
+	measure 'DPD promedio' = AVERAGE('gold fct_loans'[days_past_due])
+		formatString: 0.0
+		displayFolder: 04 Riesgo
+		lineageTag: 80e7bafa-469a-4651-a185-dfb2560942c9
+
+	measure 'Créditos 90+' = CALCULATE(COUNTROWS('gold fct_loans'), 'gold fct_loans'[days_past_due] >= 90)
+		formatString: #,0
+		displayFolder: 04 Riesgo
+		lineageTag: 62560d4d-b8d6-4211-b06d-491c22268383
+
+	measure 'Latencia p50' = PERCENTILEX.INC('gold fct_live_transactions', 'gold fct_live_transactions'[latency_seconds], 0.5)
+		formatString: 0.0
+		displayFolder: 05 Streaming
+		lineageTag: bb01494c-769e-45eb-b00a-0c8bcc2af8b8
+
+	measure 'Latencia p95' = PERCENTILEX.INC('gold fct_live_transactions', 'gold fct_live_transactions'[latency_seconds], 0.95)
+		formatString: 0.0
+		displayFolder: 05 Streaming
+		lineageTag: 3d92e28d-1735-41a7-8ef2-151c9c954261
+
+	measure 'Transacciones última hora' = CALCULATE(COUNTROWS('gold fct_live_transactions'), 'gold fct_live_transactions'[event_time] >= NOW() - 1/24)
+		formatString: #,0
+		displayFolder: 05 Streaming
+		lineageTag: 20099f11-3e5a-4d43-a98b-d5835ff71203
+
+	measure 'Volumen USD última hora' = CALCULATE(SUM('gold fct_live_transactions'[amount]), 'gold fct_live_transactions'[event_time] >= NOW() - 1/24)
+		formatString: \$#,0
+		displayFolder: 05 Streaming
+		lineageTag: 0e910735-50cc-4492-a098-5b4f953f1c09
+
+	measure 'Frescura streaming s' = DATEDIFF(MAX('gold fct_live_transactions'[processed_at]), NOW(), SECOND)
+		formatString: #,0
+		displayFolder: 05 Streaming
+		lineageTag: 24a5f8c5-f2b2-4881-be34-3ba1a99046f1
+
+	measure 'Monedas activas' = DISTINCTCOUNT('gold dim_fx_rate_current'[currency])
+		formatString: #,0
+		displayFolder: 05 Streaming
+		lineageTag: 1e5d2735-9e45-417e-b600-eb887cac5bff
+
+	measure 'Frescura FX s' = DATEDIFF(MAX('gold dim_fx_rate_current'[rate_event_time]), NOW(), SECOND)
+		formatString: #,0
+		displayFolder: 05 Streaming
+		lineageTag: 6a086786-c7e2-40af-81cf-d2a5da4652f1
+
+	measure 'Emails inválidos' = COUNTROWS(FILTER('gold dim_customer', 'gold dim_customer'[email_status] = "invalid"))
+		formatString: #,0
+		displayFolder: 06 Gobierno
+		lineageTag: 774cc239-5183-4f16-a0cb-3a9994976b11
+
+	measure 'Monedas inconsistentes' = COUNTROWS(FILTER('gold dim_account', 'gold dim_account'[is_currency_mismatch] = TRUE()))
+		formatString: #,0
+		displayFolder: 06 Gobierno
+		lineageTag: 3002700d-8809-44f9-8ddf-c8bc55cb2f1b
+
+	measure 'Registros marcados' = [Emails inválidos] + [Monedas inconsistentes]
+		formatString: #,0
+		displayFolder: 06 Gobierno
+		lineageTag: acb31cde-6e5c-42ee-967d-0f1988e298a5
+
+	measure '% emails inválidos' = DIVIDE([Emails inválidos], [Clientes])
+		formatString: 0.0%
+		displayFolder: 06 Gobierno
+		lineageTag: a25c8121-f2e4-4ae3-9d4d-8f66c5f2eb86
+
+	measure '% monedas inconsistentes' = DIVIDE([Monedas inconsistentes], [Cuentas])
+		formatString: 0.0%
+		displayFolder: 06 Gobierno
+		lineageTag: 4906cf3d-04e5-4b3a-9da1-4758967c4799
+
+	measure 'Reglas de calidad' = 206
+		formatString: #,0
+		displayFolder: 06 Gobierno
+		lineageTag: 37f15e1a-8799-4be2-82e0-a52e496a7f4a
+
+	measure 'Cumplimiento %' = 1
+		formatString: 0.0%
+		displayFolder: 06 Gobierno
+		lineageTag: 794ae469-bb1f-49f0-aa1f-df32200439d6
+
+	measure 'Ingresos mes anterior' = CALCULATE([Ingresos USD], DATEADD('gold dim_date'[full_date], -1, MONTH))
+		formatString: \$#,0
+		displayFolder: 03 Crecimiento
+		lineageTag: 767d0b06-7957-4fc9-883f-f6f2884e7dc5
+
+	measure 'Variación MoM ingresos %' = DIVIDE([Ingresos USD] - [Ingresos mes anterior], [Ingresos mes anterior])
+		formatString: 0.0%
+		displayFolder: 03 Crecimiento
+		lineageTag: c9c3f43a-39b6-4388-9d71-f5ef9786dd68
+
+	measure 'Transacciones mes anterior' = CALCULATE([Transacciones], DATEADD('gold dim_date'[full_date], -1, MONTH))
+		formatString: #,0
+		displayFolder: 03 Crecimiento
+		lineageTag: 193a72f7-2860-483a-807b-50c78e550d78
+
+	measure 'Variación MoM transacciones %' = DIVIDE([Transacciones] - [Transacciones mes anterior], [Transacciones mes anterior])
+		formatString: 0.0%
+		displayFolder: 03 Crecimiento
+		lineageTag: ced3a040-02b8-4303-9c5a-8fcc4e5430b3
+
+	column _dummy
+		lineageTag: fc1753c6-fe05-4f64-aa71-f250b934d8f1
+		isNameInferred
+		sourceColumn: [_dummy]
+
+	partition Medidas = calculated
+		mode: import
+		source = ROW("_dummy", 1)
+
+	measure 'Frescura batch días' = DATEDIFF(MAX('gold fct_transactions'[transaction_date]), TODAY(), DAY)
+		formatString: #,0
+		displayFolder: "06 Gobierno"
+
+	measure 'Saldo total' = DIVIDE([Saldo total USD], 1000000000)
+		formatString: 0.00 "B"
+		displayFolder: "01 KPIs"
+
+	measure 'Ingresos' = DIVIDE([Ingresos USD], 1000000)
+		formatString: 0.0 "M"
+		displayFolder: "01 KPIs"
+
+	measure 'Cartera' = DIVIDE([Cartera USD], 1000000)
+		formatString: 0.0 "M"
+		displayFolder: "04 Riesgo"
+
+	measure 'Volumen 24 h' = DIVIDE(CALCULATE(SUM('gold fct_live_transactions'[amount]), 'gold fct_live_transactions'[event_time] >= NOW() - 1), 1000000)
+		formatString: 0.00 "M"
+		displayFolder: "05 Streaming"
+
+	measure 'Cobertura FX %' = DIVIDE(CALCULATE(COUNTROWS('gold fct_live_transactions'), NOT ISBLANK('gold fct_live_transactions'[fx_usd_per_unit])), COUNTROWS('gold fct_live_transactions'))
+		formatString: 0.0%
+		displayFolder: "05 Streaming"
+
+	measure 'Latencia mediana (s)' = MEDIANX(FILTER('gold fct_live_transactions', 'gold fct_live_transactions'[latency_seconds] <= 60), 'gold fct_live_transactions'[latency_seconds])
+		formatString: 0.0
+		displayFolder: "05 Streaming"
