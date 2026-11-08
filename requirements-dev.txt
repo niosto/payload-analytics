@@ -1,0 +1,9 @@
+# Test and CI dependencies: pytest unit tests and the dbt integration test
+# (scripts/ci/dbt_integration.sh). dbt versions match backend/src/dbt/Dockerfile.
+pytest==8.3.3
+pyspark==3.5.3
+requests==2.32.3
+psycopg2-binary==2.9.10
+yoyo-migrations==9.0.0
+dbt-core==1.12.3
+dbt-postgres==1.11.0
