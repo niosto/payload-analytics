@@ -19,7 +19,9 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: repo:${self:custom.github.repository}:ref:refs/heads/${self:custom.github.branch}
+                token.actions.githubusercontent.com:sub:
+                  - repo:${self:custom.github.immutableRepository}:ref:refs/heads/${self:custom.github.branch}
+                  - repo:${self:custom.github.repository}:ref:refs/heads/${self:custom.github.branch}
       Policies:
         - PolicyName: ${self:custom.servicePrefix}-deploy-stacks
           PolicyDocument:

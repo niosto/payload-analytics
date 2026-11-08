@@ -49,4 +49,8 @@ custom:
     # Only pushes to this branch of this repository can assume the deploy role.
     # Pull requests run the tests without AWS credentials.
     repository: niosto/payload-analytics
+    # The repository uses GitHub's immutable OIDC subject, which carries the
+    # owner and repository ids: repo:<owner>@<owner_id>/<repo>@<repo_id>:...
+    # (gh api repos/niosto/payload-analytics/actions/oidc/customization/sub).
+    immutableRepository: niosto@159497603/payload-analytics@1314412593
     branch: main

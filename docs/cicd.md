@@ -70,7 +70,7 @@ aws secretsmanager put-secret-value --secret-id /payload-analytics-cicd/Serverle
 | Resource | What it is |
 | --- | --- |
 | `GitHubOidcProvider` | IAM OIDC provider for `token.actions.githubusercontent.com`, audience `sts.amazonaws.com`. The account had none. |
-| `GitHubDeployRole` | `payload-analytics-cicd-github-deploy`. Trust: `sts:AssumeRoleWithWebIdentity` only when `aud = sts.amazonaws.com` and `sub = repo:niosto/payload-analytics:ref:refs/heads/main`. Other repos, branches, forks, and pull requests cannot assume it. |
+| `GitHubDeployRole` | `payload-analytics-cicd-github-deploy`. Trust: `sts:AssumeRoleWithWebIdentity` only when `aud = sts.amazonaws.com` and `sub` is `main` of this repository, in either form GitHub issues: the immutable `repo:niosto@159497603/payload-analytics@1314412593:ref:refs/heads/main` (this repository uses it) or the classic `repo:niosto/payload-analytics:ref:refs/heads/main`. Other repos, branches, forks, and pull requests cannot assume it. |
 | `ServerlessAccessKeySecret` | `/payload-analytics-cicd/ServerlessAccessKey`. Created empty by the template; the value is put once with the CLI, so it is never in git or in the template. To rotate, run `put-secret-value` again. |
 | SSM | `/payload-analytics-cicd/DeployRoleArn`, `/GitHubOidcProviderArn`, `/ServerlessAccessKeySecretName`. |
 
