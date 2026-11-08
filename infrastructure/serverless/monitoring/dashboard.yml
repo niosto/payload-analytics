@@ -1,0 +1,157 @@
+# One dashboard (the first three per account are free). Layout, top to bottom:
+# help text and alarm status, batch pipeline (Step Functions, Glue, dbt), RDS,
+# streaming. Glue and dbt are read from the Step Functions service-integration
+# metrics, which exist without enabling Glue job metrics.
+Resources:
+  MonitoringDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    DependsOn:
+      - PipelineFailedAlarm
+      - RdsLowStorageAlarm
+      - RdsHighCpuAlarm
+      - StreamLagAlarm
+    Properties:
+      DashboardName: ${self:custom.monitored.dashboardName}
+      DashboardBody: !Sub
+        - |
+          {
+            "start": "-PT6H",
+            "periodOverride": "inherit",
+            "widgets": [
+              {
+                "type": "text", "x": 0, "y": 0, "width": 14, "height": 6,
+                "properties": {
+                  "markdown": "## Payload Analytics: monitoreo\n**Batch** (fila 2): cada archivo en `raw/` dispara la state machine `${StateMachineName}`, que corre Glue (bronze a silver) y dbt en Fargate (silver y gold). *Fallidas* mayor que 0 envia un correo por SNS.\n\n**RDS** (fila 3): CPU, espacio libre y conexiones de `${DbInstance}`. Alarmas: CPU > 80 % por 10 min y menos de 5 GB libres.\n\n**Streaming** (fila 4): metricas propias del job de Spark (`${StreamingNamespace}`), enviadas una vez por minuto. *Lag* = ahora menos el evento mas reciente escrito; alarma si pasa de 60 s durante 3 min. Sin datos = streaming apagado, no alarma."
+                }
+              },
+              {
+                "type": "alarm", "x": 14, "y": 0, "width": 10, "height": 6,
+                "properties": {
+                  "title": "Estado de las alarmas",
+                  "alarms": [
+                    "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${Prefix}-pipeline-failed",
+                    "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${Prefix}-rds-low-storage",
+                    "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${Prefix}-rds-high-cpu",
+                    "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${Prefix}-streaming-lag"
+                  ]
+                }
+              },
+              {
+                "type": "metric", "x": 0, "y": 6, "width": 8, "height": 6,
+                "properties": {
+                  "title": "Pipeline batch: ejecuciones (Step Functions)",
+                  "region": "${AWS::Region}", "view": "timeSeries", "stacked": false,
+                  "stat": "Sum", "period": 300,
+                  "metrics": [
+                    ["AWS/States", "ExecutionsStarted", "StateMachineArn", "${StateMachineArn}", {"label": "Iniciadas", "color": "#1f77b4"}],
+                    [".", "ExecutionsSucceeded", ".", ".", {"label": "Exitosas", "color": "#2ca02c"}],
+                    [".", "ExecutionsFailed", ".", ".", {"label": "Fallidas", "color": "#d62728"}]
+                  ],
+                  "yAxis": {"left": {"min": 0, "label": "Ejecuciones", "showUnits": false}}
+                }
+              },
+              {
+                "type": "metric", "x": 8, "y": 6, "width": 8, "height": 6,
+                "properties": {
+                  "title": "Pipeline batch: duracion de la ejecucion",
+                  "region": "${AWS::Region}", "view": "timeSeries", "stacked": false,
+                  "period": 300,
+                  "metrics": [
+                    [{"expression": "m1 / 60000", "label": "Promedio (min)", "id": "e1"}],
+                    [{"expression": "m2 / 60000", "label": "Maximo (min)", "id": "e2"}],
+                    ["AWS/States", "ExecutionTime", "StateMachineArn", "${StateMachineArn}", {"stat": "Average", "id": "m1", "visible": false}],
+                    ["...", {"stat": "Maximum", "id": "m2", "visible": false}]
+                  ],
+                  "yAxis": {"left": {"min": 0, "label": "Minutos", "showUnits": false}}
+                }
+              },
+              {
+                "type": "metric", "x": 16, "y": 6, "width": 8, "height": 6,
+                "properties": {
+                  "title": "Glue y dbt: tareas ejecutadas por la state machine",
+                  "region": "${AWS::Region}", "view": "timeSeries", "stacked": false,
+                  "stat": "Sum", "period": 300,
+                  "metrics": [
+                    ["AWS/States", "ServiceIntegrationsSucceeded", "ServiceIntegrationResourceArn", "${GlueIntegrationArn}", {"label": "Glue exitosos", "color": "#2ca02c"}],
+                    [".", "ServiceIntegrationsFailed", ".", ".", {"label": "Glue fallidos", "color": "#d62728"}],
+                    [".", "ServiceIntegrationsSucceeded", ".", "${EcsIntegrationArn}", {"label": "dbt exitosos", "color": "#17becf"}],
+                    [".", "ServiceIntegrationsFailed", ".", ".", {"label": "dbt fallidos", "color": "#ff7f0e"}]
+                  ],
+                  "yAxis": {"left": {"min": 0, "label": "Ejecuciones", "showUnits": false}}
+                }
+              },
+              {
+                "type": "metric", "x": 0, "y": 12, "width": 8, "height": 6,
+                "properties": {
+                  "title": "RDS: CPU (%)",
+                  "region": "${AWS::Region}", "view": "timeSeries", "stacked": false,
+                  "stat": "Average", "period": 300,
+                  "metrics": [
+                    ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "${DbInstance}", {"label": "CPU promedio"}]
+                  ],
+                  "yAxis": {"left": {"min": 0, "max": 100, "showUnits": false}},
+                  "annotations": {"horizontal": [{"label": "Alarma 80 %", "value": ${self:custom.thresholds.rdsCpuPercent}, "color": "#d62728"}]}
+                }
+              },
+              {
+                "type": "metric", "x": 8, "y": 12, "width": 8, "height": 6,
+                "properties": {
+                  "title": "RDS: espacio libre (GB)",
+                  "region": "${AWS::Region}", "view": "timeSeries", "stacked": false,
+                  "period": 300,
+                  "metrics": [
+                    [{"expression": "m1 / 1073741824", "label": "Espacio libre (GB)", "id": "e1"}],
+                    ["AWS/RDS", "FreeStorageSpace", "DBInstanceIdentifier", "${DbInstance}", {"stat": "Minimum", "id": "m1", "visible": false}]
+                  ],
+                  "yAxis": {"left": {"min": 0, "showUnits": false}},
+                  "annotations": {"horizontal": [{"label": "Alarma 5 GB", "value": 5, "color": "#d62728"}]}
+                }
+              },
+              {
+                "type": "metric", "x": 16, "y": 12, "width": 8, "height": 6,
+                "properties": {
+                  "title": "RDS: conexiones abiertas",
+                  "region": "${AWS::Region}", "view": "timeSeries", "stacked": false,
+                  "stat": "Maximum", "period": 300,
+                  "metrics": [
+                    ["AWS/RDS", "DatabaseConnections", "DBInstanceIdentifier", "${DbInstance}", {"label": "Conexiones (max)"}]
+                  ],
+                  "yAxis": {"left": {"min": 0, "showUnits": false}}
+                }
+              },
+              {
+                "type": "metric", "x": 0, "y": 18, "width": 12, "height": 6,
+                "properties": {
+                  "title": "Streaming: filas escritas por minuto",
+                  "region": "${AWS::Region}", "view": "timeSeries", "stacked": false,
+                  "stat": "Sum", "period": 60,
+                  "metrics": [
+                    ["${StreamingNamespace}", "TransactionsWritten", {"label": "Transacciones"}],
+                    [".", "FxTicksWritten", {"label": "Ticks FX"}]
+                  ],
+                  "yAxis": {"left": {"min": 0, "label": "Filas / min", "showUnits": false}}
+                }
+              },
+              {
+                "type": "metric", "x": 12, "y": 18, "width": 12, "height": 6,
+                "properties": {
+                  "title": "Streaming: latencia p95 y lag (segundos)",
+                  "region": "${AWS::Region}", "view": "timeSeries", "stacked": false,
+                  "stat": "Maximum", "period": 60,
+                  "metrics": [
+                    ["${StreamingNamespace}", "TransactionLatencyP95Seconds", {"label": "Latencia p95 transacciones"}],
+                    [".", "StreamLagSeconds", {"label": "Lag del stream"}]
+                  ],
+                  "yAxis": {"left": {"min": 0, "label": "Segundos", "showUnits": false}},
+                  "annotations": {"horizontal": [{"label": "Alarma lag 60 s", "value": ${self:custom.thresholds.streamLagSeconds}, "color": "#d62728"}]}
+                }
+              }
+            ]
+          }
+        - Prefix: ${self:custom.servicePrefix}
+          StateMachineName: ${self:custom.monitored.stateMachineName}
+          StateMachineArn: !Sub arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${self:custom.monitored.stateMachineName}
+          GlueIntegrationArn: !Sub arn:aws:states:${AWS::Region}:${AWS::AccountId}:glue:startJobRun.sync
+          EcsIntegrationArn: !Sub arn:aws:states:${AWS::Region}:${AWS::AccountId}:ecs:runTask.sync
+          DbInstance: ${self:custom.monitored.dbInstanceIdentifier}
+          StreamingNamespace: ${self:custom.monitored.streamingNamespace}

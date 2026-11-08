@@ -1,0 +1,16 @@
+Resources:
+  DashboardNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/DashboardName
+      Tier: Standard
+      Type: String
+      Value: !Ref MonitoringDashboard
+
+  PipelineFailedAlarmNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/PipelineFailedAlarmName
+      Tier: Standard
+      Type: String
+      Value: !Ref PipelineFailedAlarm

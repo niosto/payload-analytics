@@ -1,0 +1,94 @@
+# Four alarms (USD 0.10 per alarm per month). All of them notify the existing
+# pipeline alerts topic, which emails the team, on ALARM and on the return to OK.
+Resources:
+  PipelineFailedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: ${self:custom.servicePrefix}-pipeline-failed
+      AlarmDescription: >-
+        Una ejecucion de la state machine ${self:custom.monitored.stateMachineName}
+        fallo en los ultimos 5 minutos (Glue, dbt o el archivado). El archivo quedo en failed/.
+      Namespace: AWS/States
+      MetricName: ExecutionsFailed
+      Dimensions:
+        - Name: StateMachineArn
+          Value: !Sub arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${self:custom.monitored.stateMachineName}
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      # No executions means no data: that is the normal state, not a failure.
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - ${self:custom.monitored.alertsTopicArn}
+      OKActions:
+        - ${self:custom.monitored.alertsTopicArn}
+
+  RdsLowStorageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: ${self:custom.servicePrefix}-rds-low-storage
+      AlarmDescription: >-
+        El RDS ${self:custom.monitored.dbInstanceIdentifier} tiene menos de 5 GB libres.
+        Las tablas de ticks del streaming crecen todo el tiempo; liberar espacio o ampliar el disco.
+      Namespace: AWS/RDS
+      MetricName: FreeStorageSpace
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: ${self:custom.monitored.dbInstanceIdentifier}
+      Statistic: Minimum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: ${self:custom.thresholds.rdsFreeStorageBytes}
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: missing
+      AlarmActions:
+        - ${self:custom.monitored.alertsTopicArn}
+      OKActions:
+        - ${self:custom.monitored.alertsTopicArn}
+
+  RdsHighCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: ${self:custom.servicePrefix}-rds-high-cpu
+      AlarmDescription: >-
+        El CPU del RDS ${self:custom.monitored.dbInstanceIdentifier} supera el 80 % durante 10 minutos.
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: ${self:custom.monitored.dbInstanceIdentifier}
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      DatapointsToAlarm: 2
+      Threshold: ${self:custom.thresholds.rdsCpuPercent}
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: missing
+      AlarmActions:
+        - ${self:custom.monitored.alertsTopicArn}
+      OKActions:
+        - ${self:custom.monitored.alertsTopicArn}
+
+  StreamLagAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: ${self:custom.servicePrefix}-streaming-lag
+      AlarmDescription: >-
+        El job de Spark Streaming lleva 3 minutos con mas de 60 s de retraso entre el
+        evento mas reciente escrito en silver.stream_* y la hora actual.
+      Namespace: ${self:custom.monitored.streamingNamespace}
+      MetricName: StreamLagSeconds
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 3
+      Threshold: ${self:custom.thresholds.streamLagSeconds}
+      ComparisonOperator: GreaterThanThreshold
+      # Streaming runs locally and is often off on purpose; no data is not an incident.
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - ${self:custom.monitored.alertsTopicArn}
+      OKActions:
+        - ${self:custom.monitored.alertsTopicArn}
