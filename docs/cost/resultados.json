@@ -1,0 +1,512 @@
+{
+  "tabla1": {
+    "1": {
+      "total": 20.32278305096626,
+      "RDS instancia": 11.52,
+      "RDS almacenamiento": 2.3000000000000003,
+      "Glue batch": 1.76,
+      "Fargate dbt": 0.03085625,
+      "S3": 0.2646903556537628,
+      "Transferencia saliente": 0.0,
+      "IPv4 publica": 3.60625,
+      "Otros": 0.8409864453125001,
+      "Streaming en AWS": 0
+    },
+    "10": {
+      "total": 24.199350402317048,
+      "RDS instancia": 11.52,
+      "RDS almacenamiento": 2.3000000000000003,
+      "Glue batch": 3.74,
+      "Fargate dbt": 0.0863975,
+      "S3": 2.093543605442047,
+      "Transferencia saliente": 0.0,
+      "IPv4 publica": 3.6175,
+      "Otros": 0.841909296875,
+      "Streaming en AWS": 0
+    },
+    "100": {
+      "total": 154.1550239158249,
+      "RDS instancia": 92.88,
+      "RDS almacenamiento": 8.280000000000001,
+      "Glue batch": 27.39,
+      "Fargate dbt": 0.6418100000000001,
+      "S3": 20.382076103324888,
+      "Transferencia saliente": 0.0,
+      "IPv4 publica": 3.73,
+      "Otros": 0.8511378125000001,
+      "Streaming en AWS": 0
+    },
+    "1000": {
+      "total": 1258.2350793634032,
+      "RDS instancia": 688.3199999999999,
+      "RDS almacenamiento": 81.535,
+      "Glue batch": 271.59000000000003,
+      "Fargate dbt": 6.195935,
+      "S3": 203.2674010821533,
+      "Transferencia saliente": 0.0,
+      "IPv4 publica": 4.855,
+      "Otros": 2.47174328125,
+      "Streaming en AWS": 0
+    }
+  },
+  "tabla2": {
+    "1": {
+      "rds": "db.t4g.micro",
+      "rds_fits": true,
+      "db_gb": 1.3090187549591064,
+      "storage_gb": 20,
+      "cpu_vcpu": 0.06801388888888889,
+      "glue_workers": 2,
+      "glue_min": 4.0,
+      "dbt_min": 2.5,
+      "wall_min": 7.0,
+      "stream_gb_day": 0.09414553642272949,
+      "out_gb": 13.5,
+      "s3_gb": 11.372624158859253,
+      "gb_run": 0.05,
+      "file_split": false,
+      "days_to_fill": 163.0454356441912
+    },
+    "10": {
+      "rds": "db.t4g.micro",
+      "rds_fits": true,
+      "db_gb": 6.400217533111572,
+      "storage_gb": 20,
+      "cpu_vcpu": 0.08913888888888889,
+      "glue_workers": 2,
+      "glue_min": 8.5,
+      "dbt_min": 7.0,
+      "wall_min": 16.0,
+      "stream_gb_day": 0.6286025047302246,
+      "out_gb": 13.5,
+      "s3_gb": 90.8879828453064,
+      "gb_run": 0.5,
+      "file_split": false,
+      "days_to_fill": 22.271626178149475
+    },
+    "100": {
+      "rds": "db.t4g.large",
+      "rds_fits": true,
+      "db_gb": 57.31220531463623,
+      "storage_gb": 72,
+      "cpu_vcpu": 0.30038888888888887,
+      "glue_workers": 7,
+      "glue_min": 17.785714285714285,
+      "dbt_min": 52.0,
+      "wall_min": 70.28571428571428,
+      "stream_gb_day": 5.973172187805176,
+      "out_gb": 13.5,
+      "s3_gb": 886.0415697097778,
+      "gb_run": 5.0,
+      "file_split": true,
+      "days_to_fill": 0.08370761536404386
+    },
+    "1000": {
+      "rds": "db.r7g.2xlarge",
+      "rds_fits": true,
+      "db_gb": 566.4320831298828,
+      "storage_gb": 709,
+      "cpu_vcpu": 2.412888888888889,
+      "glue_workers": 67,
+      "glue_min": 18.42537313432836,
+      "dbt_min": 502.0,
+      "wall_min": 520.9253731343283,
+      "stream_gb_day": 59.41886901855469,
+      "out_gb": 13.5,
+      "s3_gb": 8837.577438354492,
+      "gb_run": 50.0,
+      "file_split": true,
+      "days_to_fill": 0.0
+    }
+  },
+  "tabla3": {
+    "1": {
+      "local": 20.32278305096626,
+      "msk_prov": 754.0782518009663,
+      "msk_srv": 1200.5932830509664,
+      "kin_od": 684.8606580509663,
+      "kin_prov": 666.3497910509662
+    },
+    "10": {
+      "local": 24.199350402317048,
+      "msk_prov": 758.7749441523171,
+      "msk_srv": 1208.8438504023172,
+      "kin_od": 692.0177254023171,
+      "kin_prov": 670.879542402317
+    },
+    "100": {
+      "local": 154.1550239158249,
+      "msk_prov": 1239.075867665825,
+      "msk_srv": 1382.539523915825,
+      "kin_od": 854.7783989158249,
+      "kin_prov": 807.367055915825
+    },
+    "1000": {
+      "local": 1258.2350793634032,
+      "msk_prov": 3375.5684231134032,
+      "msk_srv": 3874.4195793634035,
+      "kin_od": 3237.308454363403,
+      "kin_prov": 2948.765511363403
+    }
+  },
+  "tabla4": {
+    "C1 minimo|1": 20.32278305096626,
+    "C1 minimo|100": 154.1550239158249,
+    "C2 base|1": 20.32278305096626,
+    "C2 base|100": 154.1550239158249,
+    "C3 medio|1": 31.84278305096626,
+    "C3 medio|100": 233.3550239158249,
+    "C4 alto|1": 185.96778305096626,
+    "C4 alto|100": 238.44002391582487,
+    "C5 muy alto|1": 213.01278305096625,
+    "C5 muy alto|100": 265.48502391582485
+  },
+  "tabla5": [
+    [
+      1,
+      "db.t4g.micro",
+      "0.03",
+      "11.52"
+    ],
+    [
+      7,
+      "db.t4g.small",
+      "0.15",
+      "23.04"
+    ],
+    [
+      14,
+      "db.t4g.large",
+      "0.29",
+      "92.88"
+    ],
+    [
+      21,
+      "db.r7g.large",
+      "0.43",
+      "172.08"
+    ],
+    [
+      70,
+      "db.r7g.xlarge",
+      "1.41",
+      "344.16"
+    ],
+    [
+      140,
+      "db.r7g.2xlarge",
+      "2.81",
+      "688.32"
+    ]
+  ],
+  "tabla10": [
+    [
+      "Ingesta 1x -> 10x (batch y streaming, consumo base)",
+      "20.32",
+      "24.20",
+      "x1.19",
+      "0.08"
+    ],
+    [
+      "Ingesta 10x -> 100x (batch y streaming, consumo base)",
+      "24.20",
+      "154.16",
+      "x6.37",
+      "0.80"
+    ],
+    [
+      "Ingesta 100x -> 1000x (batch y streaming, consumo base)",
+      "154.16",
+      "1,258.24",
+      "x8.16",
+      "0.91"
+    ],
+    [
+      "Consumo x10 (8->80 actualiz./dia, 3->30 analistas), ingesta 1x",
+      "20.32",
+      "184.03",
+      "x9.06",
+      "0.96"
+    ],
+    [
+      "Consumo x10 (8->80 actualiz./dia, 3->30 analistas), ingesta 100x",
+      "154.16",
+      "236.51",
+      "x1.53",
+      "0.19"
+    ],
+    [
+      "Solo actualizaciones del tablero x10 (8->80/dia), ingesta 1x",
+      "20.32",
+      "22.26",
+      "x1.10",
+      "0.04"
+    ],
+    [
+      "Solo actualizaciones del tablero x10 (8->80/dia), ingesta 100x",
+      "154.16",
+      "156.09",
+      "x1.01",
+      "0.01"
+    ]
+  ],
+  "tabla9": {
+    "RDS (instancia + disco)": {
+      "modelo": 13.82,
+      "cost_explorer": 13.7631
+    },
+    "IPv4 publica (VPC)": {
+      "modelo": 3.6009375,
+      "cost_explorer": 3.6014
+    },
+    "Glue": {
+      "modelo": 0.264,
+      "cost_explorer": 0.2178
+    },
+    "Fargate (ECS)": {
+      "modelo": 0.004628437500000001,
+      "cost_explorer": 0.0053
+    },
+    "S3": {
+      "modelo": 0.015993,
+      "cost_explorer": 0.0124
+    },
+    "Otros (Secrets, ECR, CloudWatch, etc.)": {
+      "modelo": 0.831647966796875,
+      "cost_explorer": 0.4134
+    }
+  },
+  "tornado": {
+    "A. Hoy: ingesta 1x, streaming local, consumo base": {
+      "base": 20.32278305096626,
+      "drivers": {
+        "Retencion de streaming en RDS (dias)": [
+          0.0,
+          0.0
+        ],
+        "Actualizaciones de tablero/dia": [
+          0.0,
+          0.0
+        ],
+        "Analistas concurrentes": [
+          0.0,
+          0.0
+        ],
+        "GB por actualizacion del tablero": [
+          0.0,
+          0.0
+        ],
+        "CPU por analista (vCPU)": [
+          0.0,
+          0.0
+        ],
+        "CPU por fila de streaming": [
+          0.0,
+          0.0
+        ],
+        "Filas/s por DPU de Glue Streaming": [
+          0.0,
+          0.0
+        ],
+        "Horas/mes que corre el streaming en AWS": [
+          0.0,
+          0.0
+        ],
+        "Minutos dbt por GB": [
+          -0.0037106250000000784,
+          0.0037106250000000784
+        ],
+        "Eventos/s de streaming": [
+          -0.04985295832156922,
+          0.04985295832157277
+        ],
+        "Retencion de JSON en S3 (dias)": [
+          -0.05174999999999841,
+          0.05175000000000196
+        ],
+        "Bytes por fila en RDS": [
+          -0.07903517782688141,
+          0.07903517782688141
+        ],
+        "Trabajo de Glue por GB": [
+          -0.10999999999999943,
+          0.11000000000000298
+        ],
+        "Volumen batch (GB/dia)": [
+          -0.16551189453124948,
+          0.16551189453124948
+        ],
+        "Minutos fijos de Glue": [
+          -0.7699999999999996,
+          0.7699999999999996
+        ],
+        "Corridas batch por dia": [
+          -0.7918444531249982,
+          0.7918444531250017
+        ],
+        "Precio del DPU de Glue": [
+          -0.879999999999999,
+          0.8800000000000026
+        ],
+        "Precio de la instancia RDS": [
+          -5.759999999999998,
+          5.760000000000002
+        ]
+      }
+    },
+    "B. Ingesta 100x con Kinesis on-demand + Glue, consumo base": {
+      "base": 854.7783989158249,
+      "drivers": {
+        "Actualizaciones de tablero/dia": [
+          0.0,
+          0.0
+        ],
+        "Analistas concurrentes": [
+          0.0,
+          0.0
+        ],
+        "GB por actualizacion del tablero": [
+          0.0,
+          0.0
+        ],
+        "CPU por analista (vCPU)": [
+          0.0,
+          0.0
+        ],
+        "CPU por fila de streaming": [
+          0.0,
+          0.0
+        ],
+        "Filas/s por DPU de Glue Streaming": [
+          0.0,
+          0.0
+        ],
+        "Minutos dbt por GB": [
+          -0.37106249999999363,
+          0.37106249999999363
+        ],
+        "Corridas batch por dia": [
+          2.1631555468749184,
+          -0.28315554687503663
+        ],
+        "Minutos fijos de Glue": [
+          -2.69500000000005,
+          2.6949999999999363
+        ],
+        "Retencion de streaming en RDS (dias)": [
+          -2.990000000000009,
+          2.990000000000009
+        ],
+        "Retencion de JSON en S3 (dias)": [
+          -5.175000000000068,
+          5.1749999999999545
+        ],
+        "Bytes por fila en RDS": [
+          -8.004478051662431,
+          8.004478051662431
+        ],
+        "Trabajo de Glue por GB": [
+          -13.31000000000006,
+          13.309999999999945
+        ],
+        "Volumen batch (GB/dia)": [
+          -19.896189453124975,
+          20.011189453124985
+        ],
+        "Precio de la instancia RDS": [
+          -46.440000000000055,
+          46.43999999999994
+        ],
+        "Eventos/s de streaming": [
+          -72.28029583215721,
+          26.200295832157053
+        ],
+        "Precio del DPU de Glue": [
+          -330.495,
+          330.4950000000001
+        ],
+        "Horas/mes que corre el streaming en AWS": [
+          -331.20000000000005,
+          331.1999999999998
+        ]
+      }
+    },
+    "C. Ingesta 10x, streaming local, consumo alto (96 actualiz./dia, 25 analistas)": {
+      "base": 189.84435040231702,
+      "drivers": {
+        "Retencion de streaming en RDS (dias)": [
+          0.0,
+          0.0
+        ],
+        "CPU por fila de streaming": [
+          0.0,
+          0.0
+        ],
+        "Filas/s por DPU de Glue Streaming": [
+          0.0,
+          0.0
+        ],
+        "Horas/mes que corre el streaming en AWS": [
+          0.0,
+          0.0
+        ],
+        "Minutos dbt por GB": [
+          -0.03710624999999368,
+          0.0371062500000221
+        ],
+        "Eventos/s de streaming": [
+          -0.4985295832157135,
+          0.4985295832157135
+        ],
+        "Retencion de JSON en S3 (dias)": [
+          -0.5174999999999841,
+          0.5175000000000125
+        ],
+        "Bytes por fila en RDS": [
+          -0.5277118027210008,
+          0.5277118027210292
+        ],
+        "Minutos fijos de Glue": [
+          -0.7699999999999818,
+          0.7700000000000102
+        ],
+        "Corridas batch por dia": [
+          -0.7918444531249804,
+          0.7918444531250088
+        ],
+        "Trabajo de Glue por GB": [
+          -1.0999999999999943,
+          1.1000000000000227
+        ],
+        "Volumen batch (GB/dia)": [
+          -1.6551189453124948,
+          1.6551189453125232
+        ],
+        "Precio del DPU de Glue": [
+          -1.8699999999999761,
+          1.8700000000000045
+        ],
+        "Actualizaciones de tablero/dia": [
+          -5.0849999999999795,
+          6.480000000000018
+        ],
+        "GB por actualizacion del tablero": [
+          -5.0849999999999795,
+          6.480000000000018
+        ],
+        "CPU por analista (vCPU)": [
+          -79.19999999999997,
+          0.0
+        ],
+        "Analistas concurrentes": [
+          -79.76249999999997,
+          0.5625
+        ],
+        "Precio de la instancia RDS": [
+          -86.03999999999998,
+          86.04000000000005
+        ]
+      }
+    }
+  }
+}
