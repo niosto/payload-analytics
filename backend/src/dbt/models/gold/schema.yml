@@ -286,10 +286,20 @@ models:
     columns:
       - name: currency
         description: ISO currency code. Primary key.
+        tests:
+          - not_null
+          - unique
       - name: usd_per_unit
         description: USD per unit of the currency, the same value to_usd uses.
+        tests:
+          - not_null
+          - is_positive
       - name: rate_source
         description: stream when a recent tick exists, seed for the fallback.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['stream', 'seed']
       - name: rate_event_time
         description: Publication time of the tick used, NULL when the rate comes from the seed.
       - name: provider_updated_at
