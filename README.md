@@ -264,11 +264,16 @@ The second command prints a JSON object. Use its `password` field.
 | `seeds` | Lookup tables loaded by `dbt seed` |
 | `gold` | Dimensions, facts, and the customer summary used for reporting |
 
-From the backend container:
+Get the endpoint from the backend container, which has the AWS CLI:
 
 ```bash
-ENDPOINT=$(aws ssm get-parameter --name /payload-analytics-rds/DBInstanceEndpoint --query Parameter.Value --output text)
-psql "host=${ENDPOINT} port=5432 dbname=payload_analytics user=payload_analytics_admin sslmode=require"
+aws ssm get-parameter --name /payload-analytics-rds/DBInstanceEndpoint --query Parameter.Value --output text
+```
+
+Then connect with any PostgreSQL client. The dev containers do not include `psql`; this example uses `psql` installed on your machine:
+
+```bash
+psql "host=<endpoint> port=5432 dbname=payload_analytics user=payload_analytics_admin sslmode=require"
 ```
 
 `psql` asks for the password. Then:
