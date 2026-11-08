@@ -11,7 +11,7 @@ Una entrada por columna de cada tabla del warehouse (`payload_analytics` en RDS 
 | PII directa | Identifica a una persona por sí sola: nombre, correo, teléfono, dirección, coordenadas | 17 | Solo en Silver y en `gold.dim_customer`. No se exporta ni se comparte fuera del equipo. Pendiente: enmascarar con hash SHA-256 antes de Gold. |
 | PII indirecta | Identifica combinada con otros datos: fecha de nacimiento, género, nacionalidad, ciudad, edad | 16 | Reportar agregada (rangos de edad, país), nunca fila a fila con PII directa. |
 | Financiera sensible | Score crediticio, riesgo, saldos, cupos, mora | 43 | Uso analítico interno. Los reportes externos van agregados. |
-| Interno | Identificadores técnicos, fechas, categorías, montos de transacción | 299 | Sin restricción dentro del equipo. |
+| Interno | Identificadores técnicos, fechas, categorías, montos de transacción | 307 | Sin restricción dentro del equipo. |
 
 ## Fuentes (staging de Spark y streaming)
 
@@ -116,7 +116,7 @@ FX ticks written by the streaming job (one row per currency per tick, usd_per_un
 | `units_per_usd` | double precision | Interno | Units of the currency for one USD. |  |
 | `usd_per_unit` | double precision | Interno | USD for one unit of the currency. |  |
 | `provider` | character varying | Interno | Where the rate came from: binance (market trades) or open.er-api.com (daily API). |  |
-| `provider_updated_at` | timestamp with time zone | Interno | When the provider set this price: the Binance trade time, or the daily API update time. |  |
+| `provider_updated_at` | timestamp with time zone | Interno | Time the provider set the price, NULL for the seed fallback. |  |
 | `event_time` | timestamp with time zone | Interno | When the event happened, set by the producer (UTC). |  |
 | `kafka_ts` | timestamp with time zone | Interno | When Redpanda accepted the event (UTC). |  |
 | `processed_at` | timestamp with time zone | Interno | When the streaming job wrote the row (UTC); processed_at - event_time is the end-to-end latency. |  |
@@ -160,7 +160,7 @@ Cleaned account fact table. One row per account.
 | `account_id` | character varying | Interno | Primary key — unique identifier for each account. | not_null, unique |
 | `account_type` | text | Interno | Type of financial account. | accepted_values (checking, savings, credit_card, investment), not_null |
 | `currency` | text | Interno | ISO 4217 currency code (UPPERCASED). | not_null |
-| `is_currency_mismatch` | boolean | Interno | True when the account currency differs from the expected currency of the customer's country. |  |
+| `is_currency_mismatch` | boolean | Interno | True when the account currency differs from the expected currency for the customer's country. |  |
 | `balance` | double precision | Financiera sensible | Current account balance. | not_null |
 | `balance_usd` | double precision | Financiera sensible | Account balance converted to USD via seed_fx_rates. | is_non_negative |
 | `credit_limit` | double precision | Financiera sensible | Credit limit of the account; NULL for non-credit products. |  |
@@ -255,9 +255,9 @@ Rate to_usd applies, one row per currency. Latest live tick from stream_fx_rates
 | `currency` | text | Interno | ISO currency code, upper case. | not_null, unique |
 | `usd_per_unit` | double precision | Interno | USD for one unit of the currency. | is_positive, not_null |
 | `rate_source` | text | Interno | stream when a recent live tick exists, seed otherwise. | accepted_values (stream, seed), not_null |
-| `rate_event_time` | timestamp with time zone | Interno | event_time of the live tick behind usd_per_unit; NULL when the seed is used. |  |
-| `provider_updated_at` | timestamp with time zone | Interno | When the provider set this price: the Binance trade time, or the daily API update time. |  |
-| `seed_usd_per_unit` | double precision | Interno | Static rate from seed_fx_rates, kept to compare against the live one. |  |
+| `rate_event_time` | timestamp with time zone | Interno | Publication time of the tick used, NULL when the rate comes from the seed. |  |
+| `provider_updated_at` | timestamp with time zone | Interno | Time the provider set the price, NULL for the seed fallback. |  |
+| `seed_usd_per_unit` | double precision | Interno | Seed rate for comparison. |  |
 
 ### `silver.live_transactions` (vista)
 
@@ -355,6 +355,7 @@ Account dimension with USD balances and customer context.
 | `account_type` | text | Interno | Type of financial account. |  |
 | `is_credit_product` | boolean | Interno | True when account_type is credit_card. | not_null |
 | `currency` | text | Interno | ISO 4217 currency code (UPPERCASED). |  |
+| `is_currency_mismatch` | boolean | Interno | True when the account currency differs from the expected currency for the customer's country. |  |
 | `balance` | double precision | Financiera sensible | Account balance in USD. | is_non_negative |
 | `credit_limit` | double precision | Financiera sensible | Credit limit of the account; NULL for non-credit products. |  |
 | `interest_rate` | double precision | Interno | Annual interest rate (numeric). |  |
@@ -375,6 +376,7 @@ Customer dimension with credit and digital engagement attributes.
 | `first_name` | text | PII directa | Customer first name in Proper Case. |  |
 | `last_name` | text | PII directa | Customer last name in Proper Case. |  |
 | `email` | text | PII directa | Cleaned customer e-mail address. |  |
+| `email_status` | text | Interno | valid, invalid or null, inherited from Silver so quality reporting does not reimplement the rule. |  |
 | `country` | text | Interno | ISO country code (UPPERCASED). |  |
 | `city` | text | PII indirecta | Customer city, mapped to its canonical name through seed_city. |  |
 | `gender` | text | PII indirecta | Customer gender as declared; disguised nulls normalized. |  |
@@ -423,6 +425,19 @@ Calendar dimension (2000-01-01 through 2050-12-31).
 | `year` | integer | Interno | Calendar year. | accepted_range [2000, 2050] |
 | `is_weekend` | boolean | Interno | True on Saturday or Sunday. | not_null |
 | `is_month_end` | boolean | Interno | True on the last day of the month. | not_null |
+
+### `gold.dim_fx_rate_current` (tabla)
+
+One row per currency with the rate to_usd applies, its source (stream or seed) and the age of the tick.
+
+| Columna | Tipo | Clasificación | Descripción | Tests |
+| --- | --- | --- | --- | --- |
+| `currency` | text | Interno | ISO 4217 currency code (UPPERCASED). | not_null, unique |
+| `usd_per_unit` | double precision | Interno | USD per unit of the currency, the same value to_usd uses. | is_positive, not_null |
+| `rate_source` | text | Interno | stream when a recent tick exists, seed for the fallback. | accepted_values (stream, seed), not_null |
+| `rate_event_time` | timestamp with time zone | Interno | Publication time of the tick used, NULL when the rate comes from the seed. |  |
+| `provider_updated_at` | timestamp with time zone | Interno | Time the provider set the price, NULL for the seed fallback. |  |
+| `seed_usd_per_unit` | double precision | Interno | Seed rate for comparison. |  |
 
 ### `gold.fct_live_transactions` (tabla)
 

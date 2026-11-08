@@ -45,6 +45,7 @@ flowchart LR
     gold_dim_account["gold.dim_account"]
     gold_dim_customer["gold.dim_customer"]
     gold_dim_date["gold.dim_date"]
+    gold_dim_fx_rate_current["gold.dim_fx_rate_current"]
     gold_fct_live_transactions["gold.fct_live_transactions"]
     gold_fct_loans["gold.fct_loans"]
     gold_fct_transactions["gold.fct_transactions"]
@@ -80,6 +81,7 @@ flowchart LR
   silver_customers --> gold_fct_transactions
   silver_customers --> silver_accounts
   silver_digital_engagement --> gold_dim_customer
+  silver_fx_rates_current --> gold_dim_fx_rate_current
   silver_fx_rates_current --> silver_accounts
   silver_fx_rates_current --> silver_credit_info
   silver_fx_rates_current --> silver_live_transactions
