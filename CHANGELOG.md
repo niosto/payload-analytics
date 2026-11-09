@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The streaming job publishes rows written, p95 latency, and lag to CloudWatch (`PayloadAnalytics/Streaming`) once a minute
 - `docs/cost/`: cost sensitivity model on AWS Price List prices against the data ingested and consumed, checked against Cost Explorer, with tables and charts
 - README: a design decisions table with the reason for each choice, a table of who uses each dashboard page and what they decide, and the `monitoring` and `cicd` stacks in the deployment guide, with the values to change in another AWS account
+- `docs/demo.md` rewritten as a 15-minute script with no slides and all four members taking part: batch, streaming, CI/CD with a live merge, monitoring with an alarm test, and Power BI, with the order rules, the setup checklist, the fallback plan and the likely questions
 - RACI rows for CI/CD and deployment, monitoring and alerts, and cost and scalability, and the rule that a merge to `main` deploys
 
 ## [1.2.0] - 23/10/2026
