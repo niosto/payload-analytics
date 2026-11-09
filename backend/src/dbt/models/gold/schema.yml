@@ -285,7 +285,7 @@ models:
     description: One row per currency with the rate to_usd applies, its source (stream or seed) and the age of the tick.
     columns:
       - name: currency
-        description: ISO currency code. Primary key.
+        description: ISO 4217 currency code (UPPERCASED).
         tests:
           - not_null
           - unique

@@ -146,7 +146,7 @@ table Medidas
 		displayFolder: 06 Gobierno
 		lineageTag: 4906cf3d-04e5-4b3a-9da1-4758967c4799
 
-	measure 'Reglas de calidad' = 206
+	measure 'Reglas de calidad' = 212
 		formatString: #,0
 		displayFolder: 06 Gobierno
 		lineageTag: 37f15e1a-8799-4be2-82e0-a52e496a7f4a

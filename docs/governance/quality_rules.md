@@ -1,19 +1,19 @@
 # Reglas de calidad implementadas
 
-Hay **206 reglas** que corren como tests de dbt en cada ejecución del pipeline (`dbt test`, dentro de `run.sh` en Fargate). Si una falla, la tarea de Fargate falla, Step Functions mueve el archivo a `failed/` y SNS envía un correo. Ninguna regla se debilita para que una corrida pase.
+Hay **212 reglas** que corren como tests de dbt en cada ejecución del pipeline (`dbt test`, dentro de `run.sh` en Fargate). Si una falla, la tarea de Fargate falla, Step Functions mueve el archivo a `failed/` y SNS envía un correo. Ninguna regla se debilita para que una corrida pase.
 
 ## Por tipo
 
 | Tipo de regla | Qué verifica | Cantidad |
 | --- | --- | --- |
-| `not_null` | La columna nunca está vacía | 90 |
+| `not_null` | La columna nunca está vacía | 93 |
 | `is_non_negative` | El valor es mayor o igual a 0 (montos en USD) | 30 |
-| `accepted_values` | El valor está en la lista permitida | 19 |
+| `accepted_values` | El valor está en la lista permitida | 20 |
 | `relationships` | La clave foránea existe en la dimensión | 17 |
-| `unique` | No hay duplicados (clave primaria) | 14 |
+| `unique` | No hay duplicados (clave primaria) | 15 |
 | `accepted_range` | El valor está dentro de un rango | 11 |
+| `is_positive` | El valor es mayor que 0 (montos nativos) | 6 |
 | `is_valid_date_format` | La fecha quedó en formato válido | 6 |
-| `is_positive` | El valor es mayor que 0 (montos nativos) | 5 |
 | Singulares (reglas de negocio) | Consistencia entre columnas y capas | 14 |
 
 ## Reglas de negocio (tests singulares)
@@ -70,6 +70,17 @@ Hay **206 reglas** que corren como tests de dbt en cada ejecución del pipeline 
 | `month_number` | accepted_range [1, 12] |
 | `quarter` | accepted_range [1, 4] |
 | `year` | accepted_range [2000, 2050] |
+
+### `gold.dim_fx_rate_current`
+
+| Columna | Regla |
+| --- | --- |
+| `currency` | not_null |
+| `currency` | unique |
+| `rate_source` | accepted_values (stream, seed) |
+| `rate_source` | not_null |
+| `usd_per_unit` | is_positive |
+| `usd_per_unit` | not_null |
 
 ### `gold.fct_live_transactions`
 

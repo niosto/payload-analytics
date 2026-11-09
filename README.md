@@ -37,6 +37,19 @@ There is no NAT Gateway. The database is a public `db.t4g.micro` in the default 
 
 Each new file replaces `silver.stg_*` and dbt rebuilds the tables on top. Two uploads close together do not run at once: Glue allows one run, and Step Functions waits and retries.
 
+## Design decisions
+
+| Decision | Why | More |
+| --- | --- | --- |
+| Hybrid: batch in AWS, streaming in local Docker | A managed Kafka costs USD 70–500 a month and Kinesis plus a Glue streaming job about USD 1 per hour, against a USD 1 monthly budget alert. Both sides write to the same RDS, so dbt does not care where a row came from. | [`docs/cost/`](docs/cost/README.md) |
+| Public RDS, no NAT Gateway | A NAT Gateway bills by the hour and the budget is USD 1 a month. The dbt task runs in the default public subnets with a public IP, and the database is reached with `sslmode=require` and a password kept in Secrets Manager. The price is a public endpoint, listed in the limitations. | [Architecture](#architecture) |
+| Glue without a Glue Connection | Glue uses AWS's managed network and reaches the public RDS endpoint, so the job has no VPC attachment. | [Architecture](#architecture) |
+| GitHub OIDC instead of AWS keys | GitHub stores no AWS secret. The role can be assumed only from `main` of this repository and can change only the `payload-analytics-backend-*` stacks. | [`docs/cicd.md`](docs/cicd.md) |
+| Every merge to `main` deploys | One workflow with `test` and `deploy` keeps what runs in AWS equal to what is on `main`. Deploys never overlap and never cancel a running one, so changes go in as one pull request. | [`docs/cicd.md`](docs/cicd.md) |
+| Spark only explodes and deduplicates; dbt cleans | The cleaning rules are SQL models with tests (212 dbt tests), not code inside the Glue job. | [What the models do](#what-the-models-do) |
+| `fx_rates_current` with `LATERAL` and an expression index | `DISTINCT ON` read the whole 48-hour window and ignored the index: 1,593 ms. One `LATERAL ... LIMIT 1` per currency uses it: 0.19 ms. | [`docs/optimizations/`](docs/optimizations/README.md) |
+| Index on `fct_live_transactions` through a `post_hook` | dbt builds the `indexes` of an incremental model only when it creates the table, and the table already existed in RDS. | [`docs/optimizations/`](docs/optimizations/README.md) |
+
 ## Layers
 
 - **Bronze** is the JSON object in S3 for batch, with nested accounts, transactions, loans, credit info, and digital engagement intact. For streaming it is the Redpanda topics, which keep every event as it was published.
@@ -171,12 +184,32 @@ cd /app/infrastructure/serverless/alerts && serverless deploy
 
 Open the SNS confirmation email and confirm the subscription before you rely on failure alerts.
 
+Two more stacks come after `alerts`. `monitoring` reads the alerts topic, so it cannot go earlier. `cicd` needs admin credentials in `.envs/aws.env`, because it creates an IAM OIDC provider and a role. It is deployed once, by hand:
+
+```bash
+cd /app/infrastructure/serverless/monitoring && serverless deploy
+cd /app/infrastructure/serverless/cicd && serverless deploy
+aws secretsmanager put-secret-value --secret-id /payload-analytics-cicd/ServerlessAccessKey \
+  --secret-string "$SERVERLESS_ACCESS_KEY"
+```
+
+The `cicd` stack creates the secret empty; `put-secret-value` stores the Serverless key (it comes from `.envs/sls.env` and is already in the container's environment). The key never goes into git. The pipeline itself runs without these two stacks; they add the alarms and the automatic deploy that the CI/CD and monitoring sections below describe.
+
 | Stack | What it creates |
 | --- | --- |
 | storage | Private data lake bucket and artifacts bucket. EventBridge is enabled on the data lake. |
 | rds | Public Postgres. Database `payload_analytics`, master user `payload_analytics_admin`. |
 | registry | ECR repository for the dbt image. |
 | alerts | Email topic and a monthly cost budget. |
+| monitoring | CloudWatch dashboard `payload-analytics` and four alarms that email the alerts topic. |
+| cicd | GitHub OIDC provider, the deploy role `payload-analytics-cicd-github-deploy`, and the secret that holds the Serverless key. |
+
+**Deploying in another AWS account.** Some values are fixed in the repository and have to change:
+
+- In [`.github/workflows/ci.yml`](.github/workflows/ci.yml): `AWS_DEPLOY_ROLE_ARN` (the account id inside the ARN), `DEVELOPER`, `DEFAULT_VPC_ID` and `DEFAULT_VPC_SUBNET_IDS`. `DEVELOPER` has to match the one used when the stacks were created, because it is part of the bucket names.
+- In `infrastructure/serverless/cicd/serverless.yml`: `custom.github.repository` (today `niosto/payload-analytics`). The role trusts only that repository and its `main` branch.
+- An AWS account can hold only one OIDC provider for `token.actions.githubusercontent.com`. If yours already has one, the `cicd` stack will fail on it.
+- After the first merge, protect `main` in GitHub (pull request and the `test` check required). The security of the deploy role depends on it; see [`docs/cicd.md`](docs/cicd.md).
 
 ## 3. Start the backend container
 
@@ -264,11 +297,16 @@ The second command prints a JSON object. Use its `password` field.
 | `seeds` | Lookup tables loaded by `dbt seed` |
 | `gold` | Dimensions, facts, and the customer summary used for reporting |
 
-From the backend container:
+Get the endpoint from the backend container, which has the AWS CLI:
 
 ```bash
-ENDPOINT=$(aws ssm get-parameter --name /payload-analytics-rds/DBInstanceEndpoint --query Parameter.Value --output text)
-psql "host=${ENDPOINT} port=5432 dbname=payload_analytics user=payload_analytics_admin sslmode=require"
+aws ssm get-parameter --name /payload-analytics-rds/DBInstanceEndpoint --query Parameter.Value --output text
+```
+
+Then connect with any PostgreSQL client. The dev containers do not include `psql`; this example uses `psql` installed on your machine:
+
+```bash
+psql "host=<endpoint> port=5432 dbname=payload_analytics user=payload_analytics_admin sslmode=require"
 ```
 
 `psql` asks for the password. Then:
@@ -481,7 +519,7 @@ These tests validate both the warehouse structure and the business logic used in
 
 ## Dashboard
 
-`powerbi/dashboard.pbix` is a four-page report on Gold. Its versionable source is `powerbi/PayloadAnalytics.pbip` (TMDL semantic model, PBIR report and the `PayloadCorporate` theme). The screenshots below are in `powerbi/screenshots/`.
+`powerbi/dashboard.pbix` is a four-page report on Gold. `powerbi/PayloadAnalytics.pbip` is the versionable source of its semantic model (TMDL: tables, relationships and the 42 measures). The report pages and the `PayloadCorporate` theme live only in the `.pbix`, so open `dashboard.pbix` to see the dashboard. The screenshots below are in `powerbi/screenshots/`.
 
 ![Executive summary](powerbi/screenshots/01-resumen.png)
 
@@ -498,7 +536,16 @@ These tests validate both the warehouse structure and the business logic used in
 | **Resumen ejecutivo** | How is the business doing and where does revenue come from? | Customers, USD balance, revenue, 90+ delinquency and transactions; revenue trend, segment mix, balance by country, transaction mix and average ticket. |
 | **Clientes y riesgo crediticio** | Where is credit risk concentrated? | Score distribution by band, 90+ delinquency by segment and country, delinquency by country, loan portfolio by product and DPD buckets. |
 | **Operación en tiempo real** | Is streaming flowing, how fresh is it and at what rate? | p95 latency, transactions in the last hour, USD volume in 24 h, FX coverage, latency by minute, volume by minute and the current rate per currency. |
-| **Calidad y gobierno del dato** | Is the data trustworthy and fresh? | 206 dbt rules, marked records, invalid emails, currency mismatches by country, streaming/FX/batch freshness and the governance scope. |
+| **Calidad y gobierno del dato** | Is the data trustworthy and fresh? | 212 dbt rules, marked records, invalid emails, currency mismatches by country, streaming/FX/batch freshness and the governance scope. |
+
+### Who uses it and what they decide
+
+| Page | Who uses it | What they decide with it |
+| --- | --- | --- |
+| **Resumen ejecutivo** | Commercial management | Which segments and countries to push, and whether revenue, volume and average ticket are growing. |
+| **Clientes y riesgo crediticio** | Credit risk | Where to tighten limits or start collections: the bands, segments, countries and loan products with the most delinquency. |
+| **Operación en tiempo real** | Operations and treasury | Whether the live flow is healthy, how fresh it is, and which FX rate is applied to each currency right now. |
+| **Calidad y gobierno del dato** | Data owner | Whether the numbers can be trusted before they are shared, and which source to fix first: invalid emails, currency mismatches or stale loads. |
 
 ### Semantic model
 
@@ -512,7 +559,7 @@ These tests validate both the warehouse structure and the business logic used in
 
 The report was built against a local Gold database (`localhost:5433`, database `payload_analytics`) while RDS was unavailable. The `.pbix` carries the imported snapshot, so it opens without a database. To refresh it:
 
-1. Load the batch JSON into `silver.stg_*` and run the dbt project (`dbt seed`, `dbt run`, `dbt test`). The 206 tests pass on the 5,000-customer sample.
+1. Load the batch JSON into `silver.stg_*` and run the dbt project (`dbt seed`, `dbt run`, `dbt test`). The 212 tests pass on the 5,000-customer sample.
 2. For the streaming page, run the local Redpanda/Spark stack and rebuild `fct_live_transactions` and `dim_fx_rate_current`.
 3. In Power BI Desktop, refresh the model. The PostgreSQL source is `localhost:5433` / `payload_analytics`.
 
@@ -529,7 +576,7 @@ Everything about the data itself lives in [`docs/governance/`](docs/governance/R
 | [Data dictionary](docs/governance/data_dictionary.md) | Every warehouse column with type, description, sensitivity class (direct PII, indirect PII, sensitive financial, internal), and tests |
 | [Data catalog](docs/governance/catalog.html) | dbt docs as one HTML file: tables, columns, SQL, and the lineage graph. Open it in a browser |
 | [Lineage](docs/governance/lineage.md) | From the JSON in S3 and the streaming sources to Gold and Power BI |
-| [Quality rules](docs/governance/quality_rules.md) | The 206 rules running as dbt tests, by type and by table |
+| [Quality rules](docs/governance/quality_rules.md) | The 212 rules running as dbt tests, by type and by table |
 | [RACI](docs/governance/raci.md) | Who does, approves, is consulted, and is informed. Data owner: Nicolás Ospina |
 
 Database optimizations, with before and after `EXPLAIN` results, are in [`docs/optimizations/`](docs/optimizations/README.md).
