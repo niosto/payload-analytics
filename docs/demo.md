@@ -31,7 +31,7 @@ La asignación sigue la matriz RACI ([`governance/raci.md`](governance/raci.md))
 ## Reglas que no se rompen
 
 1. **No subir el JSON mientras el `deploy` está en curso.** El despliegue cambia la task de dbt y la state machine, y una ejecución que arranca en ese momento puede fallar. Por eso el batch va **antes** de fusionar (minutos 1–5) y el merge después.
-2. **El batch tiene que haber terminado antes del minuto 8.** Glue tarda unos 2 minutos y dbt otros 2. Si a esa hora sigue *Running*, no se espera: se muestra la ejecución anterior que ya está en *Succeeded* y se sigue.
+2. **El batch tiene que haber terminado antes del minuto 8.** Se sube en el minuto 1, así que tiene unos 7 minutos. Si el ensayo mide más de 6, el archivo se sube durante el alistamiento (minuto 0). Si a la hora del bloque sigue *Running*, no se espera: se muestra la ejecución anterior que ya está en *Succeeded* y se sigue.
 3. **Cualquier cambio fusionado a `main` despliega.** El workflow no filtra por rutas, así que incluso un cambio de documentación reconstruye la imagen de dbt y despliega la state machine. Por eso el cambio de la demo puede ser inocuo (por ejemplo, una línea de este documento): lo que se muestra es la tubería, no el cambio.
 4. **`main` queda congelado** desde el último despliegue verde y el pipeline de prueba. El único cambio que entra después es el de la demo.
 5. **Si `test` o `deploy` superan el tiempo asignado**, no se espera con la pantalla quieta. Se deja la ejecución en curso a la vista, se explica qué paso está corriendo y se muestra la ejecución anterior en verde (ver la tabla siguiente).
@@ -44,7 +44,7 @@ Los llena el equipo. No se inventan: se anotan de las ejecuciones reales de Acti
 | --- | --- | --- |
 | Job `test` (pytest y dbt sobre la fixture) | TODO medir | Actions → la ejecución → duración del job `test` |
 | Job `deploy` (migración, imagen, dbt, state machine) | TODO medir | Actions → la ejecución → duración del job `deploy` |
-| Batch completo (Glue y dbt) | unos 4 min (referencia del guion anterior) | Step Functions → duración de la ejecución. TODO confirmar en ensayo |
+| Batch completo (Glue y dbt) | TODO medir. Referencias que no coinciden: unos 4 min (guion anterior) y 7 min (modelo de costo: Glue 4 más dbt 2,5) | Step Functions → duración de la ejecución |
 | Latencia p95 de transacciones en el streaming | TODO medir | Consulta del bloque 1–5. La referencia es menos de 5 s |
 
 **Qué hacer si superan el tiempo.** Si `test` o `deploy` ya pasaron de su duración medida más un margen, se pasa al respaldo: la ejecución verde previa de la misma PR o de `main`, con su resumen y su imagen. Se dice en voz alta que el despliegue sigue corriendo y se continúa con el monitoreo. El plan es que el CI/CD entre en 4 minutos aunque no termine.
